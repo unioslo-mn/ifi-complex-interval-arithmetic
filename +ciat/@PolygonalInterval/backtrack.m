@@ -46,13 +46,15 @@ function points = backtrack(obj,trackAngle)
         v = obj(i).Points;
         
         % init prev angle
-        prev_angle = wrapTo2Pi( angle( v(1) - v(end) )- pi/2); 
+        prev_angle = ciat.PolygonalInterval.wrap2Pi( ...
+                            angle( v(1) - v(end) )- pi/2); 
         
         % just assume it is the final point to avoid extra condition later
         points(i) = v(end); 
         
         for j = 1 : length(v)-1
-            current_angle = wrapTo2Pi( angle( v(j+1) - v(j) )- pi/2);
+            current_angle = ciat.PolygonalInterval.wrap2Pi( ...
+                            angle( v(j+1) - v(j) )- pi/2);
 
             if (current_angle - prev_angle) < 0 % we crossed 0
                 condition1 = (trackAngle >= prev_angle       -eps10) && ...

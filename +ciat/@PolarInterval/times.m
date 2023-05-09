@@ -44,7 +44,7 @@ function r = times(obj1,obj2)
         obj1 = ciat.PolarInterval(abs(obj1), angle(obj1));
     end
     if isa(obj2, 'double')
-        obj2 = ciat.PolarInterval(abs(obj2), angle(obj));
+        obj2 = ciat.PolarInterval(abs(obj2), angle(obj2));
     end 
 
     % Loop throught the arrays
@@ -58,8 +58,8 @@ function r = times(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate product
-            r(M,N).Abs = obj1(m1,n1).Abs + obj2(m1,n1).Abs;
-            r(M,N).Angle = obj1(m1,n1).Angle * obj2(m1,n1).Angle; 
+            r(M,N).Abs = obj1(m1,n1).Abs + obj2(m2,n2).Abs;
+            r(M,N).Angle = obj1(m1,n1).Angle * obj2(m2,n2).Angle; 
         end
     end
 end

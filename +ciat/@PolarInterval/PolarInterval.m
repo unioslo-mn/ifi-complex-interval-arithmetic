@@ -127,8 +127,8 @@ classdef PolarInterval
                     [M2,N2] = size(varargin{2});
                     [M3,N3] = size(varargin{3});
                     [M4,N4] = size(varargin{4});
-                    assert(range([M1,M2,M3,M4]) == 0 && ...
-                           range([N1,N2,N3,N4]) == 0)
+                    assert(var([M1,M2,M3,M4]) == 0 && ...
+                           var([N1,N2,N3,N4]) == 0)
                     M = M1;
                     N = N1;
                     % Create object array
