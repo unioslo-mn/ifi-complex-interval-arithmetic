@@ -2,9 +2,10 @@
 An object-oriented MATLAB package for complex interval arithmetic.
 
 ## Getting started:
-1) Include the root folder in the path
-2) Run the example scipt
-3) See how it is applied to ultrasound beamforming at https://github.com/unioslo-mn/ifi-beampattern-interval-analysis
+1) Close this repository
+2) Include the root folder in the MATLAB path
+3) Run the example scipt
+4) See how it is applied to ultrasound beamforming at https://github.com/unioslo-mn/ifi-beampattern-interval-analysis
 
 ## How to use the code:
 1) All classes have a detailed MATLAB help describing the usage
