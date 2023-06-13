@@ -58,8 +58,8 @@ function r = times(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate product
-            r(M,N).Center = obj1(m1,n1).Center * obj2(m2,n2).Center;
-            r(M,N).Radius = abs(obj1(m1,n1).Center) * obj2(m2,n2).Radius + ...
+            r(m,n).Center = obj1(m1,n1).Center * obj2(m2,n2).Center;
+            r(m,n).Radius = abs(obj1(m1,n1).Center) * obj2(m2,n2).Radius + ...
                             abs(obj2(m2,n2).Center) * obj1(m1,n1).Radius + ...
                             obj1(m1,n1).Radius * obj2(m2,n2).Radius; 
         end

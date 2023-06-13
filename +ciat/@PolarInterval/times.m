@@ -58,8 +58,8 @@ function r = times(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate product
-            r(M,N).Abs = obj1(m1,n1).Abs + obj2(m2,n2).Abs;
-            r(M,N).Angle = obj1(m1,n1).Angle * obj2(m2,n2).Angle; 
+            r(m,n).Abs = obj1(m1,n1).Abs * obj2(m2,n2).Abs;
+            r(m,n).Angle = obj1(m1,n1).Angle + obj2(m2,n2).Angle; 
         end
     end
 end

@@ -59,8 +59,8 @@ function r = plus(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate sum
-            r(M,N).Real = obj1(m1,n1).Real + obj2(m2,n2).Real;
-            r(M,N).Imag = obj1(m1,n1).Imag + obj2(m2,n2).Imag;
+            r(m,n).Real = obj1(m1,n1).Real + obj2(m2,n2).Real;
+            r(m,n).Imag = obj1(m1,n1).Imag + obj2(m2,n2).Imag;
         end
     end
 end

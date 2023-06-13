@@ -229,7 +229,7 @@ classdef RectangularInterval
             alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
             value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
             
-            if obj.Real.Infimum <= 0 && obj.Real.Supremum >= 0 && ...
+            if obj.Real.Infimum <= 0 && ...
                obj.Imag.Infimum <= 0 && obj.Imag.Supremum >= 0
                 value.Infimum = 0;
                 value.Supremum = 2*pi;

@@ -59,8 +59,8 @@ function r = times(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate product
-            r(M,N).Points = reshape(obj1.Points * obj2.Points.' ,[],1);
-            r(M,N).Points = r(M,N).Boundary;
+            r(m,n).Points = reshape(obj1.Points * obj2.Points.' ,[],1);
+            r(m,n).Points = r(m,n).Boundary;
         end
     end
 end

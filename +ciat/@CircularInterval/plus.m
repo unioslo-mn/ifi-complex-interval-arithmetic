@@ -58,8 +58,8 @@ function r = plus(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate sum
-            r(M,N).Center = obj1(m1,n1).Center + obj2(m2,n2).Center;
-            r(M,N).Radius = obj1(m1,n1).Radius + obj2(m2,n2).Radius;
+            r(m,n).Center = obj1(m1,n1).Center + obj2(m2,n2).Center;
+            r(m,n).Radius = obj1(m1,n1).Radius + obj2(m2,n2).Radius;
         end
     end
 end
