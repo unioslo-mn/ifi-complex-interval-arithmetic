@@ -72,6 +72,8 @@ function outObj = cast(inObj)
                     outRadius(m,n) = R;
                 end
             end
+        otherwise
+            error('Invalid input type')
     end
 	outObj = ciat.CircularInterval(outCenter,outRadius);       
     outObj = reshape(outObj,M,N);

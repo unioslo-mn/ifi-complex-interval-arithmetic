@@ -91,9 +91,17 @@ classdef PolarInterval
                     end
                 case 2
                     % Two input arguments of real intervals is the default
-                    % way of definin polar intervals
-                    mustBeA(varargin{1},'ciat.RealInterval')
-                    mustBeA(varargin{2},'ciat.RealInterval')
+                    % way of defining polar intervals
+                    mustBeA(varargin{1},["ciat.RealInterval","double"])
+                    mustBeA(varargin{2},["ciat.RealInterval","double"])
+
+                    % Turn scalars to degenerate intervals
+                    if isa(varargin{1}, 'double')
+                        varargin{1} = ciat.RealInterval(varargin{1});
+                    end
+                    if isa(varargin{2}, 'double')
+                        varargin{2} = ciat.RealInterval(varargin{2});
+                    end 
                     
                     % Get sizes
                     [M1,N1] = size(varargin{1});

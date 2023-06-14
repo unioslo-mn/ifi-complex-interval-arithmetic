@@ -31,8 +31,8 @@ function r = mtimes(obj1,obj2)
 
 
     % Check input class
-    mustBeA(obj1,"ciat.PolygonalInterval");
-    mustBeA(obj2,"ciat.PolygonalInterval");
+    mustBeA(obj1,["ciat.PolygonalInterval","double"]);
+    mustBeA(obj2,["ciat.PolygonalInterval","double"]);
    
     % Get input sizes and check if they can be multiplied
     [M1,N1] = size(obj1);

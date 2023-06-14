@@ -29,8 +29,8 @@ function r = plus(obj1,obj2)
 % _________________________________________________________________________
 
     % Check input class
-    mustBeA(obj1,"ciat.RectangularInterval");
-    mustBeA(obj2,"ciat.RectangularInterval");
+    mustBeA(obj1,["ciat.RectangularInterval","double"]);
+    mustBeA(obj2,["ciat.RectangularInterval","double"]);
     
     % Get input sizes and check if they can be added
     [M1,N1] = size(obj1);

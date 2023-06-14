@@ -45,6 +45,11 @@ function outObj = cast(inObj,inObj2,options)
     dR = options.tolerance;
     
     switch class(inObj)
+        case 'double'
+            outPoints = inObj;
+        case 'ciat.RealInterval'
+            outPoints(1) = inObj.Infimum;
+            outPoints(2) = inObj.Supremum;
         case 'ciat.RectangularInterval'
             inReal = [inObj.Real];
             inImag = [inObj.Imag];
@@ -92,8 +97,14 @@ function outObj = cast(inObj,inObj2,options)
                 % Compile points
                 outPoints = [pL,rH, pH].';
             else
-                outPoints = timesPolarCircular(inObj,inObj2,dR);
+                if isa(inObj2,'ciat.CircularInterval')
+                    outPoints = timesPolarCircular(inObj,inObj2,dR);
+                else
+                    error('Invalid input type at position 2')
+                end
             end
+        otherwise
+            error('Invalid input type at position 1')
     end  
     outObj = ciat.PolygonalInterval(outPoints);       
     outObj = reshape(outObj,M,N);  

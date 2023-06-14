@@ -29,7 +29,7 @@ function points = sample(obj, nPoints)
 
     arguments
         obj 
-        nPoints = 10;
+        nPoints (1,1)   {mustBeInteger,mustBePositive} = 10;
     end
 
     % Extract parameters

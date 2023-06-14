@@ -39,7 +39,9 @@ function outObj = cast(inObj)
               'ciat.CircularInterval',...
               'ciat.PolygonalInterval'}
             outAbs = abs(inObj);
-            outAngle = angle(inObj);           
+            outAngle = angle(inObj);   
+        otherwise
+            error('Invalid input type')
     end
 	outObj = ciat.PolarInterval(outAbs,outAngle);       
     outObj = reshape(outObj,M,N);

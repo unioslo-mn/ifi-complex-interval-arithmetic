@@ -31,8 +31,8 @@ function r = mtimes(obj1,obj2)
 
 
     % Check input class
-    mustBeA(obj1,"ciat.PolarInterval");
-    mustBeA(obj2,"ciat.PolarInterval");
+    mustBeA(obj1,["ciat.PolarInterval","double"]);
+    mustBeA(obj2,["ciat.PolarInterval","double"]);
    
     % Calculate product using the times function
     warning(['No plus method implemented for polar intervals, ',...

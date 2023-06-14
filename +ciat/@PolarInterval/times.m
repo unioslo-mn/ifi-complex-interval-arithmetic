@@ -28,8 +28,8 @@ function r = times(obj1,obj2)
 % _________________________________________________________________________
 
     % Check input class
-    mustBeA(obj1,"ciat.PolarInterval");
-    mustBeA(obj2,"ciat.PolarInterval");
+    mustBeA(obj1,["ciat.PolarInterval","double"]);
+    mustBeA(obj2,["ciat.PolarInterval","double"]);
     
     % Get input sizes and check if they can be added
     [M1,N1] = size(obj1);

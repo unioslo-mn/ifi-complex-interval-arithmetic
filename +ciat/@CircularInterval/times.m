@@ -28,8 +28,8 @@ function r = times(obj1,obj2)
 % _________________________________________________________________________
 
     % Check input class
-    mustBeA(obj1,"ciat.CircularInterval");
-    mustBeA(obj2,"ciat.CircularInterval");
+    mustBeA(obj1,["ciat.CircularInterval","double"]);
+    mustBeA(obj2,["ciat.CircularInterval","double"]);
     
     % Get input sizes and check if they can be added
     [M1,N1] = size(obj1);
