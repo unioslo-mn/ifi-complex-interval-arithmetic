@@ -23,4 +23,5 @@ An object-oriented MATLAB package for complex interval arithmetic.
 4) H. K. Arnestad, G. Geréb, T. I. B. Lønmo, J. E. Kirkebø, A. Austeng, and S. P. Näsholm, “Worst-case analysis of array beampatterns using interval arithmetic,” The Journal of the Acoustical Society of America, 2023.
 5) H. K. Arnestad, G. Geréb, T. I. B. Lønmo, and J. E. Kirkebø, “Beampattern bounds for block errors in sonar arrays using interval arithmetic,” presented at the IEEE OCEANS 2032, Limerick, 2023.
 
-![ciat](https://github.com/unioslo-mn/ifi-complex-interval-arithmetic/assets/131883958/c3168171-9683-4935-82d8-ae1526d8e0c9)
+![ciat](https://github.com/unioslo-mn/ifi-complex-interval-arithmetic/assets/131883958/2880b6a7-2a79-47af-968f-a8c39f3586e0)
+
