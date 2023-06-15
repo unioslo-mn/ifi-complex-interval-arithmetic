@@ -34,6 +34,9 @@ function outObj = cast(inObj)
         case 'double'
             outReal = ciat.RealInterval(real(inObj));
             outImag = ciat.RealInterval(imag(inObj));
+        case 'ciat.RealInterval'
+            outReal = inObj;
+            outImag = ciat.RealInterval(zeros(size(inObj)));
         case {'ciat.CircularInterval',...
               'ciat.PolarInterval',...
               'ciat.PolygonalInterval'}
