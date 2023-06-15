@@ -50,7 +50,7 @@ classdef RealInterval
         % the infimum and the second the supremum.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.RealInterval(center,radius)
+        %   ciat.RealInterval(infimum,supremum)
         %   ciat.RealInterval(obj)
         %   ciat.RealInterval
         % _________________________________________________________________________
@@ -68,6 +68,11 @@ classdef RealInterval
         %   rectInt = ciat.RealInterval([1,2 ; 3,4 ; 5,6])
         %   rectInt(5,2) = ciat.RealInterval
         % _________________________________________________________________________
+            
+            for varIdx = 1:length(varargin)
+                assert(isreal(varargin{varIdx}),'input must be real valued');
+            end
+        
             switch length(varargin)
                 case 0
                     % This is for initializing an array of objects
@@ -79,13 +84,21 @@ classdef RealInterval
                             obj.Infimum = min(varargin{1});
                             obj.Supremum = max(varargin{1});
                         case 2
-                            M = max([M,N]);
+                            [M,dimIdx] = max([M,N]);
+                            if dimIdx == 2
+                                varargin{1} = varargin{1}.';
+                            end
                             infsup = reshape(varargin{1},[],2);
                             infsup = sort(infsup,2);
                             obj(M,1) = obj;
                             for m = 1:M
                                 obj(m).Infimum = infsup(m,1);
                                 obj(m).Supremum = infsup(m,2);
+                            end
+                            if M == 2
+                                warning(['Ambiguous input structure',...
+                                        'we assume each row to be'...,
+                                        'a seperate interval.'])
                             end
                         otherwise
                             error('Invalid input array size (>2).')
