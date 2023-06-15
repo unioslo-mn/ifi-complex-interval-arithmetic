@@ -279,7 +279,53 @@ classdef PolarInterval
         end
        
         %% Other methods
-        
+
+        function r = eq(obj1,obj2)
+            % Equality of polar intervals
+            %
+            % This function checks if two polar intervals are equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = eq(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.PolarInterval class
+            %   obj2      : array of objects from the ciat.PolarInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = eq(ciat.PolarInterval(0,1,2,3),ciat.PolarInterval(0,1,2,3));
+            % _________________________________________________________________________
+                    [M1,N1] = size(obj1);
+                    [M2,N2] = size(obj2);
+                    assert(M1 == M2 && N1 == N2)
+                    r = all([obj1.Abs] == [obj2.Abs]) && all([obj1.Angle] == [obj2.Angle]);
+        end
+
+        function r = ne(obj1,obj2)
+            % Inequality of polar intervals
+            %
+            % This function checks if two polar intervals are not equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = ne(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.PolarInterval class
+            %   obj2      : array of objects from the ciat.PolarInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = ne(ciat.PolarInterval(0,1,2,3),ciat.PolarInterval(0,1,2,3));
+            % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            r = any([obj1.Abs] ~= [obj2.Abs]) && any([obj1.Angle] ~= [obj2.Angle]);
+        end
+
         % Union
         function r = union(obj)
         % Union of polar intervals

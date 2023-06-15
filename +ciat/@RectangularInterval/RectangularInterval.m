@@ -283,6 +283,54 @@ classdef RectangularInterval
         
         %% Other methods
         
+        % Equal
+        function r = eq(obj1,obj2)
+            % Equality rectangular intervals
+            %
+            % This function checks if two sets of rectangular intervals are equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = eq(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.RectangularInterval class
+            %   obj2      : array of objects from the ciat.RectangularInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = eq(ciat.RectangularInterval(0,1,2,3), ...
+            %          ciat.RectangularInterval(0,1,2,3));
+            % _________________________________________________________________________
+                [M1,N1] = size(obj1);
+                [M2,N2] = size(obj2);
+                assert(M1 == M2 && N1 == N2)
+                r = all([obj1.Real] == [obj2.Real]) && all([obj1.Imag] == [obj2.Imag]);
+        end
+
+        % Not equal
+        function r = ne(obj1, obj2)
+            % Not equal rectangular intervals
+            %
+            % This function checks if two sets of rectangular intervals are not equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = ne(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.RectangularInterval class
+            %   obj2      : array of objects from the ciat.RectangularInterval class
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = ne(ciat.RectangularInterval(0,1,2,3), ...
+            %          ciat.RectangularInterval(0,1,2,3));
+            % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            r = any([obj1.Real] ~= [obj2.Real]) && any([obj1.Imag] ~= [obj2.Imag]);
+        end            
+
         % Sum
         function r = sum(obj)
         % Sum of rectangular intervals

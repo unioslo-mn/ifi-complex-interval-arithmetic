@@ -97,14 +97,14 @@ classdef RealInterval
                     assert(size(varargin{1},2) == size(varargin{2},2))
                     [M,N] = size(varargin{1});
                     obj(M,N) = obj;
-                   for n = 1:M*N
-                        obj(n).Infimum = min(varargin{1}(n),varargin{2}(n));
-                        obj(n).Supremum = max(varargin{1}(n),varargin{2}(n));
-                   end
+                    for n = 1:M*N
+                            obj(n).Infimum = min(varargin{1}(n),varargin{2}(n));
+                            obj(n).Supremum = max(varargin{1}(n),varargin{2}(n));
+                    end
             end
         end
         
-        %% Definint properties
+        %% Defining properties
         
         % Infimum
         function value = inf(objArr)
@@ -208,7 +208,51 @@ classdef RealInterval
         end
         
         %% Other methods
-        
+
+        % Equality
+        function r = eq(obj1,obj2)
+            % Equality of real intervals
+            %
+            % This function returns true if two real intervals are equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = eq(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.RealInterval class
+            %   obj2      : array of objects from the ciat.RealInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = eq(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
+            % _________________________________________________________________________
+                r = all([obj1.Infimum] == [obj2.Infimum]) && ...
+                    all([obj1.Supremum] == [obj2.Supremum]);
+        end
+
+        % Inequality
+        function r = ne(obj1,obj2)
+            % Inequality of real intervals
+            %
+            % This function returns true if two real intervals are not equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = ne(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.RealInterval class
+            %   obj2      : array of objects from the ciat.RealInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = ne(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
+            % _________________________________________________________________________
+                r = any([obj1.Infimum] ~= [obj2.Infimum]) || ...
+                    any([obj1.Supremum] ~= [obj2.Supremum]);
+        end
+
         % Sum
         function r = sum(obj)
         % Sum of real intervals
