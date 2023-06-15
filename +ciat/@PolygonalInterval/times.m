@@ -52,12 +52,6 @@ function r = times(obj1,obj2)
     r(M,N) = ciat.PolygonalInterval;
     for m = 1:M
         for n = 1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            
             % Calculate product
             r(m,n).Points = reshape(obj1.Points * obj2.Points.' ,[],1);
             r(m,n).Points = r(m,n).Boundary;
