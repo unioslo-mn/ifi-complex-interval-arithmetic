@@ -1,4 +1,4 @@
-classdef RectangularInterval
+classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
     
 % Rectangular interval class for complex interval arithmetic calculations
 %
@@ -104,12 +104,8 @@ classdef RectangularInterval
                     
                     % Create object array
                     obj(M,N) = obj;
-                    for m = 1:M
-                        for n = 1:N
-                            obj(m,n).Real = varargin{1}(m,n);
-                            obj(m,n).Imag = varargin{2}(m,n);
-                        end
-                    end
+                    obj.Real = varargin{1};
+                    obj.Imag = varargin{2};
                 case 4
                     % Four input arguments of doubles is also a default way
                     % of defining rectangular intervals 
@@ -125,20 +121,9 @@ classdef RectangularInterval
                     [M4,N4] = size(varargin{4});
                     assert(var([M1,M2,M3,M4]) == 0 && ...
                            var([N1,N2,N3,N4]) == 0)
-                    M = M1;
-                    N = N1;
-                    % Create object array
-                    obj(M,N) = obj;
-                    for m = 1:M
-                        for n = 1:N
-                            obj(m,n).Real = ciat.RealInterval(...
-                                                        varargin{1}(m,n),...
-                                                        varargin{2}(m,n));
-                            obj(m,n).Imag = ciat.RealInterval(...
-                                                        varargin{3}(m,n),...
-                                                        varargin{4}(m,n));
-                        end
-                    end
+
+                    obj.Real = ciat.RealInterval(varargin{1},varargin{2});
+                    obj.Imag = ciat.RealInterval(varargin{3},varargin{4});
             end
             
         end
@@ -162,8 +147,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = real(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
@@ -184,8 +168,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = imag(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         %% Dependent properties
@@ -216,8 +199,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
@@ -252,8 +234,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
         
         % Area
@@ -277,8 +258,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Area],M,N);
+            value = obj.Area;
         end
         
         %% Other methods
@@ -305,7 +285,8 @@ classdef RectangularInterval
                 [M1,N1] = size(obj1);
                 [M2,N2] = size(obj2);
                 assert(M1 == M2 && N1 == N2)
-                r = all([obj1.Real] == [obj2.Real]) && all([obj1.Imag] == [obj2.Imag]);
+                r = all(obj1.Real == obj2.Real, "all") && ...
+                    all(obj1.Imag == obj2.Imag, "all");
         end
 
         % Not equal
@@ -328,8 +309,21 @@ classdef RectangularInterval
             [M1,N1] = size(obj1);
             [M2,N2] = size(obj2);
             assert(M1 == M2 && N1 == N2)
-            r = any([obj1.Real] ~= [obj2.Real]) && any([obj1.Imag] ~= [obj2.Imag]);
-        end            
+            r = any(obj1.Real ~= obj2.Real, "all") || ...
+                any(obj1.Imag ~= obj2.Imag, "all");
+        end
+
+        function r = transpose(obj)
+            r = obj;
+            r.Real = r.Real.';
+            r.Imag = r.Imag.';
+        end
+
+        function r = ctranspose(obj)
+            r = obj;
+            r.Real = r.Real.';
+            r.Imag = -r.Imag.';
+        end
 
         % Sum
         function r = sum(obj)
@@ -350,10 +344,8 @@ classdef RectangularInterval
         %   rectInt = sum([ciat.RectangularInterval(0,1,2,3), ...
         %                    ciat.RectangularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
-            end
+            r = ciat.RectangularInterval(sum([obj.Real]) , ...
+                                         sum([obj.Imag]));
         end
         
         % Subtraction (minus)
@@ -449,10 +441,8 @@ classdef RectangularInterval
         %   rectInt = -ciat.RectangularInterval(0,1,2,3);
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                r(n).Real = -r(n).Real;
-                r(n).Imag = -r(n).Imag;
-            end
+            r.Real = -r.Real;
+            r.Imag = -r.Imag;
         end  
         
         % Plot
@@ -502,6 +492,98 @@ classdef RectangularInterval
     
     methods (Static)
        outObj = cast(inObj)
+    end
+
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Real = obj.Real.(indexOp(1));
+            obj.Imag = obj.Imag.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % disp('parenAssign')
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.RectangularInterval
+                % Might not be the place or the way to do it
+
+                % Instanciate object with zero values of correct size.
+                obj = ciat.RectangularInterval;
+                obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.Real.(indexOp) = rhs.Real;
+                obj.Imag.(indexOp) = rhs.Imag;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Real.(indexOp) = [];
+            obj.Imag.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.RectangularInterval')
+                    newArgs{ix} = varargin{ix}.Real;
+                    newArgs2{ix} = varargin{ix}.Imag;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.RectangularInterval(cat(dim,newArgs{:}), ...
+                                           cat(dim,newArgs2{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Real,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.RectangularInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Real = reshape(obj.Real,varargin{:});
+            obj.Imag = reshape(obj.Imag,varargin{:});
+        end
     end
 end
 

@@ -36,8 +36,6 @@ function r = times(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'ciat.RealInterval') == 0
@@ -47,25 +45,11 @@ function r = times(obj1,obj2)
            obj2 = ciat.RealInterval(obj2, obj2);
     end 
     
-    % Loop throught the arrays
-    r(M,N) = ciat.RealInterval;
-    for m=1:M
-        for n=1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            % Calculate candidates
-            alt1 = obj1(m1,n1).Infimum .* obj2(m2,n2).Infimum; % LL
-            alt2 = obj1(m1,n1).Infimum .* obj2(m2,n2).Supremum; % LU
-            alt3 = obj1(m1,n1).Supremum .* obj2(m2,n2).Infimum; % UL
-            alt4 = obj1(m1,n1).Supremum .* obj2(m2,n2).Supremum; % UU
+    alt1 = obj1.Infimum .* obj2.Infimum; % LL
+    alt2 = obj1.Infimum .* obj2.Supremum; % LU
+    alt3 = obj1.Supremum .* obj2.Infimum; % UL
+    alt4 = obj1.Supremum .* obj2.Supremum; % UU
 
-            % Find minimum and maximum candidate
-            r(m,n).Infimum = min([alt1, alt2, alt3, alt4], [], 2);
-            r(m,n).Supremum = max([alt1, alt2, alt3, alt4], [], 2);
-         end
-    end
+    r = ciat.RealInterval(min([alt1, alt2, alt3, alt4], [], 2), max([alt1, alt2, alt3, alt4], [], 2));
 end
 

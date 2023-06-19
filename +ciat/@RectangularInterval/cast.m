@@ -46,6 +46,5 @@ function outObj = cast(inObj)
             error('Invalid input type')
     end
 	outObj = ciat.RectangularInterval(outReal,outImag);       
-    outObj = reshape(outObj,M,N);
 end
 

@@ -37,8 +37,8 @@ function outObj = cast(inObj)
             outCenter = inObj;
             outRadius = zeros(M,N);
         case 'ciat.RectangularInterval'
-            inReal = [inObj.Real];
-            inImag = [inObj.Imag];
+            inReal = inObj.Real;
+            inImag = inObj.Imag;
             outCenter = complex( [inReal.Midpoint] , [inImag.Midpoint] );
             outRadius = sqrt( ([inReal.Width]/2).^2 + ([inImag.Width]/2).^2 );
             

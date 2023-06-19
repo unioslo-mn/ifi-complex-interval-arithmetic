@@ -1,4 +1,4 @@
-classdef RealInterval
+classdef RealInterval < matlab.mixin.indexing.RedefinesParen
 
 % Real interval class for complex interval arithmetic calculations
 %
@@ -72,48 +72,45 @@ classdef RealInterval
             for varIdx = 1:length(varargin)
                 assert(isreal(varargin{varIdx}),'input must be real valued');
             end
-        
+            
             switch length(varargin)
                 case 0
-                    % This is for initializing an array of objects
+                % This is for initializing an array of objects
                 case 1
-                    mustBeNumeric(varargin{1});
-                    [M,N] = size(varargin{1});
-                    switch min(M,N)
-                        case 1
-                            obj.Infimum = min(varargin{1});
-                            obj.Supremum = max(varargin{1});
-                        case 2
-                            [M,dimIdx] = max([M,N]);
-                            if dimIdx == 2
-                                varargin{1} = varargin{1}.';
-                            end
-                            infsup = reshape(varargin{1},[],2);
-                            infsup = sort(infsup,2);
-                            obj(M,1) = obj;
-                            for m = 1:M
-                                obj(m).Infimum = infsup(m,1);
-                                obj(m).Supremum = infsup(m,2);
-                            end
-                            if M == 2
-                                warning(['Ambiguous input structure',...
-                                        'we assume each row to be'...,
-                                        'a seperate interval.'])
-                            end
-                        otherwise
-                            error('Invalid input array size (>2).')
+                mustBeNumeric(varargin{1});
+                [M,N] = size(varargin{1});
+                switch min(M,N)
+                    case 1
+                    obj.Infimum = min(varargin{1});
+                    obj.Supremum = max(varargin{1});
+                    case 2
+                    [M,dimIdx] = max([M,N]);
+                    if dimIdx == 2
+                        varargin{1} = varargin{1}.';
                     end
+                    infsup = reshape(varargin{1},[],2);
+                    infsup = sort(infsup,2);
+                    obj(M,1) = obj;
+                    for m = 1:M
+                        obj(m).Infimum = infsup(m,1);
+                        obj(m).Supremum = infsup(m,2);
+                    end
+                    if M == 2
+                        warning(['Ambiguous input structure',...
+                        'we assume each row to be'...,
+                        'a seperate interval.'])
+                    end
+                    otherwise
+                    error('Invalid input array size (>2).')
+                end
                 case 2
-                    mustBeNumeric(varargin{1});
-                    mustBeNumeric(varargin{2});
-                    assert(size(varargin{1},1) == size(varargin{2},1))
-                    assert(size(varargin{1},2) == size(varargin{2},2))
-                    [M,N] = size(varargin{1});
-                    obj(M,N) = obj;
-                    for n = 1:M*N
-                            obj(n).Infimum = min(varargin{1}(n),varargin{2}(n));
-                            obj(n).Supremum = max(varargin{1}(n),varargin{2}(n));
-                    end
+                mustBeNumeric(varargin{1});
+                mustBeNumeric(varargin{2});
+                assert(size(varargin{1},1) == size(varargin{2},1))
+                assert(size(varargin{1},2) == size(varargin{2},2))
+                
+                obj.Infimum = min(varargin{1},varargin{2});
+                obj.Supremum = max(varargin{1},varargin{2});
             end
         end
         
@@ -136,8 +133,7 @@ classdef RealInterval
         % EXAMPLES
         %   val = inf(ciat.RealInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(objArr);
-            value = reshape([objArr.Infimum],M,N);
+            value = objArr.Infimum;
         end
         
         % Supremum
@@ -157,8 +153,7 @@ classdef RealInterval
         % EXAMPLES
         %   val = sup(ciat.RealInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(objArr);
-            value = reshape([objArr.Supremum],M,N);
+            value = objArr.Supremum;
         end
         
         % Midpoint
@@ -221,51 +216,61 @@ classdef RealInterval
         end
         
         %% Other methods
-
+        
         % Equality
         function r = eq(obj1,obj2)
-            % Equality of real intervals
-            %
-            % This function returns true if two real intervals are equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = eq(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RealInterval class
-            %   obj2      : array of objects from the ciat.RealInterval class
-            % _________________________________________________________________________
-            % OPTIONS
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = eq(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
-            % _________________________________________________________________________
-                r = all([obj1.Infimum] == [obj2.Infimum]) && ...
-                    all([obj1.Supremum] == [obj2.Supremum]);
+        % Equality of real intervals
+        %
+        % This function returns true if two real intervals are equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = eq(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RealInterval class
+        %   obj2      : array of objects from the ciat.RealInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = eq(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
+        % _________________________________________________________________________
+            r = all(obj1.Infimum == obj2.Infimum, "all") && ...
+                all(obj1.Supremum == obj2.Supremum, "all");
         end
-
+        
         % Inequality
         function r = ne(obj1,obj2)
-            % Inequality of real intervals
-            %
-            % This function returns true if two real intervals are not equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = ne(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RealInterval class
-            %   obj2      : array of objects from the ciat.RealInterval class
-            % _________________________________________________________________________
-            % OPTIONS
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = ne(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
-            % _________________________________________________________________________
-                r = any([obj1.Infimum] ~= [obj2.Infimum]) || ...
-                    any([obj1.Supremum] ~= [obj2.Supremum]);
+        % Inequality of real intervals
+        %
+        % This function returns true if two real intervals are not equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ne(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RealInterval class
+        %   obj2      : array of objects from the ciat.RealInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ne(ciat.RealInterval(0,1),ciat.RealInterval(0,1));
+        % _________________________________________________________________________
+            r = any(obj1.Infimum ~= obj2.Infimum, "all") || ...
+            any(obj1.Supremum ~= obj2.Supremum, "all");
         end
 
+        function r = transpose(obj)
+            r = obj;
+            r.Infimum = r.Infimum.';
+            r.Supremum = r.Supremum.';
+        end
+
+        function r = ctranspose(obj)
+            r = obj.';
+        end
+        
         % Sum
         function r = sum(obj)
         % Sum of real intervals
@@ -285,10 +290,11 @@ classdef RealInterval
         %   realInt = sum([ciat.RealInterval(0,1), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
-            end
+            % r = obj(1);
+            % for n = 2:length(obj(:))
+            %     r = r + obj(n);
+            % end
+            r = ciat.RealInterval(sum([obj.Infimum]), sum([obj.Supremum]));
         end
         
         % Negative (uminus)
@@ -310,11 +316,7 @@ classdef RealInterval
         % EXAMPLES
         %   realInt = -ciat.RealInterval(0,1);
         % _________________________________________________________________________
-            r = obj;
-            for n = 1:length(r(:))
-                r(n).Infimum = -r(n).Supremum;
-                r(n).Supremum = -obj(n).Infimum;
-            end
+            r = ciat.RealInterval(-obj.Supremum,-obj.Infimum);
         end
         
         % Subtraction (minus)
@@ -476,7 +478,7 @@ classdef RealInterval
         % EXAMPLES
         %   realInt = log10(ciat.RealInterval(0,1));
         % _________________________________________________________________________
-           r = obj;
+            r = obj;
             for n = 1:length(r(:))
                 if obj(n).Supremum >= 0
                     r(n).Supremum = log10(obj(n).Supremum);
@@ -552,7 +554,7 @@ classdef RealInterval
             N = length(obj(:));
             assert(N>1)
             r = ciat.RealInterval( min([obj.Infimum]) , ...
-                                   max([obj.Supremum]) );
+            max([obj.Supremum]) );
         end
         
         % Intersection
@@ -574,7 +576,7 @@ classdef RealInterval
         %   realInt = intersection([ciat.RealInterval(0,1,2,3), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-        	N = length(obj(:));
+            N = length(obj(:));
             assert(N>1)
             maxInf = max([obj.Infimum]);
             minSup = min([obj.Supremum]);
@@ -608,7 +610,7 @@ classdef RealInterval
             sup = [obj.Supremum];
             plt = line(repmat(1:M*N,2,1),[inf;sup],varargin{:});
         end
-          
+        
         
         %% Method signatures
         r = plus(obj1,obj2)
@@ -618,7 +620,121 @@ classdef RealInterval
         r = mrdivide(obj1,obj2)
         r = sin(obj)
         r = cos(obj)
+        
+    end
+
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Infimum = obj.Infimum.(indexOp(1));
+            obj.Supremum = obj.Supremum.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % POTENTIAL UNPEXPECTED BEHAVIOUR HERE
+            % Only works for 2D arrays, not all is tested
+            % Probably not all cases are covered
+
+
+
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % Object must be of the correct size
                 
+                % If rhs is of size 1, then use indices to set size
+                if isscalar(varargin{1})
+                    sz = [indexOp.Indices{:}];
+                    obj = ciat.RealInterval;
+                    obj.Infimum = zeros(sz);
+                    obj.Supremum = zeros(sz);
+                else
+                    obj = varargin{1};
+                end
+            end
+            if isempty(varargin{1})
+                % When rhs is empty, allocate memory for the object, size of indexOp.
+
+                % Size to allocate
+                tmp = indexOp.Indices;
+                % Replace ':' with 1, to avoid errors when indexing into empty arrays.
+                tmp(strcmp(':', indexOp.Indices)) = {1};
+                sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
+                
+                obj = ciat.RealInterval;
+                obj.Infimum = zeros(sz);
+                obj.Supremum = zeros(sz);
+                return;
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                % If rhs is not an interval, then convert it to one.
+                if ~isa(rhs, 'ciat.RealInterval')
+                    rhs = ciat.RealInterval(rhs);
+                end
+                obj.Infimum.(indexOp) = rhs.Infimum;
+                obj.Supremum.(indexOp) = rhs.Supremum;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Infimum.(indexOp) = [];
+            obj.Supremum.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.RealInterval')
+                    newArgs{ix} = varargin{ix}.Infimum;
+                    newArgs2{ix} = varargin{ix}.Supremum;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.RealInterval(cat(dim,newArgs{:}), cat(dim,newArgs2{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Infimum,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.RealInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Infimum = reshape(obj.Infimum,varargin{:});
+            obj.Supremum = reshape(obj.Supremum,varargin{:});
+        end
     end
 end
 

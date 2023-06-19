@@ -8,7 +8,7 @@ classdef RealIntervalTest < matlab.unittest.TestCase
         realInt1 = ciat.RealInterval(1,2);
         realInt2 = ciat.RealInterval(3,4);
         realInt3 = ciat.RealInterval(-1, 1);
-        realInt4 = ciat.RealInterval(-2, -1)
+        realInt4 = ciat.RealInterval(-2, -1);
 
         % 1x2 intervals
         realInt5 = ciat.RealInterval([1,3], [2,4]);

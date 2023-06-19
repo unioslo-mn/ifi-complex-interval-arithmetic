@@ -44,6 +44,5 @@ function outObj = cast(inObj)
             error('Invalid input type')
     end
 	outObj = ciat.PolarInterval(outAbs,outAngle);       
-    outObj = reshape(outObj,M,N);
 end
 
