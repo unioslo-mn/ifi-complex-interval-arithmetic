@@ -1,4 +1,4 @@
-function points = backtrack(obj,trackAngle)
+function points_backtracked = backtrack(obj,trackAngle)
 
 % Backtrack polygonal intervals
 %
@@ -21,7 +21,7 @@ function points = backtrack(obj,trackAngle)
 % OPTIONS
 % _________________________________________________________________________
 % EXAMPLES
-%   points = backtrack([ciat.PolygonalInterval(complex(rand(3),rand(3))), ...
+%   points_backtracked = backtrack([ciat.PolygonalInterval(complex(rand(3),rand(3))), ...
 %                       ciat.PolygonalInterval(complex(rand(3),rand(3)))],...
 %                       pi/3);
 %_________________________________________________________________________
@@ -38,42 +38,36 @@ function points = backtrack(obj,trackAngle)
         obj
         trackAngle      (1,1)   {mustBeNumeric} = 0
     end
+    
+    trackAngle = wrapTo2Pi(trackAngle);
+    points_backtracked = zeros(1, length(obj));
 
-    points = zeros(1, length(obj));
-    eps10 = 10*eps;
+    for i = 1:length(obj)  % loop over all polygons to find a backtracked point
+        v = obj(i).Points;       % vertices of current polygon
+        v = unique(v, 'stable'); % needed in cases where vertices are duplicated (may be appropriate to warn user, although it rarely matters)
+        
+        prev_angle = wrapTo2Pi( angle(v(1) - v(end)) - pi/2 ); % init prev angle
+        points_backtracked(i) = v(end); % "assume" it is the final point to avoid an extra condition later (***)
+        
+        for j = 1 : length(v)-1 % loop over every vertex except the last (***)
+            current_angle = wrapTo2Pi( angle(v(j+1) - v(j)) - pi/2 );
 
-    for i = 1:length(obj) % loop over all obj
-        v = obj(i).Points;
-        
-        % init prev angle
-        prev_angle = ciat.PolygonalInterval.wrap2Pi( ...
-                            angle( v(1) - v(end) )- pi/2); 
-        
-        % just assume it is the final point to avoid extra condition later
-        points(i) = v(end); 
-        
-        for j = 1 : length(v)-1
-            current_angle = ciat.PolygonalInterval.wrap2Pi( ...
-                            angle( v(j+1) - v(j) )- pi/2);
-
-            if (current_angle - prev_angle) < 0 % we crossed 0
-                condition1 = (trackAngle >= prev_angle       -eps10) && ...
-                                  (trackAngle <= 2*pi+current_angle+eps10);
-                condition2 = (trackAngle >= prev_angle -2*pi -eps10) && ...
-                                  (trackAngle <=      current_angle+eps10);
+            if (current_angle - prev_angle) < 0 % we crossed 0 (x-axis)
+                condition1 = (trackAngle >= prev_angle) && (trackAngle <=          2*pi);
+                condition2 = (trackAngle >=          0) && (trackAngle <= current_angle);
                 condition = condition1 || condition2;
             else
-                condition = (trackAngle >= prev_angle-eps10) && ...
-                                 (trackAngle <= current_angle+eps10);
+                condition = (trackAngle >= prev_angle) && (trackAngle <= current_angle);
             end
 
             if condition == true
-                points(i) = v(j);
+                points_backtracked(i) = v(j);
                 break;
             end
-            prev_angle = current_angle;
-        end
+            
+            prev_angle = current_angle; % we go to next vertex (shares edge, so this statement holds)
+        
+        end 
     end 
-
 end
 
