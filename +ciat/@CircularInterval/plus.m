@@ -49,17 +49,6 @@ function r = plus(obj1,obj2)
             
     % Loop throught the arrays
     r(M,N) = ciat.CircularInterval;
-    for m=1:M
-        for n=1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            
-            % Calculate sum
-            r(m,n).Center = obj1(m1,n1).Center + obj2(m2,n2).Center;
-            r(m,n).Radius = obj1(m1,n1).Radius + obj2(m2,n2).Radius;
-        end
-    end
+    r.Center = obj1.Center + obj2.Center;
+    r.Radius = obj1.Radius + obj2.Radius;
 end

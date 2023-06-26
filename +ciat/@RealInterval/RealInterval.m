@@ -81,8 +81,10 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 [M,N] = size(varargin{1});
                 switch min(M,N)
                     case 1
-                    obj.Infimum = min(varargin{1});
-                    obj.Supremum = max(varargin{1});
+                    % obj.Infimum = min(varargin{1});
+                    % obj.Supremum = max(varargin{1});
+                    obj.Infimum = varargin{1};
+                    obj.Supremum = varargin{1};
                     case 2
                     [M,dimIdx] = max([M,N]);
                     if dimIdx == 2
@@ -101,7 +103,9 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                         'a seperate interval.'])
                     end
                     otherwise
-                    error('Invalid input array size (>2).')
+                        obj.Infimum = varargin{1};
+                        obj.Supremum = varargin{1};
+                        % error('Invalid input array size (>2).')
                 end
                 case 2
                 mustBeNumeric(varargin{1});
@@ -109,8 +113,10 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 assert(size(varargin{1},1) == size(varargin{2},1))
                 assert(size(varargin{1},2) == size(varargin{2},2))
                 
-                obj.Infimum = min(varargin{1},varargin{2});
-                obj.Supremum = max(varargin{1},varargin{2});
+                % obj.Infimum = min(varargin{1},varargin{2});
+                % obj.Supremum = max(varargin{1},varargin{2});
+                obj.Infimum = varargin{1};
+                obj.Supremum = varargin{2};
             end
         end
         
@@ -419,11 +425,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   realInt = exp(ciat.RealInterval(0,1));
         % _________________________________________________________________________
-            r = obj;
-            for n = 1:length(r(:))
-                r(n).Infimum = exp(obj(n).Infimum);
-                r(n).Supremum = exp(obj(n).Supremum);
-            end
+            r.Infimum = exp(obj.Infimum);
+            r.Supremum = exp(obj.Supremum);
         end
         
         % Logarithm
@@ -531,6 +534,66 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 end
             end
         end
+
+        % Minimum
+        function r = min(obj1, obj2)
+        % Minimum of real intervals
+        %
+        % This function creates the real interval representing the
+        % minimum of two sets of real intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = min(obj1, obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RealInterval class
+        %   obj2      : array of objects from the ciat.RealInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = min(ciat.RealInterval(0,1), ciat.RealInterval(2,3));
+        % _________________________________________________________________________
+            % Turn scalars to degenerate intervals
+            if isa(obj1, 'ciat.RealInterval') == 0
+                        obj1 = ciat.RealInterval(obj1, obj1);
+            end
+            if isa(obj2, 'ciat.RealInterval') == 0
+                obj2 = ciat.RealInterval(obj2, obj2);
+            end
+            r = ciat.RealInterval(min(obj1.Infimum, obj2.Infimum), ...
+                min(obj1.Supremum, obj2.Supremum));
+        end
+
+        % Maximum
+        function r = max(obj1, obj2)
+        % Maximum of real intervals
+        %
+        % This function creates the real interval representing the
+        % maximum of two sets of real intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = max(obj1, obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RealInterval class
+        %   obj2      : array of objects from the ciat.RealInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = max(ciat.RealInterval(0,1), ciat.RealInterval(2,3));
+        % _________________________________________________________________________
+            % Turn scalars to degenerate intervals
+            if isa(obj1, 'ciat.RealInterval') == 0
+                        obj1 = ciat.RealInterval(obj1, obj1);
+            end
+            if isa(obj2, 'ciat.RealInterval') == 0
+                obj2 = ciat.RealInterval(obj2, obj2);
+            end
+            r = ciat.RealInterval(max(obj1.Infimum, obj2.Infimum), ...
+                max(obj1.Supremum, obj2.Supremum));
+        end
         
         % Union
         function r = union(obj)
@@ -620,6 +683,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         r = mrdivide(obj1,obj2)
         r = sin(obj)
         r = cos(obj)
+        r = power(obj1,obj2)
         
     end
 
@@ -640,7 +704,10 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             % Only works for 2D arrays, not all is tested
             % Probably not all cases are covered
 
-
+            % Warning, does not work for operations like
+            % obj(1,1).Supremum = 1;
+            % Should use
+            % obj.Supremum(1,1) = 1;
 
             % Ensure object instance is the first argument of call.
             if isempty(obj)
@@ -670,18 +737,22 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 obj.Supremum = zeros(sz);
                 return;
             end
-            if isscalar(indexOp)
-                assert(nargin==3);
-                rhs = varargin{1};
-                % If rhs is not an interval, then convert it to one.
-                if ~isa(rhs, 'ciat.RealInterval')
-                    rhs = ciat.RealInterval(rhs);
+            if numel(indexOp) == 1
+                if isscalar(indexOp(1))
+                    assert(nargin==3);
+                    rhs = varargin{1};
+                    % If rhs is not an interval, then convert it to one.
+                    if ~isa(rhs, 'ciat.RealInterval')
+                        rhs = ciat.RealInterval(rhs);
+                    end
+                    obj.Infimum.(indexOp(1)) = rhs.Infimum;
+                    obj.Supremum.(indexOp(1)) = rhs.Supremum;
+                    return;
                 end
-                obj.Infimum.(indexOp) = rhs.Infimum;
-                obj.Supremum.(indexOp) = rhs.Supremum;
-                return;
             end
-            [obj.(indexOp(2:end))] = varargin{:};
+            tmp = obj.(indexOp(1));
+            [tmp.(indexOp(2:end))] = varargin{:};
+            obj.(indexOp(1)) = tmp;
         end
 
         function n = parenListLength(obj,indexOp,ctx)

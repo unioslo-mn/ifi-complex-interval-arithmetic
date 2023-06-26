@@ -50,6 +50,7 @@ function r = times(obj1,obj2)
     alt3 = obj1.Supremum .* obj2.Infimum; % UL
     alt4 = obj1.Supremum .* obj2.Supremum; % UU
 
-    r = ciat.RealInterval(min([alt1, alt2, alt3, alt4], [], 2), max([alt1, alt2, alt3, alt4], [], 2));
+    % Take element-wise minimum and maximum of the four alternatives along every dimension
+    r = ciat.RealInterval(min(min(alt1,alt2),min(alt3,alt4)),max(max(alt1,alt2),max(alt3,alt4)));
 end
 

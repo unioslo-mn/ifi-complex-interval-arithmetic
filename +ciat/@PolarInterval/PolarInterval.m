@@ -1,4 +1,4 @@
-classdef PolarInterval
+classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
 
 % Polar interval class for complex interval arithmetic calculations
 %
@@ -182,7 +182,7 @@ classdef PolarInterval
         
         % Real
         function value = get.Real(obj)
-            value = obj.Abs * cos( obj.Angle );
+            value = obj.Abs .* cos( obj.Angle );
         end
         function value = real(obj)
         % Real value of polar intervals
@@ -441,7 +441,7 @@ classdef PolarInterval
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')
             obj.Abs = obj.Abs.(indexOp(1));
-            obj.Imag = obj.Imag.(indexOp(1));
+            obj.Angle = obj.Angle.(indexOp(1));
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -454,11 +454,11 @@ classdef PolarInterval
             % Ensure object instance is the first argument of call.
             if isempty(obj)
                 % This part is for initializing an array of objects
-                % such as doing obj(5,2) = ciat.RectangularInterval
+                % such as doing obj(5,2) = ciat.PolarInterval
                 % Might not be the place or the way to do it
 
                 % Instanciate object with zero values of correct size.
-                obj = ciat.RectangularInterval;
+                obj = ciat.PolarInterval;
                 obj.Abs = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
                 obj.Angle = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
 

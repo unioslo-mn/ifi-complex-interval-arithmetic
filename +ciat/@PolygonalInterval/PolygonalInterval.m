@@ -312,9 +312,11 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         %   polyInt = sum([ciat.PolygonalInterval([0,1,1i]), ...
         %                    ciat.PolygonalInterval([0,-1,-1i])]);
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
+            % Should behave like the built-in sum function
+            % For now returns the sum of the elements of A along the first array dimension
+            r = obj(1, :);
+            for n = 2:size(obj,1)
+                r(1, :) = r(1, :) + obj(n, :);
             end
         end
         

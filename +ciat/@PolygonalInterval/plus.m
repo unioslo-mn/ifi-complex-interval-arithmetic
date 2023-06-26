@@ -59,8 +59,8 @@ function r = plus(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate sum
-            r(M,N) = add( obj1(m1,n1) , obj2(m2,n2) );
-            r(M,N).Points = r(M,N).Boundary;
+            r(m,n) = add( obj1(m1,n1) , obj2(m2,n2) );
+            r(m,n).Points = r(m,n).Boundary;
         end
     end
 end

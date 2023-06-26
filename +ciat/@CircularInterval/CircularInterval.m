@@ -1,4 +1,4 @@
-classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
+classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
     
 % Circular interval class for complex interval arithmetic calculations
 %
@@ -98,12 +98,8 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
 
                         % Create object array
                         obj(M,N) = obj;
-                        for m = 1:M
-                            for n = 1:N
-                                obj(m,n).Center = varargin{1}(m,n);
-                                obj(m,n).Radius = varargin{2}(m,n);
-                            end
-                        end
+                        obj.Center = varargin{1};
+                        obj.Radius = varargin{2};
                     otherwise
                         error('Too many input arguments.')
             end
@@ -130,8 +126,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         %   circInt = center(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
         
-            [M,N] = size(obj);
-            value = reshape([obj.Center],M,N);
+            value = obj.Center;
         end
         
         % Radius
@@ -152,8 +147,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = radius(ciat.CircularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Radius],M,N);
+            value = obj.Radius;
         end
         
         %% Dependent properties
@@ -181,8 +175,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = real(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
@@ -208,17 +201,16 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = imag(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         % Abs
         function value = get.Abs(obj)
-            value = ciat.RealInterval(abs(obj.Center) - obj.Radius,...
-                                      abs(obj.Center) + obj.Radius);
-            if value.Infimum < 0
-                value.Infimum = 0;
-            end 
+            value = max(0, ciat.RealInterval(abs(obj.Center) - obj.Radius,...
+                                      abs(obj.Center) + obj.Radius));
+            % if value.Infimum < 0
+            %     value.Infimum = 0;
+            % end 
         end
         function value = abs(obj)
         % Absolute value of circular intervals
@@ -237,8 +229,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = abs(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
@@ -269,8 +260,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = angle(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
         
         % Area
@@ -294,11 +284,70 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = area(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Area],M,N);
+            value = obj.Area;
         end
         
         %% Other methods
+
+        function r = eq(obj1,obj2)
+            % Equality of circular intervals
+            %
+            % This function checks if two circular intervals are equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = eq(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.CircularInterval class
+            %   obj2      : array of objects from the ciat.CircularInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = eq(ciat.CircularInterval(0,1,2,3),ciat.CircularInterval(0,1,2,3));
+            % _________________________________________________________________________
+                    [M1,N1] = size(obj1);
+                    [M2,N2] = size(obj2);
+                    assert(M1 == M2 && N1 == N2, "Arrays have incompatible sizes for this operation.")
+                    r = all(obj1.Center == obj2.Center, "all") && ...
+                        all(obj1.Radius == obj2.Radius, "all");
+        end
+
+        function r = ne(obj1,obj2)
+            % Inequality of circular intervals
+            %
+            % This function checks if two circular intervals are not equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = ne(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.CircularInterval class
+            %   obj2      : array of objects from the ciat.CircularInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   r = ne(ciat.CircularInterval(0,1,2,3),ciat.CircularInterval(0,1,2,3));
+            % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            r = any(obj1.Center ~= obj2.Center, "all") || ...
+                any(obj1.Radius ~= obj2.Radius, "all");
+        end
+
+        function r = transpose(obj)
+            r = obj;
+            r.Center = r.Center.';
+            r.Radius = r.Radius.';
+        end
+
+        function r = ctranspose(obj)
+            r = obj;
+            r.Center = r.Center';
+            r.Radius = r.Radius.';
+        end
         
         % Sum
         function r = sum(obj)
@@ -344,10 +393,7 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   circInt = -ciat.CircularInterval(0,1);
         % _________________________________________________________________________
-            r = obj;
-            for n = 1:length(r(:))
-                r(n).Center = -r(n).Center;
-            end
+            r = ciat.CircularInterval(-obj.Center, obj.Radius);
         end  
         
         % Subtraction (minus)
@@ -417,88 +463,92 @@ classdef CircularInterval % < matlab.mixin.indexing.RedefinesParen
        outObj = cast(inObj)
     end
 
-    % methods (Access=protected)
-    %     function varargout = parenReference(obj, indexOp)
-    %         % disp('parenReference')
-    %         obj.Real = obj.Real.(indexOp(1));
-    %         obj.Imag = obj.Imag.(indexOp(1));
-    %         if isscalar(indexOp)
-    %             varargout{1} = obj;
-    %             return;
-    %         end
-    %         [varargout{1:nargout}] = obj.(indexOp(2:end));
-    %     end
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Center = obj.Center.(indexOp(1));
+            obj.Radius = obj.Radius.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
 
-    %     function obj = parenAssign(obj,indexOp,varargin)
-    %         % disp('parenAssign')
-    %         % Ensure object instance is the first argument of call.
-    %         if isempty(obj)
-    %             % This part is for initializing an array of objects
-    %             % such as doing obj(5,2) = ciat.RectangularInterval
-    %             % Might not be the place or the way to do it
+        function obj = parenAssign(obj,indexOp,varargin)
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.RectangularInterval
+                % Might not be the place or the way to do it
 
-    %             % Instanciate object with zero values of correct size.
-    %             obj = ciat.RectangularInterval;
-    %             obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-    %             obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                % Instanciate object with zero values of correct size.
+                obj = ciat.CircularInterval;
+                obj.Center = zeros([indexOp.Indices{:}]);
+                obj.Radius = zeros([indexOp.Indices{:}]);
 
-    %             % obj = varargin{1};
-    %             varargin{1} = obj.(indexOp);
-    %         end
-    %         if isscalar(indexOp)
-    %             assert(nargin==3);
-    %             rhs = varargin{1};
-    %             obj.Real.(indexOp) = rhs.Real;
-    %             obj.Imag.(indexOp) = rhs.Imag;
-    %             return;
-    %         end
-    %         [obj.(indexOp(2:end))] = varargin{:};
-    %     end
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.Center.(indexOp) = rhs.Center;
+                obj.Radius.(indexOp) = rhs.Radius;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
 
-    %     function n = parenListLength(obj,indexOp,ctx)
-    %         % disp('parenListLength')
-    %         if numel(indexOp) <= 2
-    %             n = 1;
-    %             return;
-    %         end
-    %         containedObj = obj.(indexOp(1:2));
-    %         n = listLength(containedObj,indexOp(3:end),ctx);
-    %     end
+        function n = parenListLength(obj,indexOp,ctx)
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
 
-    %     function obj = parenDelete(obj,indexOp)
-    %         % disp('parenDelete')
-    %         obj.Real.(indexOp) = [];
-    %         obj.Imag.(indexOp) = [];
-    %     end
-    % end
+        function obj = parenDelete(obj,indexOp)
+            obj.Center.(indexOp) = [];
+            obj.Radius.(indexOp) = [];
+        end
+    end
 
-    % methods (Access=public)
-    %     function out = cat(dim,varargin)
-    %         % disp('cat')
-    %         numCatArrays = nargin-1;
-    %         newArgs = cell(numCatArrays,1);
-    %         for ix = 1:numCatArrays
-    %             if isa(varargin{ix},'RealInterval')
-    %                 newArgs{ix} = varargin{ix}.Real;
-    %                 newArgs{ix} = varargin{ix}.Imag;
-    %             else
-    %                 newArgs{ix} = varargin{ix};
-    %             end
-    %         end
-    %         out = RealInterval(cat(dim,newArgs{:}));
-    %     end
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.CircularInterval')
+                    newArgs{ix} = varargin{ix}.Center;
+                    newArgs2{ix} = varargin{ix}.Radius;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.CircularInterval(cat(dim,newArgs{:}), ...
+                                           cat(dim,newArgs2{:}));
+        end
 
-    %     function varargout = size(obj,varargin)
-    %         % disp('size')
-    %         [varargout{1:nargout}] = size(obj.Real,varargin{:});
-    %     end
-    % end
+        function varargout = size(obj,varargin)
+            [varargout{1:nargout}] = size(obj.Center,varargin{:});
+        end
+    end
 
-    % methods (Static, Access=public)
-    %     function obj = empty()
-    %         disp('empty')
-    %         obj = ciat.RectangularInterval;
-    %     end
-    % end
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.CircularInterval;
+        end
+    end
+    
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Center = reshape(obj.Center,varargin{:});
+            obj.Radius = reshape(obj.Radius,varargin{:});
+        end
+    end
 end
 
