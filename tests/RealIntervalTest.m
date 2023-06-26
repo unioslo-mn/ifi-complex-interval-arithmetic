@@ -39,6 +39,64 @@ classdef RealIntervalTest < matlab.unittest.TestCase
             testCase.verifyEqual([testCase.realInt5.Infimum], [1,3]);
             
         end
+
+        function assign(testCase)
+            % Test different ways to assign to a real interval
+
+            % One cell
+            testCase.realInt10(1,1).Infimum = 44;
+            testCase.verifyEqual(testCase.realInt10(1,1).Infimum, 44);
+            testCase.verifyEqual(testCase.realInt10(1,1).Supremum, 10);
+
+            testCase.realInt10.Infimum(1,2) = 55;
+            testCase.verifyEqual(testCase.realInt10(1,2).Infimum, 55);
+            testCase.verifyEqual(testCase.realInt10(1,2).Supremum, 12);
+
+            testCase.realInt10(2,2) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+
+            % By row, and multiple assignation
+            testCase.realInt10(1,:) = testCase.realInt5;
+            testCase.verifyEqual(testCase.realInt10(1,:), testCase.realInt5);
+
+            testCase.realInt10(2,:) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+            testCase.realInt10(2,:).Infimum = 66;
+            testCase.verifyEqual(testCase.realInt10(2,1).Infimum, 66);
+            testCase.verifyEqual(testCase.realInt10(2,2).Infimum, 66);
+
+            testCase.realInt10.Supremum(2,:) = 77;
+            testCase.verifyEqual(testCase.realInt10(2,1).Supremum, 77);
+            testCase.verifyEqual(testCase.realInt10(2,2).Supremum, 77);
+
+            % Whole matrix
+            testCase.realInt10(:,:) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(1,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(1,2), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+            testCase.realInt10(:) = testCase.realInt2;
+            testCase.verifyEqual(testCase.realInt10(1,1), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(1,2), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt2);
+
+            testCase.realInt10(:).Infimum = 88;
+            testCase.verifyEqual(testCase.realInt10(1,1).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(1,2).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(2,1).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(2,2).Infimum, 88);
+
+            testCase.realInt10.Supremum(:,:) = 99;
+            testCase.verifyEqual(testCase.realInt10(1,1).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(1,2).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(2,1).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(2,2).Supremum, 99);
+        end
         
         function inf(testCase)
             testCase.verifyEqual(inf(testCase.realInt1), 1);
