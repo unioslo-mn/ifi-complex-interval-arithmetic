@@ -29,8 +29,6 @@ function outObj = cast(inObj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-    [M,N] = size(inObj);
-
     switch class(inObj)
         case 'double'
             outAbs = ciat.RealInterval(abs(inObj));

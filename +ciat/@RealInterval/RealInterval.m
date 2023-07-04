@@ -367,16 +367,15 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = recip(ciat.RealInterval(0,1));
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                if obj(n).Infimum <=0 && obj(n).Supremum>=0
-                    warning('Zero division')
-                    r(n).Infimum = nan();
-                    r(n).Supremum = nan();
-                else
-                    r(n).Infimum  = 1/obj(n).Supremum;
-                    r(n).Supremum = 1/obj(n).Infimum;
-                end
+            r.Infimum = 1./obj.Supremum;
+            r.Supremum = 1./obj.Infimum;
+
+            if any(obj.Infimum <=0 & obj.Supremum>=0, "all")
+                warning('Zero division')
+                r.Infimum(obj.Infimum <=0 & obj.Supremum>=0) = nan();
+                r.Supremum(obj.Infimum <=0 & obj.Supremum>=0) = nan();
             end
+
         end
         
         % Absolute value
@@ -398,13 +397,9 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = abs(ciat.RealInterval(0,1));
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                r(n).Infimum = min(abs(obj(n).Bounds));
-                r(n).Supremum = max(abs(obj(n).Bounds));
-                if (obj(n).Infimum * obj(n).Supremum) < 0
-                    r(n).Infimum = 0;
-                end
-            end
+            r.Infimum = min(abs(obj.Infimum), abs(obj.Supremum));
+            r.Supremum = max(abs(obj.Infimum), abs(obj.Supremum));
+            obj.Infimum(obj.Infimum .* obj.Supremum < 0) = 0;
         end
         
         % Exponential
@@ -425,8 +420,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   realInt = exp(ciat.RealInterval(0,1));
         % _________________________________________________________________________
-            r.Infimum = exp(obj.Infimum);
-            r.Supremum = exp(obj.Supremum);
+            r = ciat.RealInterval(exp(obj.Infimum), exp(obj.Supremum));
         end
         
         % Logarithm
@@ -448,22 +442,18 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = log(ciat.RealInterval(0,1));
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                if obj(n).Supremum >= 0
-                    r(n).Supremum = log(obj(n).Supremum);
-                    if obj(n).Infimum >= 0
-                        r(n).Infimum = log(obj(n).Infimum);
-                    else
-                        warning('Log of negative infimum replaced by zero.')
-                        r(n).Infimum = 0;
-                    end
-                else
-                    warning('Log of negative interval replaced by zero.')
-                    r(n).Infimum = 0;
-                    r(n).Supremum = 0;
-                end
+            r.Supremum = log(obj.Supremum);
+            r.Infimum = log(obj.Infimum);
+            r.Infimum(obj.Infimum <= 0) = 0;
+            r.Supremum(obj.Supremum <= 0) = 0;
+            if any(obj.Infimum <= 0, "all")
+                warning('Log of negative infimum replaced by zero.')
+            end
+            if any(obj.Supremum <= 0, "all")
+                warning('Log of negative interval replaced by zero.')
             end
         end
+
         function r = log10(obj)
         % 10-base logarithm value of real intervals
         %
@@ -482,20 +472,15 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = log10(ciat.RealInterval(0,1));
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                if obj(n).Supremum >= 0
-                    r(n).Supremum = log10(obj(n).Supremum);
-                    if obj(n).Infimum >= 0
-                        r(n).Infimum = log10(obj(n).Infimum);
-                    else
-                        warning('Log of negative infimum replaced by zero.')
-                        r(n).Infimum = 0;
-                    end
-                else
-                    warning('Log of negative interval replaced by zero.')
-                    r(n).Infimum = 0;
-                    r(n).Supremum = 0;
-                end
+            r.Supremum = log10(obj.Supremum);
+            r.Infimum = log10(obj.Infimum);
+            r.Infimum(obj.Infimum <= 0) = 0;
+            r.Supremum(obj.Supremum <= 0) = 0;
+            if any(obj.Infimum <= 0, "all")
+                warning('Log of negative infimum replaced by zero.')
+            end
+            if any(obj.Supremum <= 0, "all")
+                warning('Log of negative interval replaced by zero.')
             end
         end
         
@@ -518,20 +503,15 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = sqrt(ciat.RealInterval(0,1));
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                if obj(n).Supremum >= 0
-                    r(n).Supremum = sqrt(obj(n).Supremum);
-                    if obj(n).Infimum >= 0
-                        r(n).Infimum = sqrt(obj(n).Infimum);
-                    else
-                        warning('Sqrt of negative infimum replaced by zero.')
-                        r(n).Infimum = 0;
-                    end
-                else
-                    warning('Sqrt of negative interval replaced by zero.')
-                    r(n).Infimum = 0;
-                    r(n).Supremum = 0;
-                end
+            r.Infimum = sqrt(obj.Infimum);
+            r.Supremum = sqrt(obj.Supremum);
+            r.Infimum(obj.Infimum <= 0) = 0;
+            r.Supremum(obj.Supremum <= 0) = 0;
+            if any(obj.Infimum < 0, "all")
+                warning('Sqrt of negative infimum replaced by zero.')
+            end
+            if any(obj.Supremum < 0, "all")
+                warning('Sqrt of negative interval replaced by zero.')
             end
         end
 

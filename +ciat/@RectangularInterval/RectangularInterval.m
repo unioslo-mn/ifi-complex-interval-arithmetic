@@ -211,11 +211,12 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
             value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
             
-            if obj.Real.Infimum <= 0 && ...
-               obj.Imag.Infimum <= 0 && obj.Imag.Supremum >= 0
-                value.Infimum = 0;
-                value.Supremum = 2*pi;
-            end         
+            value.Infimum(obj.Real.Infimum <= 0 & ...
+                          obj.Imag.Infimum <= 0 & ...
+                          obj.Imag.Supremum >= 0) = 0;
+            value.Supremum(obj.Real.Infimum <= 0 & ...
+                           obj.Imag.Infimum <= 0 & ...
+                           obj.Imag.Supremum >= 0) = 2*pi;
         end
         function value = angle(obj)
         % Angle of rectangular intervals
@@ -265,47 +266,47 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         % Equal
         function r = eq(obj1,obj2)
-            % Equality rectangular intervals
-            %
-            % This function checks if two sets of rectangular intervals are equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = eq(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RectangularInterval class
-            %   obj2      : array of objects from the ciat.RectangularInterval class
-            % _________________________________________________________________________
-            % OPTIONS
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = eq(ciat.RectangularInterval(0,1,2,3), ...
-            %          ciat.RectangularInterval(0,1,2,3));
-            % _________________________________________________________________________
-                [M1,N1] = size(obj1);
-                [M2,N2] = size(obj2);
-                assert(M1 == M2 && N1 == N2)
-                r = all(obj1.Real == obj2.Real, "all") && ...
-                    all(obj1.Imag == obj2.Imag, "all");
+        % Equality rectangular intervals
+        %
+        % This function checks if two sets of rectangular intervals are equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = eq(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RectangularInterval class
+        %   obj2      : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = eq(ciat.RectangularInterval(0,1,2,3), ...
+        %          ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            r = all(obj1.Real == obj2.Real, "all") && ...
+                all(obj1.Imag == obj2.Imag, "all");
         end
 
         % Not equal
         function r = ne(obj1, obj2)
-            % Not equal rectangular intervals
-            %
-            % This function checks if two sets of rectangular intervals are not equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = ne(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RectangularInterval class
-            %   obj2      : array of objects from the ciat.RectangularInterval class
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = ne(ciat.RectangularInterval(0,1,2,3), ...
-            %          ciat.RectangularInterval(0,1,2,3));
-            % _________________________________________________________________________
+        % Not equal rectangular intervals
+        %
+        % This function checks if two sets of rectangular intervals are not equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ne(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RectangularInterval class
+        %   obj2      : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ne(ciat.RectangularInterval(0,1,2,3), ...
+        %          ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
             [M1,N1] = size(obj1);
             [M2,N2] = size(obj2);
             assert(M1 == M2 && N1 == N2)
@@ -507,7 +508,6 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         function obj = parenAssign(obj,indexOp,varargin)
-            % disp('parenAssign')
             % Ensure object instance is the first argument of call.
             if isempty(obj)
                 % This part is for initializing an array of objects
@@ -533,7 +533,6 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         function n = parenListLength(obj,indexOp,ctx)
-            % disp('parenListLength')
             if numel(indexOp) <= 2
                 n = 1;
                 return;
@@ -543,7 +542,6 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         function obj = parenDelete(obj,indexOp)
-            % disp('parenDelete')
             obj.Real.(indexOp) = [];
             obj.Imag.(indexOp) = [];
         end
@@ -567,7 +565,6 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         function varargout = size(obj,varargin)
-            % disp('size')
             [varargout{1:nargout}] = size(obj.Real,varargin{:});
         end
     end

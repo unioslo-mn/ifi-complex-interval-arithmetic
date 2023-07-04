@@ -208,9 +208,6 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         function value = get.Abs(obj)
             value = max(0, ciat.RealInterval(abs(obj.Center) - obj.Radius,...
                                       abs(obj.Center) + obj.Radius));
-            % if value.Infimum < 0
-            %     value.Infimum = 0;
-            % end 
         end
         function value = abs(obj)
         % Absolute value of circular intervals
@@ -368,10 +365,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         %   circInt = sum([ciat.CircularInterval(0,1), ...
         %                    ciat.CircularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
-            end
+            r = ciat.CircularInterval(sum(obj.Center), sum(obj.Radius));
         end
                 
         % Negative (uminus)

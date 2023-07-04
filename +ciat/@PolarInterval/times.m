@@ -36,8 +36,6 @@ function r = times(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'double')

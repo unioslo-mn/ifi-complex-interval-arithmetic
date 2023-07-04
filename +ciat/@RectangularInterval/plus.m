@@ -37,8 +37,6 @@ function r = plus(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'double')
@@ -48,10 +46,8 @@ function r = plus(obj1,obj2)
         obj2 = ciat.RectangularInterval(obj2);
     end 
             
-    % Loop throught the arrays
-    r(M,N) = ciat.RectangularInterval;
-    r.Real = obj1.Real + obj2.Real;
-    r.Imag = obj1.Imag + obj2.Imag;
+    r = ciat.RectangularInterval(obj1.Real + obj2.Real, ...
+                                 obj1.Imag + obj2.Imag)
 end
 
         
