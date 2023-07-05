@@ -34,25 +34,15 @@ function r = cos(obj)
     
     % Calculate sum
     r(M,N) = ciat.RealInterval;
-    for m = 1:M
-        for n = 1:N
-            % Check if the envelope is part of the interval
-            bot1 = ceil((obj.Infimum + pi)/(2*pi));
-            bot2 = ceil((obj.Supremum + pi)/(2*pi));
-            top1 = ceil((obj.Infimum)/(2*pi));
-            top2 = ceil((obj.Supremum)/(2*pi));
-            
-            % Calculate the interval
-            if (bot2-bot1)>=1
-                r(m,n).Infimum = -1;
-            else
-                r(m,n).Infimum = min(cos(obj.Infimum),cos(obj.Supremum));
-            end
-            if (top2-top1)>=1
-                r(m,n).Supremum = 1;
-            else
-                r(m,n).Supremum = max(cos(obj.Infimum),cos(obj.Supremum));
-            end
-        end
-    end
+
+    bot1 = ceil((obj.Infimum + pi)/(2*pi));
+    bot2 = ceil((obj.Supremum + pi)/(2*pi));
+    top1 = ceil((obj.Infimum)/(2*pi));
+    top2 = ceil((obj.Supremum)/(2*pi));
+
+    r(bot2-bot1>=1).Infimum = -1;
+    r(bot2-bot1<1).Infimum = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
+    r(top2-top1>=1).Supremum = 1;
+    r(top2-top1<1).Supremum = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
+
 end  
