@@ -177,10 +177,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         function value = get.Abs(obj)
             value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
                           abs(obj.Imag) * abs(obj.Imag) );
-            if obj.Real.Infimum <= 0 && obj.Real.Supremum >= 0 && ...
-               obj.Imag.Infimum <= 0 && obj.Imag.Supremum >= 0
-                value.Infimum = 0;
-            end 
+            value.Infimum(obj.contains(0)) = 0;
         end
         function value = abs(obj)
         % Absolute value of rectangular intervals
@@ -326,6 +323,26 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             r.Imag = -r.Imag.';
         end
 
+        function r = contains(obj, x)
+        % Contains rectangular intervals
+        %
+        % This function checks if a set of rectangular intervals contains
+        % a given value. Returns a logical array of the same size as the
+        % input array.
+        % _________________________________________________________________________
+        % USAGE
+        %   r = contains(obj, x)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        %   x         : complex value
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = contains(ciat.RectangularInterval(0,1,2,3), 0.5);
+        % _________________________________________________________________________
+            r = obj.Real.contains(real(x)) & obj.Imag.contains(imag(x));
+        end
+
         % Sum
         function r = sum(obj)
         % Sum of rectangular intervals
@@ -370,6 +387,159 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %             ciat.RectangularInterval(0,1,2,3);
         % _________________________________________________________________________
             r = obj1 + (-obj2);
+        end
+
+        % Exponential
+        function r = exp(obj)
+        % Exponential value of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % exponential value of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = exp(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = exp(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(exp(obj.Real).*cos(obj.Imag), ...
+                                         exp(obj.Real).*sin(obj.Imag));
+        end
+
+        % Sine
+        function r = sin(obj)
+        % Sine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % sine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = sin(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = sin(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(sin(obj.Real).*cosh(obj.Imag), cos(obj.Real).*sinh(obj.Imag));
+        end
+
+        % Cosine
+        function r = cos(obj)
+        % Cosine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % cosine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cos(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cos(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(cos(obj.Real).*cosh(obj.Imag), -sin(obj.Real).*sinh(obj.Imag));
+        end
+
+        % Cotangent
+        function r = cot(obj)
+        % Cotangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % cotangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cot(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cot(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = tan(pi/2 - obj);
+        end
+
+        % Hyperbolic sine
+        function r = sinh(obj)
+        % Hyperbolic sine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic sine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = sinh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = sinh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = -1j.*sin(1j.*obj);
+        end
+
+        % Hyperbolic cosine
+        function r = cosh(obj)
+        % Hyperbolic cosine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic cosine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cosh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cosh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = cos(1j.*obj);
+        end
+
+        % Hyperbolic tangent
+        function r = tanh(obj)
+        % Hyperbolic tangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic tangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = tanh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = tanh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = -1j.*tan(1j.*obj);
+        end
+
+        % Hyperbolic cotangent
+        function r = coth(obj)
+        % Hyperbolic cotangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic cotangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = coth(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = coth(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = 1j.*cot(1j.*obj);
         end
         
         % Union
@@ -488,6 +658,10 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         r = plus(obj1,obj2)
         r = mtimes(obj1,obj2)
         r = times(obj1,obj2)
+        r = recip(obj)
+        r = rdivide(obj1,obj2)
+        r = power(obj1,obj2)
+        r = sqrt(obj)
         
     end
     

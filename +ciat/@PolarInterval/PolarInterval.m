@@ -431,6 +431,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         points = sample(obj, n_points)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
+        r = exp(obj)
     end
     
     methods (Static)

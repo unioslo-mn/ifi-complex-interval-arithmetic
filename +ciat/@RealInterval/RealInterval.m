@@ -113,10 +113,10 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 assert(size(varargin{1},1) == size(varargin{2},1))
                 assert(size(varargin{1},2) == size(varargin{2},2))
                 
-                % obj.Infimum = min(varargin{1},varargin{2});
-                % obj.Supremum = max(varargin{1},varargin{2});
-                obj.Infimum = varargin{1};
-                obj.Supremum = varargin{2};
+                obj.Infimum = min(varargin{1},varargin{2});
+                obj.Supremum = max(varargin{1},varargin{2});
+                % obj.Infimum = varargin{1};
+                % obj.Supremum = varargin{2};
             end
         end
         
@@ -218,6 +218,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         
         % Bounds as a 2 element array
         function value = get.Bounds(obj)
+            % Doesn't work as intended when using matrices
             value = [obj.Infimum;obj.Supremum];
         end
         
@@ -276,6 +277,26 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         function r = ctranspose(obj)
             r = obj.';
         end
+
+        function r = contains(obj, x)
+        % Contains rectangular intervals
+        %
+        % This function checks if a set of real intervals contains
+        % a given value. Returns a logical array of the same size as the
+        % input array.
+        % _________________________________________________________________________
+        % USAGE
+        %   r = contains(obj, x)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.RealInterval class
+        %   x         : complex value
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = contains(ciat.RealInterval(0,1), 0.5);
+        % _________________________________________________________________________
+            r = obj.Infimum <= x & x <= obj.Supremum;
+        end
         
         % Sum
         function r = sum(obj)
@@ -300,7 +321,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             % for n = 2:length(obj(:))
             %     r = r + obj(n);
             % end
-            r = ciat.RealInterval(sum([obj.Infimum]), sum([obj.Supremum]));
+            r = ciat.RealInterval(sum(obj.Infimum), sum(obj.Supremum));
         end
         
         % Negative (uminus)
@@ -664,6 +685,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         r = sin(obj)
         r = cos(obj)
         r = power(obj1,obj2)
+        r= sinh(obj)
+        r = cosh(obj)
         
     end
 
