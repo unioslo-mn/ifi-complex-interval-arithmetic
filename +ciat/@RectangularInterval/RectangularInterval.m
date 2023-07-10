@@ -237,7 +237,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         % Area
         function value = get.Area(obj)
-           value = pi * obj.Radius.^2;
+           value = width(obj.Real) .* width(obj.Imag);
         end        
         function value = area(obj)
         % Area of rectangular intervals
