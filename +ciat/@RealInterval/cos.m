@@ -40,9 +40,9 @@ function r = cos(obj)
     top1 = ceil((obj.Infimum)/(2*pi));
     top2 = ceil((obj.Supremum)/(2*pi));
 
-    r(bot2-bot1>=1).Infimum = -1;
-    r(bot2-bot1<1).Infimum = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
-    r(top2-top1>=1).Supremum = 1;
-    r(top2-top1<1).Supremum = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
+    r.Infimum(bot2-bot1>=1) = -1;
+    r.Infimum(bot2-bot1<1) = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
+    r.Supremum(top2-top1>=1) = 1;
+    r.Supremum(top2-top1<1) = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
 
 end  

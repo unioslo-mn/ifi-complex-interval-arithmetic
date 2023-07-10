@@ -41,8 +41,8 @@ function r = sin(obj)
     top1 = ceil((obj.Infimum - pi/2)/(2*pi));
     top2 = ceil((obj.Supremum - pi/2)/(2*pi));
 
-    r(bot2-bot1>=1).Infimum = -1;
-    r(bot2-bot1<1).Infimum = min(sin(obj(bot2-bot1<1).Infimum),sin(obj(bot2-bot1<1).Supremum));
-    r(top2-top1>=1).Supremum = 1;
-    r(top2-top1<1).Supremum = max(sin(obj(top2-top1<1).Infimum),sin(obj(top2-top1<1).Supremum));
+    r.Infimum(bot2-bot1>=1) = -1;
+    r.Infimum(bot2-bot1<1) = min(sin(obj.Infimum(bot2-bot1<1)),sin(obj.Supremum(bot2-bot1<1)));
+    r.Supremum(top2-top1>=1) = 1;
+    r.Supremum(top2-top1<1) = max(sin(obj.Infimum(top2-top1<1)),sin(obj.Supremum(top2-top1<1)));
 end 

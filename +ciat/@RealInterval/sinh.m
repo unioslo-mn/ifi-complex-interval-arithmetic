@@ -25,5 +25,5 @@ function r = sinh(obj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-    r = ciat.RealInterval(sin(obj.Infimum),sin(obj.Supremum));
+    r = ciat.RealInterval(sinh(obj.Infimum),sinh(obj.Supremum));
 end 
