@@ -23,6 +23,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
     properties
         Real;    % Projection of the rectangular interval to the real axis
         Imag;   % Projection of the rectangular interval to the imaginary axis
+        ProbaGrid; % Probability grid for the interval
     end
     
      properties (Dependent)
@@ -169,6 +170,15 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   rectInt = imag(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
             value = obj.Imag;
+        end
+
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            % Give a warning if the interval is not scalar
+            if ~isscalar(obj)
+                warning('Probability grid is not yet implemented for non-scalar intervals')
+            end
+            obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
         end
         
         %% Dependent properties
@@ -643,6 +653,12 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 p2 = obj(n).Real.Infimum + 1j*obj(n).Imag.Supremum;
                 p3 = obj(n).Real.Supremum + 1j*obj(n).Imag.Supremum;
                 p4 = obj(n).Real.Supremum + 1j*obj(n).Imag.Infimum;
+
+                % If interval has a probability grid, plot it
+                if ~isempty(obj(n).ProbaGrid)
+                    [X, Y] = meshgrid(obj(n).ProbaGrid.x, obj(n).ProbaGrid.y);
+                    obj(n).ProbaGrid.plot('AlphaData', obj(n).ininterval(X+1i*Y));
+                end
 
                 h = [h;plot(real([p1,p2,p3,p4,p1]), ...
                             imag([p1,p2,p3,p4,p1]), varargin{:})];

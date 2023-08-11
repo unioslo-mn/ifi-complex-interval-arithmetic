@@ -61,6 +61,13 @@ function r = plus(obj1,obj2)
             % Calculate sum
             r(m,n) = add( obj1(m1,n1) , obj2(m2,n2) );
             r(m,n).Points = r(m,n).Boundary;
+
+            % If the interval has a probability grid, compute the sum
+            if ~isempty(obj1(m1,n1).ProbaGrid) && ~isempty(obj2(m2,n2).ProbaGrid)
+                r.ProbaGrid = obj1(m1,n1).ProbaGrid + obj2(m2,n2).ProbaGrid;
+                % Fit the grid to the new interval
+                r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+            end
         end
     end
 end

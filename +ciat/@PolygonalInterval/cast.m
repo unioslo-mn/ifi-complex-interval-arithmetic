@@ -43,6 +43,8 @@ function outObj = cast(inObj,inObj2,options)
     
     [M,N] = size(inObj);
     dR = options.tolerance;
+
+    is_product = false;
     
     switch class(inObj)
         case 'double'
@@ -98,6 +100,7 @@ function outObj = cast(inObj,inObj2,options)
                 outPoints = [pL,rH, pH].';
             else
                 if isa(inObj2,'ciat.CircularInterval')
+                    is_product = true;
                     outPoints = timesPolarCircular(inObj,inObj2,dR);
                 else
                     error('Invalid input type at position 2')
@@ -108,6 +111,16 @@ function outObj = cast(inObj,inObj2,options)
     end  
     outObj = ciat.PolygonalInterval(outPoints);       
     outObj = reshape(outObj,M,N);  
+
+
+    % Copy over the proba grid if it exists
+    if ~isempty(inObj.ProbaGrid)
+        if is_product && ~isempty(inObj2.ProbaGrid)
+            outObj.ProbaGrid = inObj.ProbaGrid .* inObj2.ProbaGrid;
+        else
+            outObj.ProbaGrid = inObj.ProbaGrid;
+        end
+    end
 end
 
 %% Utility function
@@ -142,7 +155,7 @@ function points = timesPolarCircular(pInt, cInt, dR)
     
     % If the circle is just a point
     if (cRadius == 0)
-        % If the circle center is at zero creat a zero polygon
+        % If the circle center is at zero create a zero polygon
         if cInt.Center == 0
             polygon = ciat.PolygonalInterval(0);
             return 
