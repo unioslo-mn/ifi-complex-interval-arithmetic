@@ -63,14 +63,26 @@ classdef ProbaGrid
             obj.x = x;
             obj.y = y;
 
-            dx = x(2) - x(1);
-            dy = y(2) - y(1);
+            % Check if the grid is real (1D) or complex (2D)
+            if ny == 1
+                % The grid is real
+                obj.nx = nx;
+                obj.ny = 1;
+                dx = x(2) - x(1);
+                dy = 0;
+            else
+                % The grid is complex
+                obj.nx = nx;
+                obj.ny = ny;
+                dx = x(2) - x(1);
+                dy = y(2) - y(1);
+            end
 
             obj.dx = dx;
             obj.dy = dy;
 
-            obj.nx = nx;
-            obj.ny = ny;
+            % obj.nx = nx;
+            % obj.ny = ny;
 
             switch distribution_name
                 case "uniform"
@@ -236,6 +248,80 @@ classdef ProbaGrid
             % obj = obj.normalize();
         end
 
+        % Real part
+        function obj = real(obj)
+            % Compute the distribution of the real part of the random
+            % variable.
+
+            % First compute the new grid
+            new_x = linspace(min(obj.x(:)), max(obj.x(:)), obj.nx);
+            new_y = 0;
+
+            pdf = sum(obj.Pdf, 1) .* obj.dy;
+
+            % Create a new ProbaGrid object
+            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
+            % obj = obj.normalize();
+        end
+
+        % Imaginary part
+        function obj = imag(obj)
+            % Compute the distribution of the imaginary part of the random
+            % variable.
+
+            % First compute the new grid
+            new_x = linspace(min(obj.y(:)), max(obj.y(:)), obj.ny);
+            new_y = 0;
+
+            pdf = sum(obj.Pdf, 2) .* obj.dx;
+
+            % Create a new ProbaGrid object
+            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
+            % obj = obj.normalize();
+        end
+
+        % Squared magnitude
+        function obj = abs2(obj)
+            % Compute the distribution of the squared magnitude of the
+            % random variable.
+            % For a variable Z = X + iY, this is |Z|^2 = X^2 + Y^2
+            % Thus this is a real random variable.
+
+            % The new probability grid is only 1D as opposed to the other
+            % operations
+
+            new_nx = max(obj.nx, obj.ny);
+
+            % First compute the new grid
+            abs2_points = abs(obj.x + 1i * obj.y.').^2;
+            new_x = linspace(min(abs2_points(:)), max(abs2_points(:)), new_nx);
+            new_y = 0;
+
+            % Compute the marginal distributions
+            f_X = real(obj).Pdf;
+            f_Y = imag(obj).Pdf;
+
+            pdf = zeros(new_nx, 1);
+            for i = 1:length(new_x)
+                z = new_x(i);
+                if z == 0
+                    continue;
+                end
+                % Compute the integral
+                % Define functions to integrate
+                f_Xf = @(u) interp1(obj.x, f_X, u, 'linear', 0);
+                f_Yf = @(u) interp1(obj.y, f_Y, u, 'linear', 0);
+        
+                f = @(u) ((f_Xf(u) + f_Xf(-u)) .* (f_Yf(sqrt(z-u.^2)) + f_Yf(-sqrt(z-u.^2))) + (f_Yf(u) + f_Yf(-u)) .* (f_Xf(sqrt(z-u.^2)) + f_Xf(-sqrt(z-u.^2)))) ./ sqrt(z-u.^2);
+        
+                pdf(i) = integral(f, 0, sqrt(z/2))/2;
+            end
+
+            % Create a new ProbaGrid object
+            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
+            % obj = obj.normalize();
+        end
+
 
         % 
         function obj = adjust(obj, new_x, new_y)
@@ -385,8 +471,17 @@ classdef ProbaGrid
             obj.y = y;
             obj.nx = length(x);
             obj.ny = length(y);
-            obj.dx = x(2) - x(1);
-            obj.dy = y(2) - y(1);
+
+            % Check if the grid is complex
+            if obj.ny == 1
+                % obj.is_complex = false;
+                obj.dx = x(2) - x(1);
+                obj.dy = 0;
+            else
+                % obj.is_complex = true;
+                obj.dx = x(2) - x(1);
+                obj.dy = y(2) - y(1);
+            end
         end
 
     end
