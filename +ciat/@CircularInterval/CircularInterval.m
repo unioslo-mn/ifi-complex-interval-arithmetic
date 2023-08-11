@@ -355,6 +355,28 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             r.Center = r.Center';
             r.Radius = r.Radius.';
         end
+
+        % In interval
+        function r = ininterval(obj, points)
+        % Check if points are in circular intervals
+        %
+        % This function checks if a set of points are in a set of
+        % circular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ininterval(obj, points)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.CircularInterval class
+        %   points    : array of points in the complex plane
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ininterval(ciat.CircularInterval(0,1),[0.5+0.5i,1+1i]);
+        % _________________________________________________________________________
+            r = abs(points - obj.Center) <= obj.Radius;
+        end
         
         % Sum
         function r = sum(obj)

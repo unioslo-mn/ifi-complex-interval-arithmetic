@@ -56,7 +56,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % double type input this results in degenerate intervals.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.RectangularInterval(center,radius)
+        %   ciat.RectangularInterval(realInf, realSup, imagInf, imagSup)
         %   ciat.RectangularInterval(obj)
         %   ciat.RectangularInterval
         % _________________________________________________________________________
@@ -187,7 +187,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         function value = get.Abs(obj)
             value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
                           abs(obj.Imag) * abs(obj.Imag) );
-            value.Infimum(obj.contains(0)) = 0;
+            value.Infimum(obj.ininterval(0)) = 0;
         end
         function value = abs(obj)
         % Absolute value of rectangular intervals
@@ -333,7 +333,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             r.Imag = -r.Imag.';
         end
 
-        function r = contains(obj, x)
+        function r = ininterval(obj, x)
         % Contains rectangular intervals
         %
         % This function checks if a set of rectangular intervals contains
@@ -341,16 +341,16 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % input array.
         % _________________________________________________________________________
         % USAGE
-        %   r = contains(obj, x)
+        %   r = ininterval(obj, x)
         % _________________________________________________________________________
         % NECESSARY ARGUMENTS
         %   obj       : array of objects from the ciat.RectangularInterval class
         %   x         : complex value
         % _________________________________________________________________________
         % EXAMPLES
-        %   r = contains(ciat.RectangularInterval(0,1,2,3), 0.5);
+        %   r = ininterval(ciat.RectangularInterval(0,1,2,3), 0.5);
         % _________________________________________________________________________
-            r = obj.Real.contains(real(x)) & obj.Imag.contains(imag(x));
+            r = obj.Real.ininterval(real(x)) & obj.Imag.ininterval(imag(x));
         end
 
         % Sum
@@ -417,6 +417,25 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             r = ciat.RectangularInterval(exp(obj.Real).*cos(obj.Imag), ...
                                          exp(obj.Real).*sin(obj.Imag));
+        end
+
+        % Logarithm
+        function r = log(obj)
+        % Logarithm of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % logarithm of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = log(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : object from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = log(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(log(abs(obj)), angle(obj));
         end
 
         % Sine

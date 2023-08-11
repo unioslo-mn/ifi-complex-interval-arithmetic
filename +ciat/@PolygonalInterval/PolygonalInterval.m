@@ -298,6 +298,30 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         
         
         %% Other functions
+
+        % In interval
+        function r = ininterval(obj,points)
+        % Check if points are in polygonal intervals
+        %
+        % This function checks if a set of points are in a set of
+        % polygonal intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ininterval(obj,points)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.PolygonalInterval class
+        %   points    : array of points to be checked
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   polyInt = ciat.PolygonalInterval([0,1,1i]);
+        %   r = ininterval(polyInt,[0.5,0.5i])
+        % _________________________________________________________________________
+            r = inpolygon(real(points),imag(points),...
+                          real(obj.Points),imag(obj.Points));
+        end
         
         % Sum
         function r = sum(obj)

@@ -278,8 +278,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             r = obj.';
         end
 
-        function r = contains(obj, x)
-        % Contains rectangular intervals
+        function r = ininterval(obj, x)
+        % Check if value is in real intervals
         %
         % This function checks if a set of real intervals contains
         % a given value. Returns a logical array of the same size as the
@@ -293,7 +293,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   x         : complex value
         % _________________________________________________________________________
         % EXAMPLES
-        %   r = contains(ciat.RealInterval(0,1), 0.5);
+        %   r = ininterval(ciat.RealInterval(0,1), 0.5);
         % _________________________________________________________________________
             r = obj.Infimum <= x & x <= obj.Supremum;
         end

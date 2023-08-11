@@ -325,6 +325,33 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
             r.Angle = -r.Angle.';
         end
 
+        % In interval
+        function r = ininterval(obj, points)
+        % Check if points are in polar intervals
+        %
+        % This function checks if a set of points are in a set of
+        % polar intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ininterval(obj, points)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.PolarInterval class
+        %   points    : array of complex numbers
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ininterval(ciat.PolarInterval(0,1,2,3),[1,2,3,4,5]);
+        % _________________________________________________________________________
+            % r = obj.Abs.ininterval(abs(points)) & ...
+            %     obj.Angle.ininterval(angle(points));
+            % wrap angle interval to [-pi,pi]
+            r = obj.Abs.ininterval(abs(points)) & ...
+                sin(obj.Angle).ininterval(sin(angle(points))) & ...
+                cos(obj.Angle).ininterval(cos(angle(points)));
+        end
+
         % Union
         function r = union(obj)
         % Union of polar intervals
