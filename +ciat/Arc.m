@@ -17,14 +17,21 @@ classdef Arc
 
 	methods
 		%% Constructor
-        function obj = Arc(center,radius,angle)
-            mustBeA(center,'double')
-            mustBeA(radius,'double')
-            mustBeA(angle,'ciat.RealInterval')
-
-            obj.Center = center;
-            obj.Radius = radius;
-            obj.Angle = ciat.RealInterval(ciat.wrapPi(angle.Bounds));
+        function obj = Arc(varargin)
+            switch length(varargin)
+                case 0
+                    % This is for initializing an array of objects
+                case 3
+                    center = varargin{1};
+                    radius = varargin{2};
+                    angle = varargin{3};
+                    mustBeA(center,'double')
+                    mustBeA(radius,'double')
+                    mustBeA(angle,'ciat.RealInterval')
+                    obj.Center = center;
+                    obj.Radius = radius;
+                    obj.Angle = ciat.RealInterval(angle.Bounds);
+            end
 		end
 
 		%% Defining properties
@@ -88,13 +95,13 @@ classdef Arc
             h = [];
             for n = 1:length(obj(:))
                 % Extract parameters
-                cr = real(obj.Center);
-                ci = imag(obj.Center);
-                r = obj.Radius;
+                cr = real(obj(n).Center);
+                ci = imag(obj(n).Center);
+                r = obj(n).Radius;
                 % Plot arc by angle quadrants
                 q = [-pi,-pi/2 ; -pi/2,0 ; 0,pi/2 ; pi/2,pi];
                 for idx = 1:4
-                    qi = intersection([obj.Angle, ...
+                    qi = intersection([obj(n).Angle, ...
                                         ciat.RealInterval(q(idx,:))]);
                     if ~isempty(qi)
                         xBound = sort(cr + r*cos(qi.Bounds) );

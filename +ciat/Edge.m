@@ -17,10 +17,19 @@ classdef Edge
 
 	methods
 		%% Constructor
-        function obj = Edge(endpoints)
-            mustBeA(endpoints,'double')
+        function obj = Edge(varargin)
+            for varIdx = 1:length(varargin)
+                mustBeA(varargin{varIdx},'double')
+            end
 
-            obj.Endpoints = endpoints;
+            switch length(varargin)
+                case 0
+                    % This is for initializing an array of objects
+                case 1
+                    obj.Endpoints = [varargin{1},varargin{1}];
+                case 2
+                    obj.Endpoints = [varargin{1},varargin{2}];
+            end
 		end
 
 		%% Defining properties

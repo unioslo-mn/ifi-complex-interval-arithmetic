@@ -86,8 +86,7 @@ classdef PolarInterval
                     [M,N] = size(varargin{1});
                     obj(M,N) = obj;
                     for n = 1:M*N
-                        obj(n) = ciat.PolarInterval.cast(...
-                                                        varargin{1}(n));
+                        obj(n) = ciat.PolarInterval.cast(varargin{1}(n));
                     end
                 case 2
                     % Two input arguments of real intervals is the default

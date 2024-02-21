@@ -26,6 +26,11 @@ pI.plot('b-')
 gI = ciat.PolygonalInterval([1-1i, 3-2i, 2-3i, 1-2i]);
 gI.plot('b-')
 
+% Polyarcular interval
+aI = ciat.PolyarcularInterval([ciat.Arc(2+1i,2,ciat.RealInterval(-0.7,-0.4)),...
+                               ciat.Arc(3+3i,-0.7,ciat.RealInterval(0.3,0.5)),...
+                               ciat.Arc(1+2i,0,ciat.RealInterval(0))]);
+% aI.plot('b-')
 %% Cast complex interval types
 
 % Rectangular to circular
