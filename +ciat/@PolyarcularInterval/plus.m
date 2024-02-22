@@ -66,21 +66,84 @@ end
 %% Function for adding two polygons
 
 function r = add(obj1,obj2)
-    % Ensure counter-clockwise order and that v1 and w1
-    % being the vertices with smallest y-coordinate 
-    % (and smallest x-coordinate in case of ties)
-    v = obj1.Points;
-    w = obj2.Points;
     
-    % Handle exception when one of the inputs is a degenerate interval
-    if length(v)==1 || length(w)==1 
-        arcs = 
-        r = ciat.PolyarcularInterval(arcs);
-        return
+    % Create ordered lists of segments (arcs and vertices)
+    seg1 = orderSegments(obj1);
+    seg2 = orderSegments(obj2);
+
+    % Create match matrix
+    N = length(seg1);
+    M = length(seg2);
+    matchMat = zeros(N,M);
+    for n = 1:N
+        for m = n:M
+            matchMat(n,m) = isempty(intersection([seg1(n).GaussMap,...
+                                                  seg2(m).GaussMap]));
+        end
+    end
+    seg1.GaussMap;
+
+    % % Gauss map match segments
+    % arcs = [];
+    % idx1 = 1;
+    % idx2 = 1;
+    % while idx1 <= length(seg1) && idx2 <= length(seg2)
+    %     % Intersect Gauss maps
+    %     match = intersection([seg1(idx1).GaussMap,...
+    %                           seg2(idx2).GaussMap]);
+    % 
+    % 
+    %     if ~isempty(match)
+    % 
+    %     else
+    %         idx2 = idx2 + 1;
+    %     end
+    % 
+    % end
+
+
+
+    r = ciat.PolyarcularInterval(arcs);
+
+
+end
+
+%% Function for creating an ordered set of arcs and vertices
+
+function seg = orderSegments(obj)
+    N = obj.ArcCount;
+    M = sum([obj.Arcs.Radius]~=0);
+    if N > 1 && M > 0
+        seg(length(obj.Arcs)+length(obj.Vertices),1) = ciat.Arc;
+        segIdx = 1;
+        vertIdx = 1;
+        for arcIdx = 1:length(obj.Arcs)
+            seg(segIdx) = obj.Arcs(arcIdx);
+            if obj.Arcs(arcIdx).Radius ~= 0 
+                seg(segIdx+1) = obj.Vertices(2*vertIdx-1);
+                seg(segIdx+2) = obj.Vertices(2*vertIdx);
+                vertIdx = vertIdx + 1;
+                segIdx = segIdx + 3;
+            else
+                segIdx = segIdx + 1;
+            end
+        end
+    else
+        seg = obj.Arcs;
     end
 
-    % Use Gauss map matching and add arcs
-    arcs = 
-    r = ciat.PolygonalInterval(arcs);
-
+    % Find and split segments with two Gauss intervals
+    n = 1;
+    while n<=length(seg)
+        if length(seg(n).GaussMap)>1
+            if n<length(seg)
+                seg = [seg(1:n) ; seg(n) ; seg(n+1:end)];
+            else
+                seg = [seg(1:n) ; seg(n)];
+            end
+            seg(n+1).Angles = seg(n).GaussMap(2);
+            seg(n).Angles = seg(n).GaussMap(1);
+        end
+        n=n+1;
+    end
 end

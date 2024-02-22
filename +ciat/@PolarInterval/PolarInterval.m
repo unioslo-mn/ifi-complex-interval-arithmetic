@@ -418,6 +418,9 @@ classdef PolarInterval
         %   h = plot(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];

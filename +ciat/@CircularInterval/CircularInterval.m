@@ -392,6 +392,9 @@ classdef CircularInterval
         %   h = plot(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];

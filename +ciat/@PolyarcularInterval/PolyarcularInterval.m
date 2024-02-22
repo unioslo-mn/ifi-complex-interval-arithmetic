@@ -65,6 +65,7 @@ classdef PolyarcularInterval
             N = length(arcs);
             if N > 1
                 for n=1:N
+                    % Fix the angles property of zero radius arcs
                     if arcs(n).Radius == 0
                         % set current, previous and next arc
                         arcCurr = arcs(n);
@@ -86,11 +87,11 @@ classdef PolyarcularInterval
                         if angMin > angMax
                             angMax = angMax + 2*pi;
                         end
-                        arcs(n).Angle = ciat.RealInterval(angMin,angMax);
+                        arcs(n).Angles = ciat.RealInterval(angMin,angMax);
                     end
                 end
             else
-                arcs.Angle = ciat.RealInterval(-pi,pi);
+                arcs.Angles = ciat.RealInterval(-pi,pi);
             end
             obj.Boundary = arcs;
         end 
@@ -119,6 +120,105 @@ classdef PolyarcularInterval
                                       obj.Arcs(1).Endpoints(1)];
         end
 
+        % Get implicit vertices
+        function value = get.Vertices(obj)
+            % Filter out vertices with zero radius
+            N = obj.ArcCount;
+            M = sum([obj.Arcs.Radius]~=0);
+            if N > 1 && M > 0
+                value(2*M,1) = ciat.Arc;
+                
+                % Initialize vertex-pair index
+                m = 1;
+                for n=1:N
+                    arc = obj.Arcs(n);
+                    if arc.Radius ~= 0
+                        % Extract neighbouring edges
+                        edgeNext = obj.Edges(n);
+                        if n==1
+                            edgePrev = obj.Edges(N);
+                        else
+                            edgePrev = obj.Edges(n-1);                   
+                        end
+        
+                        % Calculate angle intervals
+                        ang1Min = edgePrev.GaussMap.Midpoint;
+                        ang2Max = edgeNext.GaussMap.Midpoint;
+                        if arc.Radius >= 0
+                            ang1Max = arc.Angles.Infimum;
+                            ang2Min = arc.Angles.Supremum;
+                        else
+                            ang1Max = arc.Angles.Supremum;
+                            ang2Min = arc.Angles.Infimum;
+                        end
+
+                        % Adjust order of angle bounds
+                        if ang1Min > ang1Max
+                            ang1Max = ang1Max + 2*pi;
+                        end
+                        if ang2Min > ang2Max
+                            ang2Max = ang2Max + 2*pi;
+                        end
+                        
+                        % Set vertex parameters
+                        value(2*m-1).Center = arc.Endpoints(1);
+                        value(2*m-1).Radius = 0;
+                        value(2*m-1).Angles = ciat.RealInterval(ang1Min,ang1Max);
+        
+                        value(2*m).Center = arc.Endpoints(2);
+                        value(2*m).Radius = 0;
+                        value(2*m).Angles = ciat.RealInterval(ang2Min,ang2Max);
+                        
+                        % Increase vertex-pair index
+                        m = m + 1;
+                    end
+                end
+            else
+                value = [];
+            end
+        end
+
+        % Real
+        function value = get.Real(obj)
+            value = ciat.RealInterval(min(inf(real(obj.Arcs))),...
+                                      max(sup(real(obj.Arcs))));
+        end
+        function value = real(obj)
+            [M,N] = size(obj);
+            value = reshape([obj.Real],M,N);
+        end
+        
+        % Imag
+        function value = get.Imag(obj)
+            value = ciat.RealInterval(min(inf(imag(obj.Arcs))),...
+                                      max(sup(imag(obj.Arcs))));
+        end
+        function value = imag(obj)
+            [M,N] = size(obj);
+            value = reshape([obj.Imag],M,N);
+        end
+        
+        % Abs
+        function value = get.Abs(obj)
+            value = ciat.RealInterval(min(min(inf(abs(obj.Arcs))),...
+                                            min(inf(abs(obj.Edges))) ),...
+                                      max(sup(abs(obj.Arcs))));
+        end
+        function value = abs(obj)
+            [M,N] = size(obj);
+            value = reshape([obj.Abs],M,N);
+        end
+        
+        % Angle
+        function value = get.Angle(obj)
+            value = ciat.RealInterval(min(inf(angle(obj.Arcs))),...
+                                      max(sup(angle(obj.Arcs))));         
+        end
+        function value = angle(obj)
+            [M,N] = size(obj);
+            value = reshape([obj.Angle],M,N);
+        end
+
         %% Other functions
 
         % Plot
@@ -140,13 +240,55 @@ classdef PolyarcularInterval
         %
         % _________________________________________________________________________
             tf = ishold;
+            if tf == false 
+                clf
+            end
             hold on
             h = [];
             for n = 1:length(obj(:))
-                for m = 1:length(obj(n).Arcs)
-                    h = [h;obj(n).Arcs(m).plot];    
-                end
+                h = [h;obj(n).Arcs.plot(varargin{:})];    
+                h = [h;obj(n).Edges.plot(varargin{:})];    
             end
+            if tf == false 
+                hold off
+            end
+        end
+
+        % Plot Gauss maps
+        function h = plotGaussMap(obj, arrowSize, varargin)
+            tf = ishold;
+            if tf == false 
+                clf
+            end
+            hold on
+            h = [];
+
+            % Plot normal vectors
+            % for n = 1:obj.ArcCount
+                h = [h; obj.Arcs.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Edges.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Vertices.plotGaussMap(arrowSize,varargin{:})];
+            % end
+
+            if tf == false 
+                hold off
+            end
+        end
+        function h = plotLogGaussMap(obj, arrowSize, varargin)
+            tf = ishold;
+            if tf == false 
+                clf
+            end
+            hold on
+            h = [];
+
+            % Plot normal vectors
+            for n = 1:obj.ArcCount
+                h = [h; obj.Arcs(n).plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Edges(n).plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Vertices(n).plotLogGaussMap(arrowSize,varargin{:})];
+            end
+
             if tf == false 
                 hold off
             end
@@ -159,5 +301,6 @@ classdef PolyarcularInterval
         % Function headers
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
+        outObj = cast(inObj,options)
     end
 end

@@ -30,7 +30,7 @@ function outObj = cast(inObj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-    [M,N] = size(inObj);
+    % [M,N] = size(inObj);
     
     switch class(inObj)
         case 'double'
@@ -44,14 +44,14 @@ function outObj = cast(inObj)
             inReal = [inObj.Real];
             inImag = [inObj.Imag];
             
-            outArcs = zeros(4,1);
+            outArcs(4,1) = ciat.Arc;
             outArcs(1) = ciat.Arc(complex([inReal.Infimum],[inImag.Infimum]),...
                                     0,ciat.RealInterval(-pi,-pi/2));
-            outArcs(2) = ciat.Arc(complex([inReal.Infimum],[inImag.Supremum]),...
+            outArcs(2) = ciat.Arc(complex([inReal.Supremum],[inImag.Infimum]),...
                                     0,ciat.RealInterval(-pi/2,0));
             outArcs(3) = ciat.Arc(complex([inReal.Supremum],[inImag.Supremum]),...
                                     0,ciat.RealInterval(0,pi/2));
-            outArcs(4) = ciat.Arc(complex([inReal.Supremum],[inImag.Infimum]),...
+            outArcs(4) = ciat.Arc(complex([inReal.Infimum],[inImag.Supremum]),...
                                     0,ciat.RealInterval(pi/2,pi));
             
         case 'ciat.CircularInterval'
@@ -64,12 +64,18 @@ function outObj = cast(inObj)
             inAngle = [inObj.Angle];
             maxAbs = [inAbs.Supremum];
             minAbs = [inAbs.Infimum];
-            outArcs(1) = ciat.Arc(0,minAbs,inAngle);
+            outArcs(1) = ciat.Arc(0,-minAbs,inAngle+pi);
             outArcs(2) = ciat.Arc(0,maxAbs,inAngle);
+        case 'ciat.PolygonalInterval'
+            N = inObj.PointCount;
+            outArcs(N,1) = ciat.Arc;
+            for n = 1:N
+                outArcs(n) = ciat.Arc(inObj.Points(n),0,0);
+            end
         otherwise
             error('Invalid input type at position 1')
     end  
     outObj = ciat.PolyarcularInterval(outArcs);       
-    outObj = reshape(outObj,M,N);  
+    % outObj = reshape(outObj,M,N);  
 end
 

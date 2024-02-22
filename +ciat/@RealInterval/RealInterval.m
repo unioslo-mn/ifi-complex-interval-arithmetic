@@ -584,6 +584,11 @@ classdef RealInterval
                 r = ciat.RealInterval.empty;
             end
         end
+
+        % Inside
+        function r = isin(obj,x)
+            r = obj.Infimum <= x & x <= obj.Supremum; 
+        end
         
         % Plot
         function plt = plot(obj,varargin)

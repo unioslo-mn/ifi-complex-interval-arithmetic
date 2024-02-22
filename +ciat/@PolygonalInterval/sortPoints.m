@@ -78,7 +78,7 @@ end
 function points = sortCounterClockwise(points)
     % Sort points counter-clockwise
     center = mean(points);
-    angles = ciat.wrap2Pi( angle(points - center) );
+    angles = ciat.wrapTo2Pi( angle(points - center) );
     [~, sortIdx] = sort(angles,'ascend');
     points = points(sortIdx);
     

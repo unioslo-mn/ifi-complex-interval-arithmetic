@@ -435,6 +435,9 @@ classdef PolygonalInterval
         %   h = plot(ciat.PolygonalInterval([0,1,1i]));
         % _________________________________________________________________________
             tf = ishold;
+            if tf == false 
+                clf
+            end
             hold on
             h = [];
             for n = 1:length(obj(:))
