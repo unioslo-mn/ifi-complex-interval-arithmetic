@@ -8,6 +8,9 @@ plot(0,0,'k+')
 xlabel('Real')
 ylabel('Imag')
 set(0, 'DefaultLineLineWidth', 2);
+set(0,'DefaultContourLineWidth',2)
+set(0,'DefaultFunctionContourLineWidth',2)
+set(0,'defaultimplicitfunctionlineLineWidth',2)
 title('Example results of complex interval arithmetic operations')
 
 % Rectangular interval
@@ -148,8 +151,8 @@ gI_times = rgI * cgI;
 gI_times.plot('g-')
 
 % Add polyarcular intervals
-aI_plus = paI + ciat.PolyarcularInterval(rpI);
-aI_plus.plot('g-')
+aI_plus = ciat.PolyarcularInterval(-pI) + aI;
+aI_plus.plot('g-');
 
 %% Unite or intersect complex intervals
 

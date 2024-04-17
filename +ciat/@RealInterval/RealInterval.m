@@ -575,13 +575,16 @@ classdef RealInterval
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
         	N = length(obj(:));
-            assert(N>1)
-            maxInf = max([obj.Infimum]);
-            minSup = min([obj.Supremum]);
-            if maxInf <= minSup
-                r = ciat.RealInterval( maxInf , minSup );
+            if N>1
+                maxInf = max([obj.Infimum]);
+                minSup = min([obj.Supremum]);
+                if maxInf <= minSup
+                    r = ciat.RealInterval( maxInf , minSup );
+                else
+                    r = ciat.RealInterval.empty;
+                end
             else
-                r = ciat.RealInterval.empty;
+                r = obj;
             end
         end
 
