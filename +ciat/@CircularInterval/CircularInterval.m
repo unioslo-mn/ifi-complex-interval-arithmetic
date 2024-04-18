@@ -369,7 +369,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         end
         
         % Sum
-        function r = sum(obj)
+        function r = sum(obj,varargin)
         % Sum of circular intervals
         %
         % This function creates the circular interval representing the 
@@ -387,7 +387,8 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         %   circInt = sum([ciat.CircularInterval(0,1), ...
         %                    ciat.CircularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = ciat.CircularInterval(sum(obj.Center), sum(obj.Radius));
+            r = ciat.CircularInterval(sum(obj.Center,varargin{:}), ...
+                                      sum(obj.Radius,varargin{:}));
         end
                 
         % Negative (uminus)

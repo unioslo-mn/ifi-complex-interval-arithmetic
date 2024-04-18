@@ -47,7 +47,7 @@ function r = plus(obj1,obj2)
     end 
             
     r = ciat.RectangularInterval(obj1.Real + obj2.Real, ...
-                                 obj1.Imag + obj2.Imag)
+                                 obj1.Imag + obj2.Imag);
 end
 
         
