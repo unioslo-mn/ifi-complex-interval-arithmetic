@@ -34,29 +34,15 @@ function r = sin(obj)
     
     % Calculate sum
     r(M,N) = ciat.RealInterval;
-    for m = 1:M
-        for n = 1:N
-            % Check if the envelope is part of the interval
-            bot1 = ceil((obj.Infimum + pi/2)/(2*pi));
-            bot2 = ceil((obj.Supremum + pi/2)/(2*pi));
-            top1 = ceil((obj.Infimum - pi/2)/(2*pi));
-            top2 = ceil((obj.Supremum - pi/2)/(2*pi));
-            
-            % Calculate sine of infimum and supremum
-            sinInf = sin(obj.Infimum);
-            sinSup = sin(obj.Supremum);
-            
-            % Calculate the interval
-            if (bot2-bot1)>=1
-                r(m,n).Infimum = -1;
-            else
-                r(m,n).Infimum = min(sinInf,sinSup);
-            end
-            if (top2-top1)>=1
-                r(m,n).Supremum = 1;
-            else
-                r(m,n).Supremum = max(sinInf,sinSup);
-            end
-        end
-    end
+
+    % With vectorized operations
+    bot1 = ceil((obj.Infimum + pi/2)/(2*pi));
+    bot2 = ceil((obj.Supremum + pi/2)/(2*pi));
+    top1 = ceil((obj.Infimum - pi/2)/(2*pi));
+    top2 = ceil((obj.Supremum - pi/2)/(2*pi));
+
+    r.Infimum(bot2-bot1>=1) = -1;
+    r.Infimum(bot2-bot1<1) = min(sin(obj.Infimum(bot2-bot1<1)),sin(obj.Supremum(bot2-bot1<1)));
+    r.Supremum(top2-top1>=1) = 1;
+    r.Supremum(top2-top1<1) = max(sin(obj.Infimum(top2-top1<1)),sin(obj.Supremum(top2-top1<1)));
 end 

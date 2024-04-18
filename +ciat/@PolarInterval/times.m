@@ -36,8 +36,6 @@ function r = times(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'double')
@@ -47,19 +45,5 @@ function r = times(obj1,obj2)
         obj2 = ciat.PolarInterval(abs(obj2), angle(obj2));
     end 
 
-    % Loop throught the arrays
-    r(M,N) = ciat.PolarInterval;
-    for m = 1:M
-        for n = 1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            
-            % Calculate product
-            r(m,n).Abs = obj1(m1,n1).Abs * obj2(m2,n2).Abs;
-            r(m,n).Angle = obj1(m1,n1).Angle + obj2(m2,n2).Angle; 
-        end
-    end
+    r = ciat.PolarInterval(obj1.Abs .* obj2.Abs, obj1.Angle + obj2.Angle);
 end

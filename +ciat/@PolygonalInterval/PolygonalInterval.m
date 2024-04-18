@@ -1,4 +1,4 @@
-classdef PolygonalInterval
+classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
 
 % Polygonal interval class for complex interval arithmetic calculations
 %
@@ -292,32 +292,32 @@ classdef PolygonalInterval
         
         
         %% Other functions
-        
-        % Sum
-        function r = sum(obj)
-        % Sum of polygonal intervals
+
+        % In interval
+        function r = ininterval(obj,points)
+        % Check if points are in polygonal intervals
         %
-        % This function creates the polygonal interval representing the 
-        % sum of a set of polygonal intervals
+        % This function checks if a set of points are in a set of
+        % polygonal intervals
         % _________________________________________________________________________
-        % USAGE        
-        %   r = sum(obj)
+        % USAGE
+        %   r = ininterval(obj,points)
         % _________________________________________________________________________
-        % NECESSARY ARGUMENT
+        % NECESSARY ARGUMENTS
         %   obj       : array of objects from the ciat.PolygonalInterval class
+        %   points    : array of points to be checked
         % _________________________________________________________________________
         % OPTIONS
         % _________________________________________________________________________
         % EXAMPLES
-        %   polyInt = sum([ciat.PolygonalInterval([0,1,1i]), ...
-        %                    ciat.PolygonalInterval([0,-1,-1i])]);
+        %   polyInt = ciat.PolygonalInterval([0,1,1i]);
+        %   r = ininterval(polyInt,[0.5,0.5i])
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
-            end
+            r = inpolygon(real(points),imag(points),...
+                          real(obj.Points),imag(obj.Points));
         end
         
+               
         % Subtraction (minus)
         function r = minus(obj1,obj2)
         % Subtraction of polygonal intervals (- operator)
@@ -448,6 +448,7 @@ classdef PolygonalInterval
         
         %% Function headers
         r = plus(obj1,obj2)
+        r = sum(obj,varargin)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
         points = sortPoints(obj)
@@ -465,5 +466,89 @@ classdef PolygonalInterval
         end
 
     end
+
+    % methods (Access=protected)
+    %     function varargout = parenReference(obj, indexOp)
+    %         % disp('parenReference')
+    %         obj.Real = obj.Real.(indexOp(1));
+    %         obj.Imag = obj.Imag.(indexOp(1));
+    %         if isscalar(indexOp)
+    %             varargout{1} = obj;
+    %             return;
+    %         end
+    %         [varargout{1:nargout}] = obj.(indexOp(2:end));
+    %     end
+
+    %     function obj = parenAssign(obj,indexOp,varargin)
+    %         % disp('parenAssign')
+    %         % Ensure object instance is the first argument of call.
+    %         if isempty(obj)
+    %             % This part is for initializing an array of objects
+    %             % such as doing obj(5,2) = ciat.RectangularInterval
+    %             % Might not be the place or the way to do it
+
+    %             % Instanciate object with zero values of correct size.
+    %             obj = ciat.RectangularInterval;
+    %             obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+    %             obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+
+    %             % obj = varargin{1};
+    %             varargin{1} = obj.(indexOp);
+    %         end
+    %         if isscalar(indexOp)
+    %             assert(nargin==3);
+    %             rhs = varargin{1};
+    %             obj.Real.(indexOp) = rhs.Real;
+    %             obj.Imag.(indexOp) = rhs.Imag;
+    %             return;
+    %         end
+    %         [obj.(indexOp(2:end))] = varargin{:};
+    %     end
+
+    %     function n = parenListLength(obj,indexOp,ctx)
+    %         % disp('parenListLength')
+    %         if numel(indexOp) <= 2
+    %             n = 1;
+    %             return;
+    %         end
+    %         containedObj = obj.(indexOp(1:2));
+    %         n = listLength(containedObj,indexOp(3:end),ctx);
+    %     end
+
+    %     function obj = parenDelete(obj,indexOp)
+    %         % disp('parenDelete')
+    %         obj.Real.(indexOp) = [];
+    %         obj.Imag.(indexOp) = [];
+    %     end
+    % end
+
+    % methods (Access=public)
+    %     function out = cat(dim,varargin)
+    %         % disp('cat')
+    %         numCatArrays = nargin-1;
+    %         newArgs = cell(numCatArrays,1);
+    %         for ix = 1:numCatArrays
+    %             if isa(varargin{ix},'RealInterval')
+    %                 newArgs{ix} = varargin{ix}.Real;
+    %                 newArgs{ix} = varargin{ix}.Imag;
+    %             else
+    %                 newArgs{ix} = varargin{ix};
+    %             end
+    %         end
+    %         out = RealInterval(cat(dim,newArgs{:}));
+    %     end
+
+    %     function varargout = size(obj,varargin)
+    %         % disp('size')
+    %         [varargout{1:nargout}] = size(obj.Real,varargin{:});
+    %     end
+    % end
+
+    % methods (Static, Access=public)
+    %     function obj = empty()
+    %         disp('empty')
+    %         obj = ciat.RectangularInterval;
+    %     end
+    % end
 end
 

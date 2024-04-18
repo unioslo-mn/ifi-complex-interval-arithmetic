@@ -1,12 +1,12 @@
-function r = cos(obj)
+function r = cosh(obj)
 
-% Cosine of real intervals
+% Hyperbolic cosine of real intervals
 %
-% This function creates the real intervals representing the cosine 
+% This function creates the real intervals representing the hyperbolic cosine 
 % of the given set of real intervals (see MATLAB cos function).
 % _________________________________________________________________________
 % USAGE        
-%   r = cos(obj)
+%   r = cosh    (obj)
 % _________________________________________________________________________
 % NECESSARY ARGUMENT
 %   obj        : array of objects from the ciat.RealInterval class
@@ -14,7 +14,7 @@ function r = cos(obj)
 % OPTIONS
 % _________________________________________________________________________
 % EXAMPLES
-%   realInt = cos(ciat.RealInterval(0,1));
+%   realInt = cosh(ciat.RealInterval(0,1));
 % _________________________________________________________________________
 %
 % Copyright (C) 2023 H. Arnestad and G. Gereb, BSD-3
@@ -25,24 +25,14 @@ function r = cos(obj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-
-    % Check input class
-    mustBeA(obj,"ciat.RealInterval");
-    
     % Get input size
     [M,N] = size(obj);
     
     % Calculate sum
     r(M,N) = ciat.RealInterval;
+    % cosh function is decreasing on negative numbers and increasing on positive numbers
+    r.Supremum = max(cosh(obj.Supremum),cosh(obj.Infimum));
+    r.Infimum = min(cosh(obj.Supremum),cosh(obj.Infimum));
 
-    bot1 = ceil((obj.Infimum + pi)/(2*pi));
-    bot2 = ceil((obj.Supremum + pi)/(2*pi));
-    top1 = ceil((obj.Infimum)/(2*pi));
-    top2 = ceil((obj.Supremum)/(2*pi));
-
-    r.Infimum(bot2-bot1>=1) = -1;
-    r.Infimum(bot2-bot1<1) = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
-    r.Supremum(top2-top1>=1) = 1;
-    r.Supremum(top2-top1<1) = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
-
-end  
+    r.Infimum(obj.Infimum <= 0 & obj.Supremum >= 0) = 1;
+end 

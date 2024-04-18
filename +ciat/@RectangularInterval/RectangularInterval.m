@@ -1,4 +1,4 @@
-classdef RectangularInterval
+classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
     
 % Rectangular interval class for complex interval arithmetic calculations
 %
@@ -55,7 +55,7 @@ classdef RectangularInterval
         % double type input this results in degenerate intervals.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.RectangularInterval(center,radius)
+        %   ciat.RectangularInterval(realInf, realSup, imagInf, imagSup)
         %   ciat.RectangularInterval(obj)
         %   ciat.RectangularInterval
         % _________________________________________________________________________
@@ -104,12 +104,8 @@ classdef RectangularInterval
                     
                     % Create object array
                     obj(M,N) = obj;
-                    for m = 1:M
-                        for n = 1:N
-                            obj(m,n).Real = varargin{1}(m,n);
-                            obj(m,n).Imag = varargin{2}(m,n);
-                        end
-                    end
+                    obj.Real = varargin{1};
+                    obj.Imag = varargin{2};
                 case 4
                     % Four input arguments of doubles is also a default way
                     % of defining rectangular intervals 
@@ -125,20 +121,9 @@ classdef RectangularInterval
                     [M4,N4] = size(varargin{4});
                     assert(var([M1,M2,M3,M4]) == 0 && ...
                            var([N1,N2,N3,N4]) == 0)
-                    M = M1;
-                    N = N1;
-                    % Create object array
-                    obj(M,N) = obj;
-                    for m = 1:M
-                        for n = 1:N
-                            obj(m,n).Real = ciat.RealInterval(...
-                                                        varargin{1}(m,n),...
-                                                        varargin{2}(m,n));
-                            obj(m,n).Imag = ciat.RealInterval(...
-                                                        varargin{3}(m,n),...
-                                                        varargin{4}(m,n));
-                        end
-                    end
+
+                    obj.Real = ciat.RealInterval(varargin{1},varargin{2});
+                    obj.Imag = ciat.RealInterval(varargin{3},varargin{4});
             end
             
         end
@@ -162,8 +147,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = real(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
@@ -184,8 +168,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = imag(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         %% Dependent properties
@@ -194,10 +177,7 @@ classdef RectangularInterval
         function value = get.Abs(obj)
             value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
                           abs(obj.Imag) * abs(obj.Imag) );
-            if obj.Real.Infimum <= 0 && obj.Real.Supremum >= 0 && ...
-               obj.Imag.Infimum <= 0 && obj.Imag.Supremum >= 0
-                value.Infimum = 0;
-            end 
+            value.Infimum(obj.ininterval(0)) = 0;
         end
         function value = abs(obj)
         % Absolute value of rectangular intervals
@@ -216,8 +196,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
@@ -229,11 +208,12 @@ classdef RectangularInterval
             alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
             value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
             
-            if obj.Real.Infimum <= 0 && ...
-               obj.Imag.Infimum <= 0 && obj.Imag.Supremum >= 0
-                value.Infimum = 0;
-                value.Supremum = 2*pi;
-            end         
+            value.Infimum(obj.Real.Infimum <= 0 & ...
+                          obj.Imag.Infimum <= 0 & ...
+                          obj.Imag.Supremum >= 0) = 0;
+            value.Supremum(obj.Real.Infimum <= 0 & ...
+                           obj.Imag.Infimum <= 0 & ...
+                           obj.Imag.Supremum >= 0) = 2*pi;
         end
         function value = angle(obj)
         % Angle of rectangular intervals
@@ -252,8 +232,7 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
         
         % Area
@@ -277,62 +256,95 @@ classdef RectangularInterval
         % EXAMPLES
         %   rectInt = abs(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Area],M,N);
+            value = obj.Area;
         end
         
         %% Other methods
         
         % Equal
         function r = eq(obj1,obj2)
-            % Equality rectangular intervals
-            %
-            % This function checks if two sets of rectangular intervals are equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = eq(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RectangularInterval class
-            %   obj2      : array of objects from the ciat.RectangularInterval class
-            % _________________________________________________________________________
-            % OPTIONS
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = eq(ciat.RectangularInterval(0,1,2,3), ...
-            %          ciat.RectangularInterval(0,1,2,3));
-            % _________________________________________________________________________
-                [M1,N1] = size(obj1);
-                [M2,N2] = size(obj2);
-                assert(M1 == M2 && N1 == N2)
-                r = all([obj1.Real] == [obj2.Real]) && all([obj1.Imag] == [obj2.Imag]);
+        % Equality rectangular intervals
+        %
+        % This function checks if two sets of rectangular intervals are equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = eq(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RectangularInterval class
+        %   obj2      : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = eq(ciat.RectangularInterval(0,1,2,3), ...
+        %          ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            r = all(obj1.Real == obj2.Real, "all") && ...
+                all(obj1.Imag == obj2.Imag, "all");
         end
 
         % Not equal
         function r = ne(obj1, obj2)
-            % Not equal rectangular intervals
-            %
-            % This function checks if two sets of rectangular intervals are not equal
-            % _________________________________________________________________________
-            % USAGE
-            %   r = ne(obj1,obj2)
-            % _________________________________________________________________________
-            % NECESSARY ARGUMENTS
-            %   obj1      : array of objects from the ciat.RectangularInterval class
-            %   obj2      : array of objects from the ciat.RectangularInterval class
-            % _________________________________________________________________________
-            % EXAMPLES
-            %   r = ne(ciat.RectangularInterval(0,1,2,3), ...
-            %          ciat.RectangularInterval(0,1,2,3));
-            % _________________________________________________________________________
+        % Not equal rectangular intervals
+        %
+        % This function checks if two sets of rectangular intervals are not equal
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ne(obj1,obj2)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj1      : array of objects from the ciat.RectangularInterval class
+        %   obj2      : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ne(ciat.RectangularInterval(0,1,2,3), ...
+        %          ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
             [M1,N1] = size(obj1);
             [M2,N2] = size(obj2);
             assert(M1 == M2 && N1 == N2)
-            r = any([obj1.Real] ~= [obj2.Real]) && any([obj1.Imag] ~= [obj2.Imag]);
-        end            
+            r = any(obj1.Real ~= obj2.Real, "all") || ...
+                any(obj1.Imag ~= obj2.Imag, "all");
+        end
+
+        function r = transpose(obj)
+            r = obj;
+            r.Real = r.Real.';
+            r.Imag = r.Imag.';
+        end
+
+        function r = ctranspose(obj)
+            r = obj;
+            r.Real = r.Real.';
+            r.Imag = -r.Imag.';
+        end
+
+        function r = ininterval(obj, x)
+        % Contains rectangular intervals
+        %
+        % This function checks if a set of rectangular intervals contains
+        % a given value. Returns a logical array of the same size as the
+        % input array.
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ininterval(obj, x)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        %   x         : complex value
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ininterval(ciat.RectangularInterval(0,1,2,3), 0.5);
+        % _________________________________________________________________________
+            r = obj.Real.ininterval(real(x)) & obj.Imag.ininterval(imag(x));
+        end
 
         % Sum
-        function r = sum(obj)
+        function r = sum(obj,varargin)
         % Sum of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -350,10 +362,8 @@ classdef RectangularInterval
         %   rectInt = sum([ciat.RectangularInterval(0,1,2,3), ...
         %                    ciat.RectangularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                r = r + obj(n);
-            end
+            r = ciat.RectangularInterval(sum(obj.Real,varargin{:}) , ...
+                                         sum(obj.Imag,varargin{:}));
         end
         
         % Subtraction (minus)
@@ -377,6 +387,178 @@ classdef RectangularInterval
         %             ciat.RectangularInterval(0,1,2,3);
         % _________________________________________________________________________
             r = obj1 + (-obj2);
+        end
+
+        % Exponential
+        function r = exp(obj)
+        % Exponential value of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % exponential value of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = exp(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = exp(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(exp(obj.Real).*cos(obj.Imag), ...
+                                         exp(obj.Real).*sin(obj.Imag));
+        end
+
+        % Logarithm
+        function r = log(obj)
+        % Logarithm of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % logarithm of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = log(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : object from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = log(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(log(abs(obj)), angle(obj));
+        end
+
+        % Sine
+        function r = sin(obj)
+        % Sine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % sine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = sin(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = sin(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(sin(obj.Real).*cosh(obj.Imag), cos(obj.Real).*sinh(obj.Imag));
+        end
+
+        % Cosine
+        function r = cos(obj)
+        % Cosine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % cosine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cos(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cos(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = ciat.RectangularInterval(cos(obj.Real).*cosh(obj.Imag), -sin(obj.Real).*sinh(obj.Imag));
+        end
+
+        % Cotangent
+        function r = cot(obj)
+        % Cotangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % cotangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cot(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cot(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = tan(pi/2 - obj);
+        end
+
+        % Hyperbolic sine
+        function r = sinh(obj)
+        % Hyperbolic sine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic sine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = sinh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = sinh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = -1j.*sin(1j.*obj);
+        end
+
+        % Hyperbolic cosine
+        function r = cosh(obj)
+        % Hyperbolic cosine of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic cosine of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = cosh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = cosh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = cos(1j.*obj);
+        end
+
+        % Hyperbolic tangent
+        function r = tanh(obj)
+        % Hyperbolic tangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic tangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = tanh(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = tanh(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = -1j.*tan(1j.*obj);
+        end
+
+        % Hyperbolic cotangent
+        function r = coth(obj)
+        % Hyperbolic cotangent of rectangular intervals
+        %
+        % This function creates the rectangular interval representing the
+        % hyperbolic cotangent of a set of rectangular intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = coth(obj)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        %   obj       : array of objects from the ciat.RectangularInterval class
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   rectInt = coth(ciat.RectangularInterval(0,1,2,3));
+        % _________________________________________________________________________
+            r = 1j.*cot(1j.*obj);
         end
         
         % Union
@@ -449,10 +631,8 @@ classdef RectangularInterval
         %   rectInt = -ciat.RectangularInterval(0,1,2,3);
         % _________________________________________________________________________
             r = obj;
-            for n = 1:length(r(:))
-                r(n).Real = -r(n).Real;
-                r(n).Imag = -r(n).Imag;
-            end
+            r.Real = -r.Real;
+            r.Imag = -r.Imag;
         end  
         
         % Plot
@@ -497,11 +677,103 @@ classdef RectangularInterval
         r = plus(obj1,obj2)
         r = mtimes(obj1,obj2)
         r = times(obj1,obj2)
+        r = recip(obj)
+        r = rdivide(obj1,obj2)
+        r = power(obj1,obj2)
+        r = sqrt(obj)
         
     end
     
     methods (Static)
        outObj = cast(inObj)
+    end
+
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Real = obj.Real.(indexOp(1));
+            obj.Imag = obj.Imag.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.RectangularInterval
+                % Might not be the place or the way to do it
+
+                % Instanciate object with zero values of correct size.
+                obj = ciat.RectangularInterval;
+                obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.Real.(indexOp) = rhs.Real;
+                obj.Imag.(indexOp) = rhs.Imag;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            obj.Real.(indexOp) = [];
+            obj.Imag.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.RectangularInterval')
+                    newArgs{ix} = varargin{ix}.Real;
+                    newArgs2{ix} = varargin{ix}.Imag;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.RectangularInterval(cat(dim,newArgs{:}), ...
+                                           cat(dim,newArgs2{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            [varargout{1:nargout}] = size(obj.Real,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.RectangularInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Real = reshape(obj.Real,varargin{:});
+            obj.Imag = reshape(obj.Imag,varargin{:});
+        end
     end
 end
 
