@@ -23,6 +23,7 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
 
     properties
         Tolerance;      % Maximum distance from the boundary of the represented interval (except where it is concave)
+        ProbaGrid;      % Probability grid for the interval
     end
     
     properties (Dependent)
@@ -142,6 +143,30 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         % Get points (retrieve from hidden property Boundary)
         function value = get.Points(obj)
             value = obj.Boundary;
+        end
+
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            % Set probability grid of polygonal interval
+            %
+            % This function sets the probability grid of a polygonal interval
+            % _________________________________________________________________________
+            % USAGE
+            %   obj = setProbaGrid(obj, distribution_name, varargin)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj                 : array of objects from the ciat.PolygonalInterval class
+            %   distribution_name   : name of the distribution to be used
+            % _________________________________________________________________________
+            % OPTIONS
+            %   'nx'               : number of points in the x direction
+            %   'ny'               : number of points in the y direction
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   polyInt = ciat.PolygonalInterval([0,1,1i]);
+            %   polyInt = setProbaGrid(polyInt, 'uniform');
+            % _________________________________________________________________________
+            obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
         end
         
         %% Dependent properties
@@ -438,6 +463,12 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
+                % If interval has a probability grid, plot it
+                if ~isempty(obj(n).ProbaGrid)
+                    [X, Y] = meshgrid(obj(n).ProbaGrid.x, obj(n).ProbaGrid.y);
+                    obj(n).ProbaGrid.plot('AlphaData', obj(n).ininterval(X+1i*Y));
+                end
+
                 points = cat(1,obj(n).Points, obj(n).Points(1));
                 h = [h;plot(real(points), imag(points), varargin{:})];    
             end

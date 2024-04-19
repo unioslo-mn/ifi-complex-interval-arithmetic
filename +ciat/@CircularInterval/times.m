@@ -47,10 +47,16 @@ function r = times(obj1,obj2)
         obj2 = ciat.CircularInterval(obj2, 0);
     end 
 
-    % Loop throught the arrays
     r(M,N) = ciat.CircularInterval;
     r.Center = obj1.Center .* obj2.Center;
     r.Radius = abs(obj1.Center) .* obj2.Radius + ...
                abs(obj2.Center) .* obj1.Radius + ...
                obj1.Radius .* obj2.Radius;
+
+    % If the interval has a probability grid, compute the product
+    if ~isempty(obj1.ProbaGrid) && ~isempty(obj2.ProbaGrid)
+        r.ProbaGrid = obj1.ProbaGrid .* obj2.ProbaGrid;
+        % Fit the grid to the new interval
+        r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+    end
 end

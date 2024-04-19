@@ -48,6 +48,14 @@ function r = plus(obj1,obj2)
             
     r = ciat.RectangularInterval(obj1.Real + obj2.Real, ...
                                  obj1.Imag + obj2.Imag);
+
+    % If the interval has a probability grid, compute the sum
+    if ~isempty(obj1.ProbaGrid) && ~isempty(obj2.ProbaGrid)
+        r.ProbaGrid = obj1.ProbaGrid + obj2.ProbaGrid;
+        % Fit the grid to the new interval
+        r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+    end
+
 end
 
         

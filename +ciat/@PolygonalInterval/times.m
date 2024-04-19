@@ -57,4 +57,11 @@ function r = times(obj1,obj2)
             r(m,n).Points = r(m,n).Boundary;
         end
     end
+
+    % If the interval has a probability grid, compute the product
+    if ~isempty(obj1.ProbaGrid) && ~isempty(obj2.ProbaGrid)
+        r.ProbaGrid = obj1.ProbaGrid .* obj2.ProbaGrid;
+        % Fit the grid to the new interval
+        r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+    end
 end

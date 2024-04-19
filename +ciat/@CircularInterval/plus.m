@@ -46,4 +46,11 @@ function r = plus(obj1,obj2)
     end 
             
     r = ciat.CircularInterval(obj1.Center + obj2.Center, obj1.Radius + obj2.Radius);
+
+    % If the interval has a probability grid, compute the sum
+    if ~isempty(obj1.ProbaGrid) && ~isempty(obj2.ProbaGrid)
+        r.ProbaGrid = obj1.ProbaGrid + obj2.ProbaGrid;
+        % Fit the grid to the new interval
+        r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+    end
 end

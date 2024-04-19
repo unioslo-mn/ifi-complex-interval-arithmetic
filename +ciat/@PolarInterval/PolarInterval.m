@@ -24,6 +24,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
     properties
         Abs;    % Projection of the polar interval to the absolute value axis
         Angle;  % Projection of the polar interval to the angle axis
+        ProbaGrid; % Probability grid for the interval
     end
     
     properties (Dependent)
@@ -176,6 +177,15 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         %   polarInt = abs(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
             value = obj.Angle;
+        end
+
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            % Give a warning if the interval is not scalar
+            if ~isscalar(obj)
+                warning('Probability grid is not yet implemented for non-scalar intervals')
+            end
+            obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
         end
         
         %% Dependent properties
@@ -439,6 +449,12 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
             [M,N] = size(obj); 
             h = [];
             for n = 1:length(obj(:))
+                % If interval has a probability grid, plot it
+                if ~isempty(obj(n).ProbaGrid)
+                    [X, Y] = meshgrid(obj(n).ProbaGrid.x, obj(n).ProbaGrid.y);
+                    obj(n).ProbaGrid.plot('AlphaData', obj(n).ininterval(X+1i*Y));
+                end
+                
                 angles = linspace(obj(n).Angle.Infimum, ...
                                   obj(n).Angle.Supremum, 200);
                 curve_outer = obj(n).Abs.Supremum * exp(1j*angles);
