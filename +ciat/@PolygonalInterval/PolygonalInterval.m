@@ -342,33 +342,7 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
                           real(obj.Points),imag(obj.Points));
         end
         
-        % Sum
-        function r = sum(obj)
-        % Sum of polygonal intervals
-        %
-        % This function creates the polygonal interval representing the 
-        % sum of a set of polygonal intervals
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = sum(obj)
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.PolygonalInterval class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = sum([ciat.PolygonalInterval([0,1,1i]), ...
-        %                    ciat.PolygonalInterval([0,-1,-1i])]);
-        % _________________________________________________________________________
-            % Should behave like the built-in sum function
-            % For now returns the sum of the elements of A along the first array dimension
-            r = obj(1, :);
-            for n = 2:size(obj,1)
-                r(1, :) = r(1, :) + obj(n, :);
-            end
-        end
-        
+               
         % Subtraction (minus)
         function r = minus(obj1,obj2)
         % Subtraction of polygonal intervals (- operator)
@@ -505,6 +479,7 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         
         %% Function headers
         r = plus(obj1,obj2)
+        r = sum(obj,varargin)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
         points = sortPoints(obj)

@@ -354,7 +354,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         % Sum
-        function r = sum(obj)
+        function r = sum(obj,varargin)
         % Sum of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -372,8 +372,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   rectInt = sum([ciat.RectangularInterval(0,1,2,3), ...
         %                    ciat.RectangularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            r = ciat.RectangularInterval(sum([obj.Real]) , ...
-                                         sum([obj.Imag]));
+            r = ciat.RectangularInterval(sum(obj.Real,varargin{:}) , ...
+                                         sum(obj.Imag,varargin{:}));
         end
         
         % Subtraction (minus)

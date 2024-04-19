@@ -299,7 +299,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         end
         
         % Sum
-        function r = sum(obj)
+        function r = sum(obj,varargin)
         % Sum of real intervals
         %
         % This function creates the real interval representing the 
@@ -317,11 +317,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = sum([ciat.RealInterval(0,1), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            % r = obj(1);
-            % for n = 2:length(obj(:))
-            %     r = r + obj(n);
-            % end
-            r = ciat.RealInterval(sum(obj.Infimum), sum(obj.Supremum));
+            r = ciat.RealInterval(sum(obj.Infimum, varargin{:}),...
+                                  sum(obj.Supremum,varargin{:}));
         end
         
         % Negative (uminus)
