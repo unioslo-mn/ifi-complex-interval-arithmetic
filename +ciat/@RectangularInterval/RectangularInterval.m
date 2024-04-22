@@ -125,8 +125,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
 
                     obj.Real = ciat.RealInterval(varargin{1},varargin{2});
                     obj.Imag = ciat.RealInterval(varargin{3},varargin{4});
-            end
-            
+            end 
         end
         
         %% Defining properties
@@ -172,14 +171,14 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             value = obj.Imag;
         end
 
-        % Set probability grid
-        function obj = setProbaGrid(obj, distribution_name, varargin)
-            % Give a warning if the interval is not scalar
-            if ~isscalar(obj)
-                warning('Probability grid is not yet implemented for non-scalar intervals')
-            end
-            obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
-        end
+        % % Set probability grid
+        % function obj = setProbaGrid(obj, distribution_name, varargin)
+        %     % Give a warning if the interval is not scalar
+        %     if ~isscalar(obj)
+        %         warning('Probability grid is not yet implemented for non-scalar intervals')
+        %     end
+        %     obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
+        % end
         
         %% Dependent properties
         
@@ -374,6 +373,13 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             r = ciat.RectangularInterval(sum(obj.Real,varargin{:}) , ...
                                          sum(obj.Imag,varargin{:}));
+
+            % If the interval has a probability grid, compute the sum
+            if ~isempty(obj.ProbaGrid)
+                r.ProbaGrid = sum(obj.ProbaGrid,varargin{:});
+                % Fit the grid to the new interval
+                r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+            end
         end
         
         % Subtraction (minus)
@@ -709,6 +715,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             % disp('parenReference')
             obj.Real = obj.Real.(indexOp(1));
             obj.Imag = obj.Imag.(indexOp(1));
+            obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -727,6 +734,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 obj = ciat.RectangularInterval;
                 obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
                 obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);
@@ -738,7 +746,17 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 obj.Imag.(indexOp) = rhs.Imag;
                 return;
             end
-            [obj.(indexOp(2:end))] = varargin{:};
+            % [obj.(indexOp(2:end))] = varargin{:};
+            % [obj(indexOp(1).Indices{:}).(indexOp(2))] = varargin{:};
+
+            switch indexOp(2).Name
+                case "Real"
+                    obj.Real(indexOp(1).Indices{:}) = varargin{:};
+                case "Imag"
+                    obj.Imag(indexOp(1).Indices{:}) = varargin{:};
+                case "ProbaGrid"
+                    obj.ProbaGrid(indexOp(1).Indices{:}) = varargin{:};
+            end
         end
 
         function n = parenListLength(obj,indexOp,ctx)
@@ -761,16 +779,19 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             numCatArrays = nargin-1;
             newArgs = cell(numCatArrays,1);
             newArgs2 = cell(numCatArrays,1);
+            newArgs3 = cell(numCatArrays,1);
             for ix = 1:numCatArrays
                 if isa(varargin{ix},'ciat.RectangularInterval')
                     newArgs{ix} = varargin{ix}.Real;
                     newArgs2{ix} = varargin{ix}.Imag;
+                    newArgs3{ix} = varargin{ix}.ProbaGrid;
                 else
                     newArgs{ix} = varargin{ix};
                 end
             end
             out = ciat.RectangularInterval(cat(dim,newArgs{:}), ...
                                            cat(dim,newArgs2{:}));
+            out.ProbaGrid = cat(dim,newArgs3{:});
         end
 
         function varargout = size(obj,varargin)
@@ -789,6 +810,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         function obj = reshape(obj,varargin)
             obj.Real = reshape(obj.Real,varargin{:});
             obj.Imag = reshape(obj.Imag,varargin{:});
+            obj.ProbaGrid = reshape(obj.ProbaGrid,varargin{:});
         end
     end
 end

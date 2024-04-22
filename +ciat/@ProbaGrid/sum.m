@@ -21,8 +21,8 @@ function r = sum(obj,varargin)
     if ( M == 1 && N == 1)
         r = obj;
     elseif ( M == 1 || N == 1 )
-        r = 0;
-        for n = 1:max(M,N)
+        r = obj(1);
+        for n = 2:max(M,N)
             r = r + obj(n);
         end
     else
@@ -39,14 +39,7 @@ function r = sum(obj,varargin)
                 error('Parameter two is invalid.')
             end
         end
-    end
-
-    % If the interval has a probability grid, compute the sum
-    if ~isempty([obj.ProbaGrid])
-        r.ProbaGrid = sum([obj.ProbaGrid],varargin{:});
-        % Fit the grid to the new interval
-        r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
-    end
+    end    
 end
 
 %% Function for summing along dimension 1
@@ -74,8 +67,11 @@ end
 %% Function for summing along all dimension
 function r = sumAll(obj)
     [M,N] = size(obj);
-    r = 0;
-    for m = 1:M
+    r = obj(1,1);
+    for n = 2:N
+        r = r + obj(1, n);
+    end
+    for m = 2:M
         for n = 1:N
             r = r + obj(m, n);
         end

@@ -151,14 +151,14 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             value = obj.Radius;
         end
 
-        % Set probability grid
-        function obj = setProbaGrid(obj, distribution_name, varargin)
-            % Give a warning if the interval is not scalar
-            if ~isscalar(obj)
-                warning('Probability grid is not yet implemented for non-scalar intervals')
-            end
-            obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
-        end
+        % % Set probability grid
+        % function obj = setProbaGrid(obj, distribution_name, varargin)
+        %     % Give a warning if the interval is not scalar
+        %     if ~isscalar(obj)
+        %         warning('Probability grid is not yet implemented for non-scalar intervals')
+        %     end
+        %     obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
+        % end
         
         %% Dependent properties
         
@@ -399,6 +399,13 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             r = ciat.CircularInterval(sum(obj.Center,varargin{:}), ...
                                       sum(obj.Radius,varargin{:}));
+
+            % If the interval has a probability grid, compute the sum
+            if ~isempty(obj.ProbaGrid)
+                r.ProbaGrid = sum(obj.ProbaGrid,varargin{:});
+                % Fit the grid to the new interval
+                r.ProbaGrid = r.ProbaGrid.fitToInterval(r);
+            end
         end
                 
         % Negative (uminus)
@@ -501,6 +508,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             % disp('parenReference')
             obj.Center = obj.Center.(indexOp(1));
             obj.Radius = obj.Radius.(indexOp(1));
+            obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -519,6 +527,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
                 obj = ciat.CircularInterval;
                 obj.Center = zeros([indexOp.Indices{:}]);
                 obj.Radius = zeros([indexOp.Indices{:}]);
+                obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);
@@ -530,7 +539,16 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
                 obj.Radius.(indexOp) = rhs.Radius;
                 return;
             end
-            [obj.(indexOp(2:end))] = varargin{:};
+            % [obj.(indexOp(2:end))] = varargin{:};
+
+            switch indexOp(2).Name
+                case "Center"
+                    obj.Center(indexOp(1).Indices{:}) = varargin{:};
+                case "Radius"
+                    obj.Radius(indexOp(1).Indices{:}) = varargin{:};
+                case "ProbaGrid"
+                    obj.ProbaGrid(indexOp(1).Indices{:}) = varargin{:};
+            end
         end
 
         function n = parenListLength(obj,indexOp,ctx)
@@ -557,12 +575,14 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
                 if isa(varargin{ix},'ciat.CircularInterval')
                     newArgs{ix} = varargin{ix}.Center;
                     newArgs2{ix} = varargin{ix}.Radius;
+                    newArgs3{ix} = varargin{ix}.ProbaGrid;
                 else
                     newArgs{ix} = varargin{ix};
                 end
             end
             out = ciat.CircularInterval(cat(dim,newArgs{:}), ...
                                            cat(dim,newArgs2{:}));
+             out.ProbaGrid = cat(dim,newArgs3{:});
         end
 
         function varargout = size(obj,varargin)
@@ -581,6 +601,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         function obj = reshape(obj,varargin)
             obj.Center = reshape(obj.Center,varargin{:});
             obj.Radius = reshape(obj.Radius,varargin{:});
+            obj.ProbaGrid = reshape(obj.ProbaGrid,varargin{:});
         end
     end
 end

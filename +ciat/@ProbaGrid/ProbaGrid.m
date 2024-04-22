@@ -156,90 +156,6 @@ classdef ProbaGrid
             obj.Pdf = obj.Pdf./(sum(obj.Pdf(:)) .* obj.dx .* obj.dy);
         end
 
-        % Addition
-        function obj = plus(obj, other)
-            % Compute the distribution of the sum of the two random
-            % variables. This is done by convolving the two pdfs.
-
-            new_nx = max(obj.nx, other.nx);
-            new_ny = max(obj.ny, other.ny);
-
-            % Interpolate the grid with the smallest step size
-            [pdf1, pdf2, new_dx, new_dy] = match_step_size(obj, other);
-
-            % Convolve the two pdfs
-            pdf = conv2(pdf1, pdf2, "full") .* new_dx .* new_dy;
-
-            % Create a new ProbaGrid object
-            new_x = linspace(obj.x(1) + other.x(1), obj.x(end) + other.x(end), length(pdf(1,:)));
-            new_y = linspace(obj.y(1) + other.y(1), obj.y(end) + other.y(end), length(pdf(:,1)));
-            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
-            % obj = obj.normalize();  
-
-            % Keep the same grid size
-            new_x = linspace(obj.x(1), obj.x(end), new_nx);
-            new_y = linspace(obj.y(1), obj.y(end), new_ny);
-            obj = obj.adjust(new_x, new_y);
-        end
-
-        % Log
-        function obj = log(obj)
-            % Compute the distribution of the log of the random variable.
-
-            % First compute the new grid
-            log_points = log(obj.x + 1i * obj.y.');
-            new_x = linspace(min(real(log_points(:))), max(real(log_points(:))), obj.nx);
-            new_y = linspace(min(imag(log_points(:))), max(imag(log_points(:))), obj.ny);
-
-            exp_points = exp(new_x + 1i * new_y.');
-
-            pdf = interp2(obj.x, obj.y, obj.Pdf, real(exp_points), imag(exp_points), "linear", 0) .* abs(exp_points);
-
-            % Create a new ProbaGrid object
-            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
-            % obj = obj.normalize();
-        end
-
-        % Exp
-        function obj = exp(obj)
-            % % Compute the distribution of the exp of the random variable.
-
-            % First compute the new grid
-            exp_points = exp(obj.x + 1i * obj.y.');
-            new_x = linspace(min(real(exp_points(:))), max(real(exp_points(:))), obj.nx);
-            new_y = linspace(min(imag(exp_points(:))), max(imag(exp_points(:))), obj.ny);
-            [new_X, new_Y] = meshgrid(new_x, new_y);
-
-            % Note that this would need to be summed for each multiple of 2*pi for the actual result
-            % However, for the case of the product (which is the only one we need), the result only
-            % needs three terms, as the other are zero.
-            pdf = (interp2(obj.x, obj.y, obj.Pdf, real(log(new_X + 1i * new_Y)),         imag(log(new_X + 1i * new_Y)), "linear", 0) + ...
-                   interp2(obj.x, obj.y, obj.Pdf, real(log(new_X + 1i * new_Y)+2*1j*pi), imag(log(new_X + 1i * new_Y)+2*1j*pi), "linear", 0) + ...
-                   interp2(obj.x, obj.y, obj.Pdf, real(log(new_X + 1i * new_Y)-2*1j*pi), imag(log(new_X + 1i * new_Y)-2*1j*pi), "linear", 0)) ...
-                    ./ abs(new_X + 1i * new_Y);
-
-            % Create a new ProbaGrid object
-            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
-            % obj = obj.normalize();
-        end
-
-        % Multiplication
-        function obj = times(obj, other)
-            % Compute the distribution of the product of the two random
-            % variables.
-
-            new_nx = max(obj.nx, other.nx);
-            new_ny = max(obj.ny, other.ny);
-
-            obj = exp(log(obj) + log(other));
-            % obj = obj.normalize();
-
-            % Keep the same grid size
-            new_x = linspace(obj.x(1), obj.x(end), new_nx);
-            new_y = linspace(obj.y(1), obj.y(end), new_ny);
-            obj = obj.adjust(new_x, new_y);
-        end
-
         function obj = mtimes(obj, other)
             % Compute the distribution of the product of the two random
             % variables.
@@ -280,50 +196,7 @@ classdef ProbaGrid
             % obj = obj.normalize();
         end
 
-        % Squared magnitude
-        function obj = abs2(obj)
-            % Compute the distribution of the squared magnitude of the
-            % random variable.
-            % For a variable Z = X + iY, this is |Z|^2 = X^2 + Y^2
-            % Thus this is a real random variable.
-
-            % The new probability grid is only 1D as opposed to the other
-            % operations
-
-            new_nx = max(obj.nx, obj.ny);
-
-            % First compute the new grid
-            abs2_points = abs(obj.x + 1i * obj.y.').^2;
-            new_x = linspace(min(abs2_points(:)), max(abs2_points(:)), new_nx);
-            new_y = 0;
-
-            % Compute the marginal distributions
-            f_X = real(obj).Pdf;
-            f_Y = imag(obj).Pdf;
-
-            pdf = zeros(new_nx, 1);
-            for i = 1:length(new_x)
-                z = new_x(i);
-                if z == 0
-                    continue;
-                end
-                % Compute the integral
-                % Define functions to integrate
-                f_Xf = @(u) interp1(obj.x, f_X, u, 'linear', 0);
-                f_Yf = @(u) interp1(obj.y, f_Y, u, 'linear', 0);
-        
-                f = @(u) ((f_Xf(u) + f_Xf(-u)) .* (f_Yf(sqrt(z-u.^2)) + f_Yf(-sqrt(z-u.^2))) + (f_Yf(u) + f_Yf(-u)) .* (f_Xf(sqrt(z-u.^2)) + f_Xf(-sqrt(z-u.^2)))) ./ sqrt(z-u.^2);
-        
-                pdf(i) = integral(f, 0, sqrt(z/2))/2;
-            end
-
-            % Create a new ProbaGrid object
-            obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
-            % obj = obj.normalize();
-        end
-
-
-        % 
+        % Adjust grid
         function obj = adjust(obj, new_x, new_y)
             % Adjust the grid to the new values of x and y
             % The new values of x and y must be a subset of the old ones
@@ -345,11 +218,17 @@ classdef ProbaGrid
         % Fit to interval
         function obj = fitToInterval(obj, interval)
             % Adjust the grid to the new values of x and y
-
-            new_x = linspace(interval.Real.Infimum, interval.Real.Supremum, obj.nx);
-            new_y = linspace(interval.Imag.Infimum, interval.Imag.Supremum, obj.ny);
-
-            obj = obj.adjust(new_x, new_y);
+            [M,N] = size(obj);
+            
+            for m = 1:M
+                for n = 1:N
+                    new_x = linspace(interval(m,n).Real.Infimum, ...
+                                     interval(m,n).Real.Supremum, obj(m,n).nx);
+                    new_y = linspace(interval(m,n).Imag.Infimum, ...
+                                     interval(m,n).Imag.Supremum, obj(m,n).ny);
+                    obj(m,n) = obj(m,n).adjust(new_x, new_y);
+                end
+            end
         end
 
         % Plot
@@ -362,84 +241,16 @@ classdef ProbaGrid
             axis equal
             colorbar
         end
+
+        %% Function headers
+        obj = plus(obj, other)
+        r = sum(obj,varargin)
+        obj = log(obj)
+        obj = exp(obj)
+        obj = times(obj, other)
+        obj = abs2(obj)
+        plot_areas(obj, interval, n_areas, varargin)
         
-        % Plot areas
-        function plot_areas(obj, interval, n_areas, varargin)
-            % Separate the pdf into n_areas areas, of the same shape
-            % as the original interval but smaller and centered at the
-            % baricenter of the original interval
-            % For each area, plot the probability to be on that zone
-            % as a heatmap
-            % Thus the sum of the probabilities of all the areas is 1,
-            % and the graphs contains n_areas colored zones.
-
-            % Compute the center of the interval
-            center = interval.Real.Midpoint + 1i * interval.Imag.Midpoint;
-
-            interval_centered = interval - center;
-
-            [X,Y] = meshgrid(obj.x, obj.y);
-
-            probas = zeros(n_areas, 1);
-            probas_grid = zeros(size(obj.Pdf));
-            old_mask = zeros(size(obj.Pdf));
-
-            t_values = linspace(0, 1, n_areas+1);
-            hold on
-            for i = 1:n_areas
-                % Compute the new interval
-                new_interval = interval_centered * t_values(i+1) + center;
-
-                % Compute the mask of the new interval
-                mask = new_interval.ininterval(X + 1i * Y);
-                mask = mask & ~old_mask;
-
-                % Save the mask for the next iteration to avoid overlapping
-                old_mask = mask | old_mask;
-
-                % Compute the probability of being in the new interval
-                proba_area = sum(obj.Pdf(mask), "all") * obj.dx * obj.dy;
-
-                probas(i) = proba_area;
-
-                % Fill the probability grid with the computed probability
-                probas_grid(mask) = proba_area;
-            end
-
-            % Plot the heatmap
-            imagesc(obj.x, obj.y, probas_grid, 'AlphaData', interval.ininterval(X + 1i * Y), varargin{:})
-            set(gca,'YDir','normal')
-            % colormap turbo
-            axis equal
-            colorbar
-
-            % Plot all the intervals
-            for i = 1:n_areas
-                % Compute the new interval
-                new_interval = interval_centered * t_values(i+1) + center;
-
-                % Plot the new interval
-                % new_interval.plot("Color", [0 0 0], "LineWidth", 2, 'HandleVisibility','off');
-                
-                % Plot the interval in red if it's the first with cumulative probability greater than 0.5
-                if sum(probas(1:i)) > 0.5 && sum(probas(1:i-1)) < 0.5
-                    new_interval.plot("Color", [1 0 0], "LineWidth", 4, 'DisplayName', "50% probability");
-                end
-
-                % Same in blue for 0.9
-                if sum(probas(1:i)) > 0.9 && sum(probas(1:i-1)) < 0.9
-                    new_interval.plot("Color", [0 0 1], "LineWidth", 4, 'DisplayName', "90% probability");
-                end
-
-                % Same in green for 0.99
-                if sum(probas(1:i)) > 0.99 && sum(probas(1:i-1)) < 0.99
-                    new_interval.plot("Color", [0 1 0], "LineWidth", 4, 'DisplayName', "99% probability");
-                end 
-            end
-
-            
-        end
- 
     end
 
     
@@ -487,14 +298,3 @@ classdef ProbaGrid
     end
 end
 
-% Local functions
-% Function that takes two ProbaGrid objects and returns their two pdfs,
-% where the one with the smallest step size is interpolated on the grid of
-% the other
-function [pdf1, pdf2, new_dx, new_dy] = match_step_size(obj1, obj2)
-    new_dx = max(obj1.dx, obj2.dx);
-    new_dy = max(obj1.dy, obj2.dy);
-
-    pdf1 = interp_pdf(obj1, new_dx, new_dy);
-    pdf2 = interp_pdf(obj2, new_dx, new_dy);
-end
