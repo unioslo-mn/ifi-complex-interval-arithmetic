@@ -9,7 +9,7 @@ function outObj = cast(inObj,inObj2,options)
 % as polygonal intervals.
 % _________________________________________________________________________
 % USAGE        
-%   outObj = ciat.CircularInterval.cast(inObj,inObj2,'tolerance',tol)
+%   outObj = ciat.PolygonalInterval.cast(inObj,inObj2,'tolerance',tol)
 % _________________________________________________________________________
 % NECESSARY ARGUMENT
 %   inObj       : object of one of the following types:
@@ -73,11 +73,11 @@ function outObj = cast(inObj,inObj2,options)
             if isempty(inObj2)
                 inAbs = [inObj.Abs];
                 inAngle = [inObj.Angle];
-                maxRadius = [inAbs.Supremum];
+                maxAbs = [inAbs.Supremum];
                 minAbs = [inAbs.Infimum];
                 maxAngle = [inAngle.Supremum];
                 minAngle = [inAngle.Infimum];
-                angRes = 2 * acos( maxRadius ./ (maxRadius + dR) );
+                angRes = 2 * acos( maxAbs ./ (maxAbs + dR) );
                 cntPoints = ceil((maxAngle - minAngle) ./ angRes) + 1;
                 halfCircle = [inAngle.Width] >= pi;
                 fullCircle = [inAngle.Width] >= 2*pi;
@@ -85,7 +85,7 @@ function outObj = cast(inObj,inObj2,options)
                 % Put together outer arc and inner points: COUNTER-CLOCKWISE ORDER
                 angs = linspace(minAngle, maxAngle, cntPoints);
                 pL = minAbs * exp( 1j * angs(1) ); % inner corner 1
-                rH = (maxRadius + dR) * exp(1j * angs); % outer arc
+                rH = (maxAbs + dR) * exp(1j * angs); % outer arc
                 pH = minAbs * exp( 1j * angs(end));  % inner corner 2
 
                 % Checks and corrections in case a half or full circle is made 

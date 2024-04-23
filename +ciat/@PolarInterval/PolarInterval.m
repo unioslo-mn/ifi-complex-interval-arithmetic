@@ -86,8 +86,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
                     [M,N] = size(varargin{1});
                     obj(M,N) = obj;
                     for n = 1:M*N
-                        obj(n) = ciat.PolarInterval.cast(...
-                                                        varargin{1}(n));
+                        obj(n) = ciat.PolarInterval.cast(varargin{1}(n));
                     end
                 case 2
                     % Two input arguments of real intervals is the default
@@ -435,6 +434,9 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];

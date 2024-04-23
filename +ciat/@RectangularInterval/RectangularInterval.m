@@ -654,6 +654,9 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];

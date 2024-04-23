@@ -435,6 +435,9 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.PolygonalInterval([0,1,1i]));
         % _________________________________________________________________________
             tf = ishold;
+            if tf == false 
+                clf
+            end
             hold on
             h = [];
             for n = 1:length(obj(:))
@@ -461,9 +464,7 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         % Function headers
         outObj = cast(inObj,options)
 
-        function angleOut = wrap2Pi(angleIn)
-            angleOut = rem(2*pi+angleIn, 2*pi);
-        end
+        
 
     end
 

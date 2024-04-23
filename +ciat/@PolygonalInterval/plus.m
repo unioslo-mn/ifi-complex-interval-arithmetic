@@ -86,12 +86,12 @@ function r = add(obj1,obj2)
 
     I = length(obj1.Points) + 1; 
     v = [v; v(1); v(2)];
-    v_arg = ciat.PolygonalInterval.wrap2Pi( angle( v(2:end) - v(1:end-1) ));
+    v_arg = ciat.wrapTo2Pi( angle( v(2:end) - v(1:end-1) ));
     v_arg(end) = v_arg(end) + 2*pi; % otherwise it wraps around
 
     J = length(obj2.Points) + 1; 
     w = [w; w(1); w(2)];
-    w_arg = ciat.PolygonalInterval.wrap2Pi( angle( w(2:end) - w(1:end-1) ));
+    w_arg = ciat.wrapTo2Pi( angle( w(2:end) - w(1:end-1) ));
     w_arg(end) = w_arg(end) + 2*pi; % otherwise it wraps around
 
     p = zeros( I + J, 1);

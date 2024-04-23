@@ -637,15 +637,24 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = intersection([ciat.RealInterval(0,1,2,3), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            N = length(obj(:));
-            assert(N>1)
-            maxInf = max([obj.Infimum]);
-            minSup = min([obj.Supremum]);
-            if maxInf <= minSup
-                r = ciat.RealInterval( maxInf , minSup );
+
+        	N = length(obj(:));
+            if N>1
+                maxInf = max([obj.Infimum]);
+                minSup = min([obj.Supremum]);
+                if maxInf <= minSup
+                    r = ciat.RealInterval( maxInf , minSup );
+                else
+                    r = ciat.RealInterval.empty;
+                end
             else
-                r = ciat.RealInterval.empty;
+                r = obj;
             end
+        end
+
+        % Inside
+        function r = isin(obj,x)
+            r = obj.Infimum <= x & x <= obj.Supremum; 
         end
         
         % Plot
