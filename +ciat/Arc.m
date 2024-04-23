@@ -44,6 +44,8 @@ classdef Arc
                     else
                         obj.Angles = angles;
                     end
+                otherwise
+                    error('incorrect number of input')
             end
 		end
 

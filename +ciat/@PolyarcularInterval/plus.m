@@ -62,9 +62,58 @@ function r = plus(obj1,obj2)
     end
 end
 
-%% Function for adding two polygons
+%% Function for adding two concave polyarcs
 
 function r = add(obj1,obj2)
+    
+    % Extract curve segments by type
+    %   - extract arcs with non-zero radius
+    arc1 = obj1.Arcs(abs([obj1.Arcs.Radius])>0);
+    arc2 = obj2.Arcs(abs([obj2.Arcs.Radius])>0);
+    %   - extract edges with non-zero length
+    edge1 = obj1.Edges([obj1.Edges.Length]>0);
+    edge2 = obj2.Edges([obj2.Edges.Length]>0);    
+    %   - extract all vertices including zero arcs and zero edges
+    vert1 = [obj1.Vertices ; ...
+             obj1.Arcs(abs([obj1.Arcs.Radius])==0) ; ...
+             obj1.Edges([obj1.Edges.Length]==0)];
+    vert2 = [obj2.Vertices ; ...
+             obj2.Arcs(abs([obj2.Arcs.Radius])==0) ; ...
+             obj2.Edges([obj2.Edges.Length]==0)];
+
+
+    % Add arcs and vertices
+    
+
+
+    % Generate result arcs and vertices
+    K = sum(mapMatchMat,'all');
+    seg3(K,1) = ciat.Arc;
+    k = 0;
+    for n=1:N
+        for m = find(mapMatchMat(n,:))
+            k = k + 1;
+            seg3(k).Center = seg1(n).Center + seg2(m).Center; 
+            seg3(k).Radius = seg1(n).Radius + seg2(m).Radius;
+            seg3(k).Angles = mapMatchVal(n,m);
+        end
+    end
+
+
+
+
+
+
+
+
+    r = ciat.PolyarcularInterval(seg3);
+
+
+end
+
+%% Function for adding two convex polyarcs
+
+function r = addConvex(obj1,obj2)
     
     % Create ordered lists of segments (arcs and vertices)
     seg1 = orderSegments(obj1);
@@ -106,6 +155,7 @@ function r = add(obj1,obj2)
 
 
 end
+
 
 %% Function for creating an ordered set of arcs and vertices
 
