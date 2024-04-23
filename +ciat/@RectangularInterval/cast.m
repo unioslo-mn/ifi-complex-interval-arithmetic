@@ -28,8 +28,6 @@ function outObj = cast(inObj)
 % Contact: haavaarn@uio.no, gaborge@uio.no
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
-    [M,N] = size(inObj);
-
     switch class(inObj)
         case 'double'
             outReal = ciat.RealInterval(real(inObj));
@@ -48,6 +46,5 @@ function outObj = cast(inObj)
             error('Invalid input type')
     end
 	outObj = ciat.RectangularInterval(outReal,outImag);       
-    outObj = reshape(outObj,M,N);
 end
 

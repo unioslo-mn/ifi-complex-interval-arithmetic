@@ -2,9 +2,10 @@
 clear all;
 close all;
 
-res = runtests(["RealIntervalTest", "RectangularIntervalTest", "PolarIntervalTest"]);
+res = runtests(["RealIntervalTest", "RectangularIntervalTest", "PolarIntervalTest", "CircularIntervalTest"]);
 table(res)
 
 %table(runtests("RealIntervalTest"))
 %table(runtests("RectangularIntervalTest"))
 %table(runtests("PolarIntervalTest"))
+%table(runtests("CircularIntervalTest"))

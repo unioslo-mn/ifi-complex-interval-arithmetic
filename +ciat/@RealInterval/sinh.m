@@ -1,12 +1,12 @@
-function r = cos(obj)
+function r = sinh(obj)
 
-% Cosine of real intervals
+% Hyperbolic sine of real intervals
 %
-% This function creates the real intervals representing the cosine 
+% This function creates the real intervals representing the hyperbolic sine 
 % of the given set of real intervals (see MATLAB cos function).
 % _________________________________________________________________________
 % USAGE        
-%   r = cos(obj)
+%   r = sinh    (obj)
 % _________________________________________________________________________
 % NECESSARY ARGUMENT
 %   obj        : array of objects from the ciat.RealInterval class
@@ -14,7 +14,7 @@ function r = cos(obj)
 % OPTIONS
 % _________________________________________________________________________
 % EXAMPLES
-%   realInt = cos(ciat.RealInterval(0,1));
+%   realInt = sinh(ciat.RealInterval(0,1));
 % _________________________________________________________________________
 %
 % Copyright (C) 2023 H. Arnestad and G. Gereb, BSD-3
@@ -25,24 +25,5 @@ function r = cos(obj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-
-    % Check input class
-    mustBeA(obj,"ciat.RealInterval");
-    
-    % Get input size
-    [M,N] = size(obj);
-    
-    % Calculate sum
-    r(M,N) = ciat.RealInterval;
-
-    bot1 = ceil((obj.Infimum + pi)/(2*pi));
-    bot2 = ceil((obj.Supremum + pi)/(2*pi));
-    top1 = ceil((obj.Infimum)/(2*pi));
-    top2 = ceil((obj.Supremum)/(2*pi));
-
-    r.Infimum(bot2-bot1>=1) = -1;
-    r.Infimum(bot2-bot1<1) = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
-    r.Supremum(top2-top1>=1) = 1;
-    r.Supremum(top2-top1<1) = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
-
-end  
+    r = ciat.RealInterval(sinh(obj.Infimum),sinh(obj.Supremum));
+end 

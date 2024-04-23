@@ -27,7 +27,7 @@ function points = sortPoints(obj)
 % _________________________________________________________________________
 
     
-    % Exctract points from the object
+    % Extract points from the object
     points = obj.Boundary;
     
     % Remove non-unique points

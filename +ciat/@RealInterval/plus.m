@@ -36,8 +36,8 @@ function r = plus(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
+    % M = max([M1,M2]);
+    % N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'ciat.RealInterval') == 0
@@ -47,19 +47,5 @@ function r = plus(obj1,obj2)
         obj2 = ciat.RealInterval(obj2, obj2);
     end 
     
-    % Loop throught the arrays
-    r(M,N) = ciat.RealInterval;
-    for m=1:M
-        for n=1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            
-            % Calculate sum 
-            r(m,n).Infimum = obj1(m1,n1).Infimum + obj2(m2,n2).Infimum;
-            r(m,n).Supremum = obj1(m1,n1).Supremum + obj2(m2,n2).Supremum;
-         end
-    end
+    r = ciat.RealInterval(obj1.Infimum + obj2.Infimum, obj1.Supremum + obj2.Supremum);
 end

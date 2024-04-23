@@ -44,10 +44,6 @@ rcI.plot('r--');
 rpI = ciat.PolarInterval(rI);
 rpI.plot('r--');
 
-% Rectangular to polygonal
-rgI = ciat.PolygonalInterval(rI);
-rgI.plot('r--');
-
 % Rectangular to polyarcular
 raI = ciat.PolyarcularInterval(rI);
 raI.plot('k:','LineWidth',2);
@@ -111,36 +107,36 @@ apI.plot('r--');
 %% Transform complex intervals
 
 % Negative intervals of all types
-plot(-rI,'c-')
-plot(-cI,'c-')
-plot(-pI,'c-')
-plot(-gI,'c-')
+plot(-rI,'c-');
+plot(-cI,'c-');
+plot(-pI,'c-');
+plot(-gI,'c-');
 
 %% Combine complex intervals
 
 % Add rectangular intervals
 rI_plus = rI + crI;
-rI_plus.plot('g-')
+rI_plus.plot('g-');
 
 % Multiply rectangular intervals
 rI_times = rI * crI;
-rI_times.plot('g-')
+rI_times.plot('g-');
 
 % Add circular intervals
 cI_plus = cI + rcI;
-cI_plus.plot('g-')
+cI_plus.plot('g-');
 
 % Multiply rectangular intervals
 cI_times = cI * rcI;
-cI_times.plot('g-')
+cI_times.plot('g-');
 
 % Multiply polar intervals
 pI_times = cpI * rpI;
-pI_times.plot('g-')
+pI_times.plot('g-');
 
 % Add polygonal intervals
 gI_plus = rgI + cgI;
-gI_plus.plot('g-')
+gI_plus.plot('g-');
 
 % Add polygonal intervals
 gI_plus = rgI + cgI;
@@ -148,7 +144,7 @@ gI_plus.plot('g-')
 
 % Multiply polygonal intervals
 gI_times = rgI * cgI;
-gI_times.plot('g-')
+gI_times.plot('g-');
 
 % Add polyarcular intervals
 aI_plus = ciat.PolyarcularInterval(-pI) + aI;
@@ -158,24 +154,24 @@ aI_plus.plot('g-');
 
 % Union of rectangular intervals
 cI_union = union([-rI,prI]);
-cI_union.plot('r--')
+cI_union.plot('r--');
 
 % Intersection of rectangular intervals
 gI_union = intersection([ciat.RectangularInterval(-cI),grI]);
-gI_union.plot('k--')
+gI_union.plot('k--');
 
 % Union of circular intervals
 cI_union = union([-cI,gcI]);
-cI_union.plot('r--')
+cI_union.plot('r--');
 
 % Union of polar intervals
 cI_union = union([cpI,pI_times]);
-cI_union.plot('r--')
+cI_union.plot('r--');
 
 % Union of polygonal intervals
 gI_union = union([ciat.PolygonalInterval(pI_times),gI_times]);
-gI_union.plot('r--')
+gI_union.plot('r--');
 
 % Intersection of polygonal intervals
 gI_union = intersection([ciat.PolygonalInterval(pI_times),gI_times]);
-gI_union.plot('k--')
+gI_union.plot('k--');
