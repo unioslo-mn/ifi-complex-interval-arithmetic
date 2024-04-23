@@ -594,11 +594,13 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         end
         
         % Union
-        function r = union(obj)
+        function r = union(obj,varargin)
         % Union of real intervals
         %
         % This function creates the real interval representing the 
-        % union of a set of real intervals
+        % union of a set of real intervals it behaves similar to the
+        % MATLAB sum function, so by default it makes the union along the
+        % vertical dimension
         % _________________________________________________________________________
         % USAGE        
         %   r = union(obj)
@@ -612,18 +614,37 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = union([ciat.RealInterval(0,1,2,3), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            N = length(obj(:));
-            assert(N>1)
-            r = ciat.RealInterval( min([obj.Infimum]) , ...
-            max([obj.Supremum]) );
+            
+            [M,N] = size(obj);
+            if M*N > 1
+                if size(varargin) == 0
+                    varargin = {1};
+                end
+                
+                minInf = min(obj.Infimum,[],varargin{:});
+                maxSup = max(obj.Supremum,[],varargin{:});
+
+                r = ciat.RealInterval( minInf , maxSup );
+
+                r(width(intersection(obj,varargin{:}))==0) = 0;
+            else
+                r = obj;
+            end
         end
+        % alias for the union
+        function r = cup(obj,varargin)
+            r = union(obj,varargin{:});
+        end
+
         
         % Intersection
-        function r = intersection(obj)
+        function r = intersection(obj,varargin)
         % Intersection of real intervals
         %
         % This function creates the real interval representing the 
-        % intersection of a set of real intervals
+        % intersection of a set of real intervals it behaves similar to the
+        % MATLAB sum function, so by default it intersects along the
+        % vertical dimension
         % _________________________________________________________________________
         % USAGE        
         %   r = intersection(obj)
@@ -637,19 +658,41 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   realInt = intersection([ciat.RealInterval(0,1,2,3), ...
         %                    ciat.RealInterval(2,3,4,5)]);
         % _________________________________________________________________________
-
-        	N = length(obj(:));
-            if N>1
-                maxInf = max([obj.Infimum]);
-                minSup = min([obj.Supremum]);
-                if maxInf <= minSup
+            
+            [M,N] = size(obj);
+            if size(varargin) == 0 | isa(varargin{1},'double')
+                % Intersection within a matrix
+        	    if M*N > 1
+                    if size(varargin) == 0
+                        varargin = {1};
+                    end
+                    
+                    maxInf = max(obj.Infimum,[],varargin{:});
+                    minSup = min(obj.Supremum,[],varargin{:});
+    
                     r = ciat.RealInterval( maxInf , minSup );
+    
+                    r(minSup < maxInf) = 0;
                 else
-                    r = ciat.RealInterval.empty;
+                    r = obj;
                 end
-            else
-                r = obj;
+            elseif isa(varargin{1},'ciat.RealInterval')
+                % Point-wise intersection between two matrices
+                [M2,N2] = size(varargin{1});
+                assert(M == M2 && N == N2);
+                obj = cat(3,obj,varargin{1});
+                
+                maxInf = max(obj.Infimum,[],3);
+                minSup = min(obj.Supremum,[],3);
+                
+                r = ciat.RealInterval( maxInf , minSup );
+    
+                r(minSup < maxInf) = 0;
             end
+        end
+        % Alias for the intersection function
+        function r = cap(obj,varargin)
+            r = intersection(obj,varargin{:});
         end
 
         % Inside
@@ -676,9 +719,9 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.RealInterval(0,1,2,3));
         % _________________________________________________________________________
             [M,N] = size(obj);
-            inf = [obj.Infimum];
-            sup = [obj.Supremum];
-            plt = line(repmat(1:M*N,2,1),[inf;sup],varargin{:});
+            inf = obj.Infimum;
+            sup = obj.Supremum;
+            plt = line(repmat(1:M*N,2,1),[inf(:),sup(:)]',varargin{:});
         end
         
         
@@ -695,6 +738,9 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         r = cosh(obj)
         
     end
+
+
+    %% Vectorizing the object
 
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
@@ -805,7 +851,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
 
     methods (Static, Access=public)
         function obj = empty()
-            disp('empty')
+            %disp('empty')
             obj = ciat.RealInterval;
         end
     end

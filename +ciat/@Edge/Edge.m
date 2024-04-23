@@ -68,7 +68,8 @@ classdef Edge
 
         % GaussMap
 		function value = get.GaussMap(obj)
-            value = ciat.RealInterval(ciat.wrapToPi(angle(obj.Vector)-pi/2));
+            % value = ciat.RealInterval(ciat.wrapToPi(angle(obj.Vector)-pi/2));
+            value = ciat.wrapToPi(angle(obj.Vector)-pi/2);
         end
 
         % Log-GaussMap

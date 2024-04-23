@@ -1,4 +1,4 @@
-classdef Arc
+classdef Arc < matlab.mixin.indexing.RedefinesParen
 
 	properties
         Center          % Arc center as a complex number
@@ -47,7 +47,7 @@ classdef Arc
                 otherwise
                     error('incorrect number of input')
             end
-		end
+        end
 
         %% Defining properties
                    
@@ -247,8 +247,8 @@ classdef Arc
                 q = [-pi,-pi/2 ; -pi/2,0 ; 0,pi/2 ; pi/2,pi];
                 if r~=0
                     for idx = 1:4
-                        qi = intersection([obj(n).Angles, ...
-                                            ciat.RealInterval(q(idx,:))]);
+                        qi = intersection([obj(n).Angles; ...
+                                        ciat.RealInterval(q(idx,1),q(idx,2))]);
                         if ~isempty(qi)
                             xBound = sort(cr + r*cos(qi.Bounds) );
                             yBound = sort(ci + r*sin(qi.Bounds) );
@@ -327,9 +327,141 @@ classdef Arc
         function h = plotLogGaussMap(obj, arrowSize, varargin)
             h = obj.plotMap(1,arrowSize,varargin{:});
         end
-
+        
+        %% Function headers
+        r = plus(obj1,obj2)
 
 	end
 
 
+%% Vectorizing the object
+
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Center = obj.Center.(indexOp(1));
+            obj.Radius = obj.Radius.(indexOp(1));
+            obj.ArcAngles = obj.ArcAngles.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % POTENTIAL UNPEXPECTED BEHAVIOUR HERE
+            % Only works for 2D arrays, not all is tested
+            % Probably not all cases are covered
+
+            % Warning, does not work for operations like
+            % obj(1,1).Supremum = 1;
+            % Should use
+            % obj.Supremum(1,1) = 1;
+
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % Object must be of the correct size
+                
+                % If rhs is of size 1, then use indices to set size
+                if isscalar(varargin{1})
+                    sz = [indexOp.Indices{:}];
+                    obj = ciat.RealInterval;
+                    obj.Center = zeros(sz);
+                    obj.Radius = zeros(sz);
+                    obj.ArcAngles = repmat(ciat.RealInterval,sz);
+                else
+                    obj = varargin{1};
+                end
+            end
+            if isempty(varargin{1})
+                % When rhs is empty, allocate memory for the object, size of indexOp.
+
+                % Size to allocate
+                tmp = indexOp.Indices;
+                % Replace ':' with 1, to avoid errors when indexing into empty arrays.
+                tmp(strcmp(':', indexOp.Indices)) = {1};
+                sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
+                
+                obj = ciat.Arc;
+                obj.Center = zeros(sz);
+                obj.Radius = zeros(sz);
+                obj.ArcAngles = repmat(ciat.RealInterval,sz);
+                return;
+            end
+            if numel(indexOp) == 1
+                if isscalar(indexOp(1))
+                    assert(nargin==3);
+                    rhs = varargin{1};
+                    % If rhs is not an interval, then convert it to one.
+                    if ~isa(rhs, 'ciat.RealInterval')
+                        rhs = ciat.RealInterval(rhs);
+                    end
+                    obj.Center.(indexOp(1)) = rhs.Center;
+                    obj.Radius.(indexOp(1)) = rhs.Radius;
+                    obj.ArcAngles.(indexOp(1)) = rhs.ArcAngles;
+                    return;
+                end
+            end
+            tmp = obj.(indexOp(1));
+            [tmp.(indexOp(2:end))] = varargin{:};
+            obj.(indexOp(1)) = tmp;
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Infimum.(indexOp) = [];
+            obj.Supremum.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.RealInterval')
+                    newArgs{ix} = varargin{ix}.Center;
+                    newArgs2{ix} = varargin{ix}.Radius;
+                    newArgs3{ix} = varargin{ix}.ArcAngles;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.Arc(cat(dim,newArgs{:}), ...
+                           cat(dim,newArgs2{:}), ...
+                           cat(dim,newArgs3{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Center,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            %disp('empty')
+            obj = ciat.Arc;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Center = reshape(obj.Center,varargin{:});
+            obj.Radius = reshape(obj.Radius,varargin{:});
+            obj.ArcAngles = reshape(obj.ArcAngles,varargin{:});
+        end
+    end
 end
