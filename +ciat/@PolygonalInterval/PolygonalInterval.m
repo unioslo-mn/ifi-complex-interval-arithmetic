@@ -145,29 +145,37 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
             value = obj.Boundary;
         end
 
-        % % Set probability grid
-        % function obj = setProbaGrid(obj, distribution_name, varargin)
-        %     % Set probability grid of polygonal interval
-        %     %
-        %     % This function sets the probability grid of a polygonal interval
-        %     % _________________________________________________________________________
-        %     % USAGE
-        %     %   obj = setProbaGrid(obj, distribution_name, varargin)
-        %     % _________________________________________________________________________
-        %     % NECESSARY ARGUMENTS
-        %     %   obj                 : array of objects from the ciat.PolygonalInterval class
-        %     %   distribution_name   : name of the distribution to be used
-        %     % _________________________________________________________________________
-        %     % OPTIONS
-        %     %   'nx'               : number of points in the x direction
-        %     %   'ny'               : number of points in the y direction
-        %     % _________________________________________________________________________
-        %     % EXAMPLES
-        %     %   polyInt = ciat.PolygonalInterval([0,1,1i]);
-        %     %   polyInt = setProbaGrid(polyInt, 'uniform');
-        %     % _________________________________________________________________________
-        %     obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
-        % end
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            % Set probability grid of polygonal interval
+            %
+            % This function sets the probability grid of a polygonal interval
+            % _________________________________________________________________________
+            % USAGE
+            %   obj = setProbaGrid(obj, distribution_name, varargin)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj                 : array of objects from the ciat.PolygonalInterval class
+            %   distribution_name   : name of the distribution to be used
+            % _________________________________________________________________________
+            % OPTIONS
+            %   'nx'               : number of points in the x direction
+            %   'ny'               : number of points in the y direction
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   polyInt = ciat.PolygonalInterval([0,1,1i]);
+            %   polyInt = setProbaGrid(polyInt, 'uniform');
+            % _________________________________________________________________________
+            [M,N] = size(obj);
+            
+            % Set grids
+            for m = 1:M
+                for n = 1:N
+                    obj(m,n).ProbaGrid = ciat.ProbaGrid(obj(m,n), ...
+                                            distribution_name, varargin{:});
+                end
+            end
+        end
         
         %% Dependent properties
                         

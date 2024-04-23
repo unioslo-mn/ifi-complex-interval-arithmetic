@@ -151,14 +151,23 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             value = obj.Radius;
         end
 
-        % % Set probability grid
-        % function obj = setProbaGrid(obj, distribution_name, varargin)
-        %     % Give a warning if the interval is not scalar
-        %     if ~isscalar(obj)
-        %         warning('Probability grid is not yet implemented for non-scalar intervals')
-        %     end
-        %     obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
-        % end
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            [M,N] = size(obj);
+            % Intialize ProbaGrid property
+            if isempty(obj.ProbaGrid)
+                pg(M,N) = ciat.ProbaGrid;
+                obj.ProbaGrid = pg;
+            end
+
+            % Set grids
+            for m = 1:M
+                for n = 1:N
+                    obj(m,n).ProbaGrid = ciat.ProbaGrid(obj(m,n), ...
+                                            distribution_name, varargin{:});
+                end
+            end
+        end
         
         %% Dependent properties
         
@@ -508,7 +517,9 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             % disp('parenReference')
             obj.Center = obj.Center.(indexOp(1));
             obj.Radius = obj.Radius.(indexOp(1));
-            obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
+            if ~isempty(obj.ProbaGrid)
+                obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
+            end
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -527,7 +538,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
                 obj = ciat.CircularInterval;
                 obj.Center = zeros([indexOp.Indices{:}]);
                 obj.Radius = zeros([indexOp.Indices{:}]);
-                obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
+                % obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);
@@ -537,6 +548,9 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
                 rhs = varargin{1};
                 obj.Center.(indexOp) = rhs.Center;
                 obj.Radius.(indexOp) = rhs.Radius;
+                if ~isempty(obj.ProbaGrid)
+                    obj.ProbaGrid.(indexOp) = rhs.ProbaGrid;
+                end
                 return;
             end
             % [obj.(indexOp(2:end))] = varargin{:};

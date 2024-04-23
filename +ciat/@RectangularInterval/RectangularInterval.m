@@ -90,6 +90,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                         obj(n) = ciat.RectangularInterval.cast(...
                                                         varargin{1}(n));
                     end
+                    % obj.ProbaGrid = repmat(ciat.ProbaGrid,M,N);
                 case 2
                     % Two input arguments of real intervals is the default
                     % way of definin rectangular intervals
@@ -107,6 +108,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                     obj(M,N) = obj;
                     obj.Real = varargin{1};
                     obj.Imag = varargin{2};
+                    % obj.ProbaGrid = repmat(ciat.ProbaGrid,M1,N1);
                 case 4
                     % Four input arguments of doubles is also a default way
                     % of defining rectangular intervals 
@@ -125,6 +127,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
 
                     obj.Real = ciat.RealInterval(varargin{1},varargin{2});
                     obj.Imag = ciat.RealInterval(varargin{3},varargin{4});
+                    % obj.ProbaGrid = repmat(ciat.ProbaGrid,M1,N1);
             end 
         end
         
@@ -171,21 +174,30 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             value = obj.Imag;
         end
 
-        % % Set probability grid
-        % function obj = setProbaGrid(obj, distribution_name, varargin)
-        %     % Give a warning if the interval is not scalar
-        %     if ~isscalar(obj)
-        %         warning('Probability grid is not yet implemented for non-scalar intervals')
-        %     end
-        %     obj.ProbaGrid = ciat.ProbaGrid(obj, distribution_name, varargin{:});
-        % end
+        % Set probability grid
+        function obj = setProbaGrid(obj, distribution_name, varargin)
+            [M,N] = size(obj);
+            % Intialize ProbaGrid property
+            if isempty(obj.ProbaGrid)
+                pg(M,N) = ciat.ProbaGrid;
+                obj.ProbaGrid = pg;
+            end
+
+            % Set grids
+            for m = 1:M
+                for n = 1:N
+                    obj(m,n).ProbaGrid = ciat.ProbaGrid(obj(m,n), ...
+                                            distribution_name, varargin{:});
+                end
+            end
+        end
         
         %% Dependent properties
         
         % Abs
         function value = get.Abs(obj)
-            value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
-                          abs(obj.Imag) * abs(obj.Imag) );
+            value = sqrt( abs(obj.Real) .* abs(obj.Real) +... 
+                          abs(obj.Imag) .* abs(obj.Imag) );
             value.Infimum(obj.ininterval(0)) = 0;
         end
         function value = abs(obj)
@@ -210,12 +222,14 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            alt = zeros(1,4);
-            alt(1) = obj.Real.Infimum  + 1j*obj.Imag.Infimum;
-            alt(2) = obj.Real.Infimum  + 1j*obj.Imag.Supremum;
-            alt(3) = obj.Real.Supremum + 1j*obj.Imag.Infimum;
-            alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
-            value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
+            [M,N] = size(obj);
+            alt = zeros(M,N,4);
+            alt(:,:,1) = obj.Real.Infimum  + 1j*obj.Imag.Infimum;
+            alt(:,:,2) = obj.Real.Infimum  + 1j*obj.Imag.Supremum;
+            alt(:,:,3) = obj.Real.Supremum + 1j*obj.Imag.Infimum;
+            alt(:,:,4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
+            value = ciat.RealInterval(min(angle(alt),[],3) , ...
+                                      max(angle(alt),[],3));
             
             value.Infimum(obj.Real.Infimum <= 0 & ...
                           obj.Imag.Infimum <= 0 & ...
@@ -715,7 +729,9 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             % disp('parenReference')
             obj.Real = obj.Real.(indexOp(1));
             obj.Imag = obj.Imag.(indexOp(1));
-            obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
+            if ~isempty(obj.ProbaGrid)
+                obj.ProbaGrid = obj.ProbaGrid.(indexOp(1));
+            end
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -734,7 +750,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 obj = ciat.RectangularInterval;
                 obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
                 obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-                obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
+                % obj.ProbaGrid = repmat(ciat.ProbaGrid,[indexOp.Indices{:}]);
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);
@@ -744,6 +760,9 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 rhs = varargin{1};
                 obj.Real.(indexOp) = rhs.Real;
                 obj.Imag.(indexOp) = rhs.Imag;
+                if ~isempty(obj.ProbaGrid)
+                    obj.ProbaGrid.(indexOp) = rhs.ProbaGrid;
+                end
                 return;
             end
             % [obj.(indexOp(2:end))] = varargin{:};

@@ -29,12 +29,18 @@ function obj = abs2(obj)
         f_Xf = @(u) interp1(obj.x, f_X, u, 'linear', 0);
         f_Yf = @(u) interp1(obj.y, f_Y, u, 'linear', 0);
 
-        f = @(u) ((f_Xf(u) + f_Xf(-u)) .* (f_Yf(sqrt(z-u.^2)) + f_Yf(-sqrt(z-u.^2))) + (f_Yf(u) + f_Yf(-u)) .* (f_Xf(sqrt(z-u.^2)) + f_Xf(-sqrt(z-u.^2)))) ./ sqrt(z-u.^2);
+        f = @(u) ( (f_Xf(u) + f_Xf(-u)) .* ...
+                        (f_Yf(sqrt(z-u.^2)) + f_Yf(-sqrt(z-u.^2))) ...
+                    + (f_Yf(u) + f_Yf(-u)) .* ...
+                        (f_Xf(sqrt(z-u.^2)) + f_Xf(-sqrt(z-u.^2))) ...
+                 ) ./ sqrt(z-u.^2);
 
         pdf(i) = integral(f, 0, sqrt(z/2))/2;
     end
 
     % Create a new ProbaGrid object
     obj = ciat.ProbaGrid.from_pdf(pdf, new_x, new_y);
-    % obj = obj.normalize();
+
+    % Normalize the PDF
+    obj = obj.normalize();
 end

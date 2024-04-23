@@ -1,4 +1,4 @@
-function plot_areas(obj, interval, n_areas, varargin)
+function plotAreas(obj, interval, n_areas, varargin)
     % Separate the pdf into n_areas areas, of the same shape
     % as the original interval but smaller and centered at the
     % baricenter of the original interval
