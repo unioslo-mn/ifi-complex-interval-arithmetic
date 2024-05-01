@@ -3,13 +3,17 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 	properties
         Center          % Arc center as a complex number
         Radius          % Arc radius as a real number (negative means concave arc, zero means vertex)
-	end	
+    end	
+
+    properties (Access = private)
+       ArcAngleStore        % Storage property for the arc angle
+    end
 
 	properties (Dependent)
-    	ArcAngles			% Arc angle as a real interval (always counter-clockwise)
-		StartPoint		% First point of the arc as complex numbers
-        MidPoint        % MidPoint of the arc as complex numbers
-        StopPoint		% Last point of the arc as complex numbers
+    	ArcAngle		% Arc angle as a real interval (always counter-clockwise)
+		Startpoint		% First point of the arc as complex numbers
+        Midpoint        % Midpoint of the arc as complex numbers
+        Endpoint		% Last point of the arc as complex numbers
 		Length			% Length of the arc curve
 		GaussMap        % Gauss map of the curve as real interval
 		LogGaussMap     % Gauss map of the log curve as real interval
@@ -19,10 +23,6 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         Imag;           % Projection of the polygonal interval to the imaginary axis
         Abs;            % Projection of the polygonal interval to the absolute value axis
         Angle;          % Projection of the polygonal interval to the angle axis
-    end
-
-    properties (Access = private)
-       ArcAngleStore        % Storage property for the arc angle
     end
 
 	methods
@@ -42,10 +42,10 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                                 size(center) == size(angles)]))
                     obj.Center = center;
                     obj.Radius = radius;
-                    if strcmp(class(angles),'double')
-                        obj.ArcAngles = ciat.RealInterval(angles);
+                    if isa(angles,'double')
+                        obj.ArcAngle = ciat.RealInterval(angles);
                     else
-                        obj.ArcAngles = angles;
+                        obj.ArcAngle = angles;
                     end
                 otherwise
                     error('incorrect number of input')
@@ -55,115 +55,119 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         %% Defining properties
                    
         % Set angles (store in the hidden property ArcAngleStore after wrapping)
-        function obj = set.ArcAngles(obj,angleArray)
+        function obj = set.ArcAngle(obj,angleArray)
 
-            [M,N] = size(obj);
-            [Ma,Na] = size(angleArray);
-            assert(M==Ma && N==Na)
-
-            % Initialize ArcAngles property if necessary
-            if isempty(obj.ArcAngles)
-                obj.ArcAngleStore = repmat(ciat.RealInterval(0),M,N);
+            % Check input size
+            if ndims(angleArray) > 2
+                M = size(angleArray,1);
+                N = size(angleArray,2);
+                O = size(angleArray,3);
+            else
+                [M,N] = size(angleArray);
+                O = 1;
             end
+            assert(size(obj,1)==M && size(obj,2)==N)
+
+            % Initialize angle array
+            emptyInterval(1) = ciat.RealInterval;
+            angleStore = repmat(emptyInterval,M,N,O);
 
             for m = 1:M
             for n = 1:N
-
-                % Select angle interval
-                angles = angleArray(m,n);
-
-                % Check the width of the interval
-                widthPi = floor(angles.Width / pi);
-    
-                % Check if the (-pi,pi) wrapped order is the same
-                wrapInf = wrapToPi(angles.Infimum);
-                wrapSup = wrapToPi(angles.Supremum);
-                wrapOrder = ( wrapInf < wrapSup );
-    
-                switch widthPi
-                    case 0  % Less than a Pi width
-                        if wrapOrder    % Normal order
-                            % Wrap both angles to (-pi,pi)
-                            angInf = wrapInf;
-                            angSup = wrapSup;
-                        else            % wrapInf is pos and wrapSup is neg
-                            % Wrap the infimum to (-2pi,-pi),
-                            % wrap the supremum to (-pi,0)
-                            angInf = wrapInf - 2*pi;
-                            angSup = wrapSup;
-                        end
-    
-                    case 1 % More than a Pi width but less than 2Pi
-                        if wrapOrder    % Normal order
-                            % Wrap both angles to (-pi,pi)
-                            angInf = wrapInf;
-                            angSup = wrapSup;
-                        else            % wrapped angles have the same sign 
-                                        % and wrapSup is lower than wrapInf
-                            % Wrap the infimum to (-2pi,0),
-                            % wrap the supremum to (0,2*pi)
-                            angInf = wrapTo2Pi(angles.Infimum) - 2*pi;
-                            angSup = wrapToPi(angles.Supremum);
-                        end
-                    otherwise           % full circle
-                        angInf = -pi;
-                        angSup = pi;
+                % Wrap and split all angle intervals for the given arc
+                angles = [];
+                for o = 1:O
+                    angles = cat(3,angles,...
+                                ciat.Arc.wrapArcAngle(angleArray(m,n,o)) );
                 end
-                % Assign angle values
-                obj.ArcAngleStore(m,n) = ciat.RealInterval(angInf,angSup);
+                % Add angle intervals to the storage, 
+                % increase size if necessary
+                Oa = size(angles,3);
+                Os = size(angleStore,3);
+                if Os < Oa
+                    angleStore = cat(3,angleStore, ...
+                                    repmat(emptyInterval,M,N,Oa-Os));
+                end
+                angleStore(m,n,1:Oa) = angles;
             end
             end
+
+            % Assign all angle intervals to the object storage
+            obj.ArcAngleStore = angleStore;
         end
 
-        % Get points (retrieve ArcAngles from hidden property ArcAngleStore)
-        function value = get.ArcAngles(obj)
+        % Get points (retrieve ArcAngle from hidden property ArcAngleStore)
+        function value = get.ArcAngle(obj)
             value = obj.ArcAngleStore; 
         end
 
 		%% Dependent properties
         
 
-        % StartPoint
-        function value = get.StartPoint(obj)
+        % Startpoint
+        function value = get.Startpoint(obj)
             angMask = (obj.Radius < 0);
-            angInf = obj.ArcAngles.Infimum;
-            angSup = obj.ArcAngles.Supremum;
-            angStart = angInf.*angMask + angSup.*~angMask;
+            angInf = obj.ArcAngle.Infimum;
+            angSup = obj.ArcAngle.Supremum;
+            angStart = angInf.*~angMask + angSup.*angMask;
             value = obj.Center + obj.Radius .* exp(1i*angStart);
         end
 
-        % MidPoint
-        function value = get.MidPoint(obj)
-            value = obj.Center + obj.Radius * exp(1i*obj.ArcAngles.MidPoint);
+        % Midpoint
+        function value = get.Midpoint(obj)
+            value = obj.Center + obj.Radius * exp(1i*obj.ArcAngle.Midpoint);
         end
 
-        % StopPoint
-        function value = get.StopPoint(obj)
+        % Endpoint
+        function value = get.Endpoint(obj)
             angMask = (obj.Radius < 0);
-            angInf = obj.ArcAngles.Infimum;
-            angSup = obj.ArcAngles.Supremum;
-            angStop = angInf.*~angMask + angSup.*angMask;
+            angInf = obj.ArcAngle.Infimum;
+            angSup = obj.ArcAngle.Supremum;
+            angStop = angInf.*angMask + angSup.*~angMask;
             value = obj.Center + obj.Radius .* exp(1i*angStop);
         end
 
         % Length
         function value = get.Length(obj)
-            value = 2*pi*obj.Radius * obj.ArcAngles.Width/(2*pi);
+            value = 2*pi*obj.Radius .* obj.ArcAngle.Width/(2*pi);
         end
 
         % Gauss map angle interval
         function value = get.GaussMap(obj)
-            value = obj.ArcAngles;
-            if ~isempty(value) && value.isin(pi) && all(pi~=value.Bounds)
-                value = [ciat.RealInterval(wrapToPi(value.Infimum),pi);...
-                         ciat.RealInterval(-pi,wrapToPi(value.Supremum))];
+
+            % Start by assigning the arc-angle values
+            value = obj.ArcAngle;
+            [M,N] = size(value);
+
+            % Check if any elements contain the -pi or pi value
+            mask = ~isnan(value) & ...
+                   ( value.isin(-pi) | value.isin(pi) ) & ...
+                   ( value.Infimum ~= -pi | value.Infimum ~= pi | ...
+                     value.Supremum ~= -pi | value.Supremum ~= pi);
+            % Create a second layer of the array in the 3rd dimension
+            if any(mask)
+                value2(M,N) = ciat.RealInterval;
+                value2(mask) = ciat.RealInterval(...
+                                     -pi , ...
+                                     wrapToPi(value.Supremum(mask)));
+                value(mask) = ciat.RealInterval( ...
+                                    wrapToPi(value.Infimum(mask)) , ...
+                                    pi);
+                value(~mask) = ciat.RealInterval(...
+                                    wrapToPi(value.Infimum(~mask)) , ...
+                                    wrapToPi(value.Supremum(~mask)) );
+                value = cat(3,value,value2);
+            else
+                value = ciat.RealInterval(...
+                                    wrapToPi(value.Infimum) , ...
+                                    wrapToPi(value.Supremum) );
             end
         end
 
         % Log-Gauss map angle interval
         function value = get.LogGaussMap(obj)
-            value = obj.GaussMap - ciat.RealInterval(angle(obj.StartPoint),...
-                                                     angle(obj.StopPoint));
+            value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
+                                                     angle(obj.Endpoint));
         end
 
         % Normalization factor
@@ -177,7 +181,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Curve parameter
         function value = get.CurveParameter(obj)
-            value = obj.ArcAngles + angle(obj.NormFactor);
+            value = obj.ArcAngle + angle(obj.NormFactor);
         end
 
         % Real
@@ -185,15 +189,15 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             
             % Create boolean masks
             isConcave = obj.Radius < 0;
-            crossInf = obj.ArcAngles.isin((isConcave-3)*pi) | ...
-                       obj.ArcAngles.isin((isConcave-1)*pi) | ...
-                       obj.ArcAngles.isin((isConcave+1)*pi) ;
-            crossSup = obj.ArcAngles.isin((isConcave-2)*pi) | ...
-                       obj.ArcAngles.isin((isConcave+0)*pi);
+            crossInf = obj.ArcAngle.isin((isConcave-3)*pi) | ...
+                       obj.ArcAngle.isin((isConcave-1)*pi) | ...
+                       obj.ArcAngle.isin((isConcave+1)*pi) ;
+            crossSup = obj.ArcAngle.isin((isConcave-2)*pi) | ...
+                       obj.ArcAngle.isin((isConcave+0)*pi);
             
             % Calculate real bounds of the endpoints
-            pntInf = min(real(obj.StartPoint),real(obj.StopPoint));
-            pntSup = max(real(obj.StartPoint),real(obj.StopPoint));
+            pntInf = min(real(obj.Startpoint),real(obj.Endpoint));
+            pntSup = max(real(obj.Startpoint),real(obj.Endpoint));
 
             % Calculate real bounds of the envelope
             envInf = real(obj.Center) - abs(obj.Radius);
@@ -215,15 +219,15 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             
             % Create boolean masks
             isConcave = obj.Radius < 0;
-            crossInf = obj.ArcAngles.isin((isConcave-2.5)*pi) | ...
-                       obj.ArcAngles.isin((isConcave-0.5)*pi) | ...
-                       obj.ArcAngles.isin((isConcave+1.5)*pi) ;
-            crossSup = obj.ArcAngles.isin((isConcave-1.5)*pi) | ...
-                       obj.ArcAngles.isin((isConcave+0.5)*pi);
+            crossInf = obj.ArcAngle.isin((isConcave-2.5)*pi) | ...
+                       obj.ArcAngle.isin((isConcave-0.5)*pi) | ...
+                       obj.ArcAngle.isin((isConcave+1.5)*pi) ;
+            crossSup = obj.ArcAngle.isin((isConcave-1.5)*pi) | ...
+                       obj.ArcAngle.isin((isConcave+0.5)*pi);
             
             % Calculate real bounds of the endpoints
-            pntInf = min(imag(obj.StartPoint),imag(obj.StopPoint));
-            pntSup = max(imag(obj.StartPoint),imag(obj.StopPoint));
+            pntInf = min(imag(obj.Startpoint),imag(obj.Endpoint));
+            pntSup = max(imag(obj.Startpoint),imag(obj.Endpoint));
 
             % Calculate imag bounds of the envelope
             envInf = imag(obj.Center) - abs(obj.Radius);
@@ -246,15 +250,15 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             % Create boolean masks
             isConcave = obj.Radius < 0;
             angOffset = angle(obj.Center);
-            crossInf = obj.ArcAngles.isin(angOffset+(isConcave-3)*pi) | ...
-                       obj.ArcAngles.isin(angOffset+(isConcave-1)*pi) | ...
-                       obj.ArcAngles.isin(angOffset+(isConcave+1)*pi);
-            crossSup = obj.ArcAngles.isin(angOffset+(isConcave-2)*pi) | ...
-                       obj.ArcAngles.isin(angOffset+(isConcave+0)*pi);
+            crossInf = obj.ArcAngle.isin(angOffset+(isConcave-3)*pi) | ...
+                       obj.ArcAngle.isin(angOffset+(isConcave-1)*pi) | ...
+                       obj.ArcAngle.isin(angOffset+(isConcave+1)*pi);
+            crossSup = obj.ArcAngle.isin(angOffset+(isConcave-2)*pi) | ...
+                       obj.ArcAngle.isin(angOffset+(isConcave+0)*pi);
             
             % Calculate real bounds of the endpoints
-            pntInf = min(abs(obj.StartPoint),abs(obj.StopPoint));
-            pntSup = max(abs(obj.StartPoint),abs(obj.StopPoint));
+            pntInf = min(abs(obj.Startpoint),abs(obj.Endpoint));
+            pntSup = max(abs(obj.Startpoint),abs(obj.Endpoint));
 
             % Calculate abs bounds of the envelope
             envInf = abs(obj.Center) - abs(obj.Radius);
@@ -274,8 +278,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = get.Angle(obj)
 
             % Calculate real bounds of the endpoints
-            pntInf = min(angle(obj.StartPoint),angle(obj.StopPoint));
-            pntSup = max(angle(obj.StartPoint),angle(obj.StopPoint));
+            pntInf = min(angle(obj.Startpoint),angle(obj.Endpoint));
+            pntSup = max(angle(obj.Startpoint),angle(obj.Endpoint));
 
             % Calculate angle bounds of the envelope
             envInf = angle(obj.Center) - asin(abs(obj.Radius./obj.Center));
@@ -283,13 +287,13 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
             % Create boolean masks
             isConcave = obj.Radius < 0;
-            crossInf = obj.ArcAngles.isin(envInf+(isConcave-2.5)*pi) | ...
-                       obj.ArcAngles.isin(envInf+(isConcave-0.5)*pi) | ...
-                       obj.ArcAngles.isin(envInf+(isConcave+1.5)*pi);
-            crossSup = obj.ArcAngles.isin(envSup+(isConcave-3.5)*pi) | ...
-                       obj.ArcAngles.isin(envSup+(isConcave-1.5)*pi) | ...
-                       obj.ArcAngles.isin(envSup+(isConcave+0.5)*pi) | ...
-                       obj.ArcAngles.isin(envSup+(isConcave+2.5)*pi);
+            crossInf = obj.ArcAngle.isin(envInf+(isConcave-2.5)*pi) | ...
+                       obj.ArcAngle.isin(envInf+(isConcave-0.5)*pi) | ...
+                       obj.ArcAngle.isin(envInf+(isConcave+1.5)*pi);
+            crossSup = obj.ArcAngle.isin(envSup+(isConcave-3.5)*pi) | ...
+                       obj.ArcAngle.isin(envSup+(isConcave-1.5)*pi) | ...
+                       obj.ArcAngle.isin(envSup+(isConcave+0.5)*pi) | ...
+                       obj.ArcAngle.isin(envSup+(isConcave+2.5)*pi);
 
             % Pick the correct value according to the masks
             angleInf = (pntInf .* ~crossInf) + (envInf .* crossInf);
@@ -300,27 +304,48 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = angle(obj)
             value = obj.Angle;
         end
+        
 
 		%% Other methods
 
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Length);
+        end 
+
+        function points = sample(obj, nPoints)
+            [M,N] = size(obj);
+            points = cell(M,N);
+            for m = 1:M
+            for n = 1:N
+                center = obj(m,n).Center;
+                radius = obj(m,n).Radius;
+                angInf = obj(m,n).ArcAngle.Infimum;
+                angSup = obj(m,n).ArcAngle.Supremum;
+                points{m,n} = center + radius * ...
+                                   exp(1j*linspace(angInf,angSup,nPoints));
+            end
+            end
+        end
+
         % Plot
         function h = plot(obj, varargin)
-        % Plot arcs
-        %
-        % This function plots a set of polygonal intervals 
-        % (see MATLAB plot function)
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = plot(obj)
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.Arc class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   
-        % _________________________________________________________________________
+            % Plot arcs
+            %
+            % This function plots a set of polygonal intervals 
+            % (see MATLAB plot function)
+            % _________________________________________________________________________
+            % USAGE        
+            %   r = plot(obj)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENT
+            %   obj       : array of objects from the ciat.Arc class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %   
+            % _________________________________________________________________________
             tf = ishold;
             if tf == false 
                 clf
@@ -328,27 +353,28 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                % Extract parameters
-                cr = real(obj(n).Center);
-                ci = imag(obj(n).Center);
-                r = obj(n).Radius;
-                % Plot arc by angle quadrants between in (-2Pi,2Pi)
-                % q = [-pi,-pi/2 ; -pi/2,0 ; 0,pi/2 ; pi/2,pi];
-                q = ((-2:0.5:1.5)'+[0,0.5])*pi;
-                if r~=0
-                    for idx = 1:length(q)
-                        qi = intersection(obj(n).ArcAngles, ...
-                                        ciat.RealInterval(q(idx,1),q(idx,2)));
-                        if ~isempty(qi)
-                            xBound = sort(cr + r*cos(qi.Bounds) );
-                            yBound = sort(ci + r*sin(qi.Bounds) );
-                            h = [h; ...
-                                fimplicit(@(x,y) (x-cr).^2 + (y-ci).^2 - r^2 , ...
+                if ~isnan(obj(n))
+                    % Extract parameters
+                    cr = real(obj(n).Center);
+                    ci = imag(obj(n).Center);
+                    r = obj(n).Radius;
+                    % Plot arc by angle quadrants between in (-2Pi,2Pi)
+                    q = ((-2:0.5:1.5)'+[0,0.5])*pi;
+                    if r~=0
+                        for idx = 1:length(q)
+                            qi = intersection(obj(n).ArcAngle, ...
+                                            ciat.RealInterval(q(idx,1),q(idx,2)));
+                            if ~isnan(qi)
+                                xBound = sort(cr + r*cos(qi.Bounds) );
+                                yBound = sort(ci + r*sin(qi.Bounds) );
+                                h = [h; fimplicit(@(x,y) ...
+                                     (x-cr).^2 + (y-ci).^2 - r^2 , ...
                                             [xBound yBound],varargin{:})];    
+                            end
                         end
+                    else
+                        h = [h; plot(cr,ci,varargin{:},'Marker','.')];
                     end
-                else
-                    h = [h; plot(cr,ci,varargin{:},'Marker','.')];
                 end
             end
             if tf == false 
@@ -357,60 +383,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         end
 
         % Plot Gauss maps
-        function h = plotMap(obj, logMap, arrowSize, varargin)
-            tf = ishold;
-            if tf == false 
-                clf
-            end
-            hold on
-            h = [];
-
-            % Plot normal vectors
-            for n = 1:length(obj(:))
-                % Extract variables
-                arc = obj(n);
-                if logMap == 0
-                    map = arc.GaussMap;
-                else
-                    map = arc.LogGaussMap;
-                end
-
-                % Set arrow positions
-                p = zeros(1,3);
-                p(1) = arc.StartPoint;
-                p(2) = arc.MidPoint;
-                p(3) = arc.StopPoint;
-
-                % Set vector lengths
-                if length(map) == 1
-                    a = zeros(1,3);
-                else
-                    a = zeros(1,6);
-                    p = reshape(repmat(p,1,2),1,[]);
-                end
-
-                % Set arrow angle and length
-                for m = 1:length(map)
-                    a(1+3*(m-1)) = arrowSize * exp(1i*map(m).Infimum);
-                    a(2+3*(m-1)) = arrowSize * exp(1i*map(m).MidPoint);
-                    a(3+3*(m-1)) = arrowSize * exp(1i*map(m).Supremum);
-                end
-
-                % Flip vectors if arc is concave 
-                if obj(n).Radius < 0
-                    a = flip(a);
-                end
-
-                % Plot arrows
-                h=[h; ...
-                    quiver(real(p),imag(p),real(a),imag(a),...
-                           varargin{:},'AutoScale','off')];
-            end
-
-            if tf == false 
-                hold off
-            end
-        end
+        
         function h = plotGaussMap(obj, arrowSize, varargin)
             h = obj.plotMap(0,arrowSize,varargin{:});
         end
@@ -420,9 +393,13 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         
         %% Function headers
         r = plus(obj1,obj2)
+        h = plotMap(obj, logMap, arrowSize, varargin)
 
-	end
+    end
 
+    methods(Static)
+        angles = wrapArcAngle(angles)
+    end
 
 %% Vectorizing the object
 
@@ -457,8 +434,10 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 if isscalar(varargin{1})
                     sz = [indexOp.Indices{:}];
                     obj = ciat.RealInterval;
-                    obj.Center = zeros(sz);
-                    obj.Radius = zeros(sz);
+                    obj.Center = nan(sz);
+                    obj.Radius = nan(sz);
+                    ang(sz) = ciat.RealInterval;
+                    obj.ArcAngleStore = ang;
                     obj.ArcAngleStore = repmat(ciat.RealInterval,sz);
                 else
                     obj = varargin{1};
@@ -474,9 +453,10 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
                 
                 obj = ciat.Arc;
-                obj.Center = zeros(sz);
-                obj.Radius = zeros(sz);
-                obj.ArcAngleStore = repmat(ciat.RealInterval,sz);
+                obj.Center = nan(sz);
+                obj.Radius = nan(sz);
+                ang(sz(1),sz(2)) = ciat.RealInterval;
+                obj.ArcAngleStore = ang;
                 return;
             end
             if numel(indexOp) == 1
@@ -484,7 +464,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     assert(nargin==3);
                     rhs = varargin{1};
                     % If rhs is not an interval, then convert it to one.
-                    if ~isa(rhs, 'ciat.RealInterval')
+                    if ~isa(rhs, 'ciat.Arc')
                         rhs = ciat.RealInterval(rhs);
                     end
                     obj.Center.(indexOp(1)) = rhs.Center;
@@ -520,8 +500,9 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             numCatArrays = nargin-1;
             newArgs = cell(numCatArrays,1);
             newArgs2 = cell(numCatArrays,1);
+            newArgs3 = cell(numCatArrays,1);
             for ix = 1:numCatArrays
-                if isa(varargin{ix},'ciat.RealInterval')
+                if isa(varargin{ix},'ciat.Arc')
                     newArgs{ix} = varargin{ix}.Center;
                     newArgs2{ix} = varargin{ix}.Radius;
                     newArgs3{ix} = varargin{ix}.ArcAngleStore;

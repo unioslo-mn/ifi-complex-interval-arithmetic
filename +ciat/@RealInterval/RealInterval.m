@@ -670,9 +670,13 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                     maxInf = max(obj.Infimum,[],varargin{:});
                     minSup = min(obj.Supremum,[],varargin{:});
     
-                    r = ciat.RealInterval( maxInf , minSup );
-    
-                    r(minSup < maxInf) = 0;
+                    % Assign bounds
+                    mask = maxInf < minSup;
+                    r(size(maxInf,1),size(maxInf,2)) = ciat.RealInterval;
+                    if any(mask)
+                        r(mask) = ciat.RealInterval( maxInf(mask) , ...
+                                                     minSup(mask) );
+                    end
                 else
                     r = obj;
                 end
@@ -685,9 +689,13 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 maxInf = max(obj.Infimum,[],3);
                 minSup = min(obj.Supremum,[],3);
                 
-                r = ciat.RealInterval( maxInf , minSup );
-    
-                r(minSup < maxInf) = 0;
+                % Assign bounds
+                mask = maxInf < minSup;
+                r(M,N) = ciat.RealInterval;
+                if any(mask)
+                    r(mask) = ciat.RealInterval( maxInf(mask) , ...
+                                                 minSup(mask) );
+                end
             end
         end
         % Alias for the intersection function

@@ -55,20 +55,22 @@ function r = plus(obj1,obj2)
             p2 = obj1.Endpoints(1) + obj2.Endpoints(2);
 
         case 'double'
-            p1 = obj1.Endpoints(1) + obj2;
-            p2 = obj1.Endpoints(2) + obj2;
+            p1 = obj1.Startpoint + obj2;
+            p2 = obj1.Endpoint + obj2;
             mask = ones(size(p1,1),size(p1,2));
         
         case 'ciat.Arc'
-            mask = isin(obj2.ArcAngles,obj1.GaussMap);
-            offset = obj2.Radius * exp(1i*obj1.GaussMap);
-            p1 = obj1.Endpoints(1) + offset;
-            p2 = obj1.Endpoints(2) + offset;
+            mask = isin(obj2.ArcAngles,obj1.GaussMap.Midpoint);
+            offset = obj2.Radius * exp(1i*obj1.GaussMap.Midpoint);
+            p1 = obj1.Startpoint + offset;
+            p2 = obj1.Endpoint + offset;
     end
 
     % Create new object        
-    r = ciat.Arc(center,radius,angles);
-    r(mask) == 
+    r(M1,N1) = ciat.Edge;
+    if any(mask)
+        r(mask) = ciat.Edge(p1(mask),p2(mask));
+    end
 end
 
         

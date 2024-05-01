@@ -1,10 +1,10 @@
-% clear
-% close all
+clear
+close all
 
 %%  Generate random arcs
 
-M = 1;
-N = 1;
+M = 4;
+N = 3;
 
 % Create arc array
 centers = 3*complex(rand(M,N),rand(M,N));
@@ -14,7 +14,7 @@ angSup = 2*pi*rand(M,N);
 arcs = ciat.Arc(centers, radii, ciat.RealInterval(angInf,angSup));
 
 % Plot
-% figure;
+figure;
 clf;hold on;axis equal
 arcs.plot;
 
@@ -44,5 +44,5 @@ arc2rec = ciat.RectangularInterval(arcReal,arcImag);
 arc2pol = ciat.PolarInterval(arcAbs,arcAng);
 
 
-% arc2rec.plot
+arc2rec.plot
 arc2pol.plot

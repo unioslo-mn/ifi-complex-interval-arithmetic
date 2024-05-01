@@ -1,51 +1,64 @@
-clear
-close all
+% clear
+% close all
 
-%% Define two arcs
-
-arc1 = ciat.Arc(1+1i,1,ciat.RealInterval(1,2));
-arc2 = ciat.Arc(2+2i,2,ciat.RealInterval(3,4)); 
-
-% Plot
-figure;clf;hold on;axis equal
-arc1.plot;
-arc2.plot;
-
-%%  Arc array behavioour
+%%  Generate random arcs
 
 M = 2;
-N = 3;
+N = 1;
 
 % Create arc array
-arcs = ciat.Arc(10*complex(rand(M,N),rand(M,N)), ...
-                rand(M,N), ...
-                2*pi*ciat.RealInterval(rand(M,N),rand(M,N)));
+centers = 3*complex(rand(M,N),rand(M,N));
+radii = 2*rand(M,N)-1;
+angInf = 2*pi*rand(M,N);
+angSup = 2*pi*rand(M,N);
+arcs = ciat.Arc(centers, radii, ciat.RealInterval(angInf,angSup));
 
 % Plot
-arcs.plot;
+% figure;
+clf;hold on;axis equal
+arcs.plot('k');
+arcs.plotMap(0,.1,'k');
 
 %% Arc addition
 
 % Add arcs
-arcSum = arc1 + arc2;
+arcPlus = arcs(1) + arcs(2);
 
 % Add a vertex to the arc
-arcTranslate = arc1 + 1;
+arcTranslate = arcs(1) + 1;
 
-arcSum.plot
-arcTranslate.plot
+arcPlus.plot('b');
+arcPlus.plotMap(0,.1,'b');
+arcTranslate.plot('g');
+arcTranslate.plotMap(0,.1,'g');
 
-%% Define two edges
+%%  Generate random edges
 
-edge1 = ciat.Edge(1+2i, 2+1i);
-edge2 = ciat.Edge(0+3i, 2+0i);
+M = 1;
+N = 1;
 
-edge1.plot
-edge2.plot
+% Create edge array
+startpoints = complex(rand(M,N),rand(M,N));
+endpoints = complex(rand(M,N),rand(M,N));
+edges = ciat.Edge(startpoints,endpoints);
 
-%% Define an edge array
+% Plot
+edges.plot('k');
+edges.plotMap(0,.1,'k');
 
-edgeArr = ciat.Edge(complex(rand(3,4),rand(3,4)), ...
-                    complex(rand(3,4),rand(3,4)));
 
-edgeArr.plot
+%% Edge addition
+
+% Add an arc to the edge
+edgePlus = edges(1) + arcs(1);
+
+% Add a vertex to the edge
+edgeTranslate = edges(1) + 1;
+
+% Plot
+edgePlus.plot('b')
+edgePlus.plotMap(0,.1,'b');
+edgeTranslate.plot('g')
+edgeTranslate.plotMap(0,.1,'g');
+
+

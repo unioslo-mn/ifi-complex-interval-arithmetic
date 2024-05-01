@@ -1,8 +1,8 @@
 classdef Edge < matlab.mixin.indexing.RedefinesParen
 
 	properties
-        Start           % First point of the edge
-        Stop            % Last point of the edge
+        Startpoint           % First point of the edge
+        Endpoint            % Last point of the edge
     end	
 
 	properties (Dependent)
@@ -32,11 +32,11 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 case 0
                     % This is for initializing an array of objects
                 case 1
-                    obj.Start = varargin{1};
-                    obj.Stop = obj.Start;
+                    obj.Startpoint = varargin{1};
+                    obj.Endpoint = obj.Startpoint;
                 case 2
-                    obj.Start = varargin{1};
-                    obj.Stop = varargin{2};
+                    obj.Startpoint = varargin{1};
+                    obj.Endpoint = varargin{2};
             end
 		end
 
@@ -44,12 +44,12 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % Midpoint
         function value = get.Midpoint(obj)
-            value = (obj.Start+obj.Stop)/2;
+            value = (obj.Startpoint+obj.Endpoint)/2;
         end
 
         % Vector
         function value = get.Vector(obj)
-            value = obj.Stop - obj.Start;
+            value = obj.Endpoint - obj.Startpoint;
         end
 
         % Slope
@@ -60,7 +60,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % Zero crossing
 		function value = get.ZeroCrossing(obj)
-            value = real(obj.Start) - imag(obj.Start) ./ obj.Slope;
+            value = real(obj.Startpoint) - imag(obj.Startpoint) ./ obj.Slope;
         end
 
         % Length
@@ -70,14 +70,14 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % GaussMap
 		function value = get.GaussMap(obj)
-            % value = ciat.RealInterval(ciat.wrapToPi(angle(obj.Vector)-pi/2));
-            value = ciat.wrapToPi(angle(obj.Vector)-pi/2);
+            value = ciat.RealInterval(ciat.wrapToPi(angle(obj.Vector)-pi/2));
+            % value = ciat.wrapToPi(angle(obj.Vector)-pi/2);
         end
 
         % Log-GaussMap
 		function value = get.LogGaussMap(obj)
-            value = obj.GaussMap - ciat.RealInterval(angle(obj.Start), ...
-                                                     angle(obj.Stop));
+            value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint), ...
+                                                     angle(obj.Endpoint));
         end
 
         % Normalization factor
@@ -86,7 +86,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 value = 0;
             else
                 % Extract line parameters
-                v1 = obj.Start;
+                v1 = obj.Startpoint;
                 va = obj.Slope;        
                 
                 % Find scale-rotate factor
@@ -98,14 +98,16 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         end
 
         function value = get.CurveParameter(obj)
-            value = ciat.RealInterval(imag(obj.Start .* obj.NormFactor),...
-                                        imag(obj.Stop .* obj.NormFactor));
+            value = ciat.RealInterval(imag(obj.Startpoint .* obj.NormFactor),...
+                                        imag(obj.Endpoint .* obj.NormFactor));
         end
 
         % Real
         function value = get.Real(obj)
-            value = ciat.RealInterval(min(real(obj.Start),real(obj.Stop)),...
-                                      max(real(obj.Start),real(obj.Stop)));
+            value = ciat.RealInterval(min(real(obj.Startpoint), ...
+                                          real(obj.Endpoint)),...
+                                      max(real(obj.Startpoint), ...
+                                          real(obj.Endpoint)));
         end
         function value = real(obj)
             [M,N] = size(obj);
@@ -114,8 +116,10 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         
         % Imag
         function value = get.Imag(obj)
-            value = ciat.RealInterval(min(imag(obj.Start),imag(obj.Stop)),...
-                                      max(imag(obj.Start),imag(obj.Stop)));
+            value = ciat.RealInterval(min(imag(obj.Startpoint), ...
+                                          imag(obj.Endpoint)),...
+                                      max(imag(obj.Startpoint), ...
+                                          imag(obj.Endpoint)));
         end
         function value = imag(obj)
             [M,N] = size(obj);
@@ -127,9 +131,9 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             if obj.CurveParameter.isin(0)
                 minAbs = 1/abs(obj.NormFactor);
             else
-                minAbs = min(abs(obj.Start),abs(obj.Stop));
+                minAbs = min(abs(obj.Startpoint),abs(obj.Endpoint));
             end
-            maxAbs = max(abs(obj.Start),abs(obj.Stop));
+            maxAbs = max(abs(obj.Startpoint),abs(obj.Endpoint));
             value = ciat.RealInterval(minAbs,maxAbs);
         end
         function value = abs(obj)
@@ -139,8 +143,10 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval(min(angle(obj.Start),min(angle(obj.Stop))),...
-                                      max(angle(obj.Start),max(angle(obj.Stop))));
+            value = ciat.RealInterval(min(angle(obj.Startpoint), ...
+                                      min(angle(obj.Endpoint))),...
+                                      max(angle(obj.Startpoint), ...
+                                      max(angle(obj.Endpoint))));
         end
         function value = angle(obj)
             [M,N] = size(obj);
@@ -148,6 +154,11 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         end
 
         %% Other methods
+
+         % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Length);
+        end 
 
         % Plot
         function h = plot(obj, varargin)
@@ -174,7 +185,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                points = [obj(n).Start , obj(n).Stop];
+                points = [obj(n).Startpoint , obj(n).Endpoint];
                 if obj(n).Length ~= 0
                     h = [h;plot(real(points), imag(points), varargin{:})];    
                 else
@@ -187,61 +198,15 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             end
         end
 
-        % Plot
-        function h = plotMap(obj,logMap,arrowSize,varargin)
-            tf = ishold;
-            if tf == false 
-                clf
-            end
-            hold on
-            h = [];
-
-            % Plot normal vectors
-            for n = 1:length(obj(:))
-                % Extact variables
-                edge = obj(n);
-                if logMap == 0
-                    map = edge.GaussMap;
-                else
-                    map = edge.LogGaussMap;
-                end
-
-                % Set arrow positions
-                p(1) = edge.Start;
-                p(2) = edge.Midpoint;
-                p(3) = edge.Stop;
-
-                % Set vector lengths
-                if length(map) == 1
-                    a = zeros(1,3);
-                else
-                    a = zeros(1,6);
-                    p = repmat(p,1,2);
-                end
-
-                % Set arrow angle and length
-                for m = 1:length(map)
-                    a(1+3*(m-1)) = arrowSize * exp(1i*map(m).Infimum);
-                    a(2+3*(m-1)) = arrowSize * exp(1i*map(m).Midpoint);
-                    a(3+3*(m-1)) = arrowSize * exp(1i*map(m).Supremum);
-                end
-                
-                % Plot arrows
-                h=[h; ...
-                    quiver(real(p),imag(p),real(a),imag(a),...
-                           varargin{:},'AutoScale','off')];
-            end
-
-            if tf == false 
-                hold off
-            end
-        end
         function h = plotGaussMap(obj, arrowSize, varargin)
             h = obj.plotMap(0,arrowSize,varargin{:});
         end
         function h = plotLogGaussMap(obj, arrowSize, varargin)
             h = obj.plotMap(1,arrowSize,varargin{:});
         end
+
+        %% Function headers
+        h = plotMap(obj,logMap,arrowSize,varargin)
 
     end
 
@@ -250,8 +215,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')
-            obj.Start = obj.Start.(indexOp(1));
-            obj.Stop = obj.Stop.(indexOp(1));
+            obj.Startpoint = obj.Startpoint.(indexOp(1));
+            obj.Endpoint = obj.Endpoint.(indexOp(1));
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -265,9 +230,9 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             % Probably not all cases are covered
 
             % Warning, does not work for operations like
-            % obj(1,1).Stop = 1;
+            % obj(1,1).Endpoint = 1;
             % Should use
-            % obj.Stop(1,1) = 1;
+            % obj.Endpoint(1,1) = 1;
 
             % Ensure object instance is the first argument of call.
             if isempty(obj)
@@ -277,8 +242,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 if isscalar(varargin{1})
                     sz = [indexOp.Indices{:}];
                     obj = ciat.Edge;
-                    obj.Start = zeros(sz);
-                    obj.Stop = zeros(sz);
+                    obj.Startpoint = nan(sz);
+                    obj.Endpoint = nan(sz);
                 else
                     obj = varargin{1};
                 end
@@ -293,8 +258,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
                 
                 obj = ciat.Edge;
-                obj.Start = zeros(sz);
-                obj.Stop = zeros(sz);
+                obj.Startpoint = nan(sz);
+                obj.Endpoint = nan(sz);
                 return;
             end
             if numel(indexOp) == 1
@@ -305,8 +270,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                     if ~isa(rhs, 'ciat.Edge')
                         rhs = ciat.Edge(rhs);
                     end
-                    obj.Start.(indexOp(1)) = rhs.Start;
-                    obj.Stop.(indexOp(1)) = rhs.Stop;
+                    obj.Startpoint.(indexOp(1)) = rhs.Startpoint;
+                    obj.Endpoint.(indexOp(1)) = rhs.Endpoint;
                     return;
                 end
             end
@@ -327,8 +292,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         function obj = parenDelete(obj,indexOp)
             % disp('parenDelete')
-            obj.Start.(indexOp) = [];
-            obj.Stop.(indexOp) = [];
+            obj.Startpoint.(indexOp) = [];
+            obj.Endpoint.(indexOp) = [];
         end
     end
 
@@ -339,8 +304,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             newArgs2 = cell(numCatArrays,1);
             for ix = 1:numCatArrays
                 if isa(varargin{ix},'ciat.Edge')
-                    newArgs{ix} = varargin{ix}.Start;
-                    newArgs2{ix} = varargin{ix}.Stop;
+                    newArgs{ix} = varargin{ix}.Startpoint;
+                    newArgs2{ix} = varargin{ix}.Endpoint;
                 else
                     newArgs{ix} = varargin{ix};
                 end
@@ -350,7 +315,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         function varargout = size(obj,varargin)
             % disp('size')
-            [varargout{1:nargout}] = size(obj.Start,varargin{:});
+            [varargout{1:nargout}] = size(obj.Startpoint,varargin{:});
         end
     end
 
@@ -363,8 +328,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
     methods
         function obj = reshape(obj,varargin)
-            obj.Start = reshape(obj.Start,varargin{:});
-            obj.Stop = reshape(obj.Stop,varargin{:});
+            obj.Startpoint = reshape(obj.Startpoint,varargin{:});
+            obj.Endpoint = reshape(obj.Endpoint,varargin{:});
         end
     end
 

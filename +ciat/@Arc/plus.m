@@ -58,17 +58,51 @@ function r = plus(obj1,obj2)
         case 'ciat.Arc'
             center = obj1.Center + obj2.Center;
             radius = obj1.Radius + obj2.Radius;
-            angles = cap(obj1.ArcAngles,obj2.Angles);
+            
+            % Intersect Gauss-maps
+            G1 = obj1.GaussMap;
+            G2 = obj2.GaussMap;
+            if size(G1,3) > 1 && size(G2,3) > 1
+                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
+                               cap(G1(:,:,1),G2(:,:,2)), ...
+                               cap(G1(:,:,2),G2(:,:,1)), ...
+                               cap(G1(:,:,2),G2(:,:,2)) );
+                angleCap = sort(angleCap,3);
+                nanLayer = all(isnan(angleCap),[1,2]);
+                nanLayer = find(nanLayer,1,'first');
+                angles = angleCap(:,:,1:nanLayer-1);
+
+            elseif size(G1,3) == 1 && size(G2,3) > 1
+                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
+                               cap(G1(:,:,1),G2(:,:,2)) );
+                angleCap = sort(angleCap,3);
+                nanLayer = all(isnan(:,:,2));
+                angles = angleCap(:,:,1:nanLayer+1);
+            elseif size(G1,3) > 1 && size(G2,3) == 1
+                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
+                               cap(G1(:,:,2),G2(:,:,1)) );
+                angleCap = sort(angleCap,3);
+                nanLayer = all(isnan(:,:,2));
+                angles = angleCap(:,:,1:nanLayer+1);
+            else
+                angles = cap(G1,G2);
+            end
 
         case 'double'
             center = obj1.Center + obj2;
             radius = obj1.Radius;
-            angles = obj1.ArcAngles;
-             
+            angles = obj1.ArcAngle;
     end
 
     % Create new object        
-    r = ciat.Arc(center,radius,angles);
+    r(M1,N1) = ciat.Arc;
+    mask = ~isnan(angles);
+    if any(mask)
+        % r(mask) = ciat.Arc(center(mask),radius(mask),angles(mask));
+        r.Center(mask) = center(mask);
+        r.Radius(mask) = radius(mask);
+        r.ArcAngle(mask) = angles(mask);
+    end
 end
 
         
