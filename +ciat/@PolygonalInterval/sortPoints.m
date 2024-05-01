@@ -1,4 +1,4 @@
-function points = sortPoints(obj)
+function points = sortPoints(points,tolerance)
 
 % Sort the vertex points of polygonal intervals
 %
@@ -26,13 +26,11 @@ function points = sortPoints(obj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-    
-    % Extract points from the object
-    points = obj.Boundary;
-    
+    points = points(:);
+
     % Remove non-unique points
     points = uniquetol([real(points), imag(points)] ,...
-                      obj.Tolerance,'ByRows',true, 'DataScale', 1);
+                      tolerance,'ByRows',true, 'DataScale', 1);
 
     % Find convex hull
     if (length(points) > 3) && ~(isColinear(points(:,1) , points(:,2)))
@@ -42,7 +40,7 @@ function points = sortPoints(obj)
     
     % Sort points to form a counter-clockwise boundary and assign to object
     points = sortCounterClockwise(points);
-    
+
 end
 
 %% Utility functions

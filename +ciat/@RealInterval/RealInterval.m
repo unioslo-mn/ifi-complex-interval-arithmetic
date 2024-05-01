@@ -699,6 +699,11 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         function r = isin(obj,x)
             r = obj.Infimum <= x & x <= obj.Supremum; 
         end
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Width);
+        end
         
         % Plot
         function plt = plot(obj,varargin)
@@ -772,8 +777,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 if isscalar(varargin{1})
                     sz = [indexOp.Indices{:}];
                     obj = ciat.RealInterval;
-                    obj.Infimum = zeros(sz);
-                    obj.Supremum = zeros(sz);
+                    obj.Infimum = nan(sz);
+                    obj.Supremum = nan(sz);
                 else
                     obj = varargin{1};
                 end
@@ -788,8 +793,8 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
                 
                 obj = ciat.RealInterval;
-                obj.Infimum = zeros(sz);
-                obj.Supremum = zeros(sz);
+                obj.Infimum = nan(sz);
+                obj.Supremum = nan(sz);
                 return;
             end
             if numel(indexOp) == 1

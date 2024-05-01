@@ -1,4 +1,4 @@
-classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
+classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
 
 % Polygonal interval class for complex interval arithmetic calculations
 %
@@ -25,6 +25,10 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         Tolerance;      % Maximum distance from the boundary of the represented interval (except where it is concave)
     end
     
+    properties (Access = private)
+       Boundary         % Storage property for the vertex points
+    end
+
     properties (Dependent)
         Points;         % Vertex points of the polygonal interval boundary
         PointCount;     % Number of vertex points
@@ -33,10 +37,6 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         Abs;            % Projection of the polygonal interval to the absolute value axis
         Angle;          % Projection of the polygonal interval to the angle axis
         Area;           % Area of the polygonal interval
-    end
-    
-    properties (Access = private)
-       Boundary         % Storage property for the vertex points
     end
     
     methods
@@ -87,7 +87,8 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
                 inObj2               (:,:)   = []
                 optional.tolerance   (1,1)   {mustBeNumeric}     = 1e-6
             end    
-            obj.Tolerance = optional.tolerance;
+
+            % obj.Tolerance = optional.tolerance;
             
             switch class(inObj)
                 case 'double'
@@ -97,16 +98,14 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
                         % This is the default way of defining polygonal
                         % intervals the points are assumed to belong to a
                         % single interval no matter how many dimensions
-                        obj.Points = inObj(:);
+                        obj.Points = {inObj(:)};
                     end
                 case 'cell'
                     % This is how multiple polygons can be defined using
                     % cells of double arrays
                     [M,N] = size(inObj);
                     obj(M,N) = obj;
-                    for n = 1:M*N
-                        obj(n).Points = inObj{n};
-                    end
+                    obj.Points = inObj;
                 otherwise
                     % Input object will be casted
                     tol = obj.Tolerance;
@@ -135,8 +134,13 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
                
         % Set points (store in the hidden property Boundary after sorting)
         function obj = set.Points(obj,points)
-            obj.Boundary = points;
-            obj.Boundary = obj.sortPoints;
+            [M,N] = size(obj);
+            for m = 1:M
+                for n = 1:N
+                    obj.Boundary(m,n) = {ciat.PolygonalInterval.sortPoints( ...
+                                          points{m,n},obj.Tolerance(m,n))};
+                end
+            end
         end 
         
         % Get points (retrieve from hidden property Boundary)
@@ -148,13 +152,22 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
                         
         % Get point count
         function value = get.PointCount(obj)
-            value = length(obj.Points);
+            value = cellfun(@length,obj.Points);
         end
         
         % Real
         function value = get.Real(obj)
-            value = ciat.RealInterval( min(real(obj.Points)),...
-                                       max(real(obj.Points)) );
+            [M,N] = size(obj);
+            minReal = zeros(M,N);
+            maxReal = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minReal(m,n) = min(real(obj.Points{m,n}));
+                    maxReal(m,n) = min(real(obj.Points{m,n}));
+                end
+            end
+
+            value = ciat.RealInterval( minReal,maxReal );
         end
         function value = real(obj)
         % Real value of polygonal intervals
@@ -173,14 +186,22 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   polyInt = real(ciat.PolygonalInterval([0,1,1i]));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
         function value = get.Imag(obj)
-            value = ciat.RealInterval( min(imag(obj.Points)),...
-                                       max(imag(obj.Points)) );
+            [M,N] = size(obj);
+            minImag = zeros(M,N);
+            maxImag = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minImag(m,n) = min(imag(obj.Points{m,n}));
+                    maxImag(m,n) = min(imag(obj.Points{m,n}));
+                end
+            end
+
+            value = ciat.RealInterval( minImag,maxImag );
         end
         function value = imag(obj)
         % Imaginary value of polygonal intervals
@@ -199,18 +220,27 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   polyInt = imag(ciat.PolygonalInterval([0,1,1i]));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         % Abs
         function value = get.Abs(obj)
-            value = ciat.RealInterval( min(abs(obj.Points)),...
-                                       max(abs(obj.Points)) );
-            if obj.PointCount >= 3 && ...
-                        inpolygon(0,0,real(obj.Points),imag(obj.Points))
-                value.Infimum = 0;
+            [M,N] = size(obj);
+            minAbs = zeros(M,N);
+            maxAbs = zeros(M,N);
+            pointIn = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minAbs(m,n) = min(abs(obj.Points{m,n}));
+                    maxAbs(m,n) = min(abs(obj.Points{m,n}));
+                    pointIn(m,n) = obj.PointCount(m,n) >= 3 && ...
+                                  inpolygon(0,0,real(obj.Points{m,n}), ...
+                                                imag(obj.Points{m,n}));
+                end
             end
+
+            value = ciat.RealInterval( minAbs,maxAbs );
+            value(pointIn) = 0;
         end
         function value = abs(obj)
         % Absolute value of polygonal intervals
@@ -229,19 +259,28 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         % EXAMPLES
         %   polyInt = abs(ciat.PolygonalInterval([0,1,1i]));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval( min(angle(obj.Points)),...
-                                       max(angle(obj.Points)) );  
-            if obj.PointCount >= 3 && ...
-                        inpolygon(0,0,real(obj.Points),imag(obj.Points))
-                value.Infimum = 0;
-                value.Supremum = 2*pi;
+            [M,N] = size(obj);
+            minAng = zeros(M,N);
+            maxAng = zeros(M,N);
+            pointIn = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minAng(m,n) = min(angle(obj.Points{m,n}));
+                    maxAng(m,n) = min(angle(obj.Points{m,n}));
+                    pointIn(m,n) = obj.PointCount >= 3 && ...
+                                  inpolygon(0,0,real(obj.Points{m,n}), ...
+                                                imag(obj.Points{m,n}));
+                end
             end
+
+            value = ciat.RealInterval( minAng,maxAng );
+            value(pointIn).Infimum = 0;
+            value(pointIn).Supremum = 2*pi;
         end
         function value = angle(obj)
         % Angle of polygonal intervals
@@ -266,7 +305,11 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         
         % Area
         function value = get.Area(obj)
-           value = polyarea(real(obj.Points),imag(obj.Points));
+            if obj.PointCount == 0
+                value = nan;
+            else
+                value = polyarea(real(obj.Points{:}),imag(obj.Points{:}));
+            end
         end
         function value = area(obj)
         % Area of polygonal intervals
@@ -454,7 +497,6 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
         r = sum(obj,varargin)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
-        points = sortPoints(obj)
         points = backtrack(obj,trackAngle)
                 
     end
@@ -463,93 +505,87 @@ classdef PolygonalInterval % < matlab.mixin.indexing.RedefinesParen
     methods (Static)
         % Function headers
         outObj = cast(inObj,options)
-
-        
-
+        points = sortPoints(points,tolerance)
     end
 
-    % methods (Access=protected)
-    %     function varargout = parenReference(obj, indexOp)
-    %         % disp('parenReference')
-    %         obj.Real = obj.Real.(indexOp(1));
-    %         obj.Imag = obj.Imag.(indexOp(1));
-    %         if isscalar(indexOp)
-    %             varargout{1} = obj;
-    %             return;
-    %         end
-    %         [varargout{1:nargout}] = obj.(indexOp(2:end));
-    %     end
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Tolerance = obj.Tolerance.(indexOp(1));
+            obj.Boundary = obj.Boundary.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
 
-    %     function obj = parenAssign(obj,indexOp,varargin)
-    %         % disp('parenAssign')
-    %         % Ensure object instance is the first argument of call.
-    %         if isempty(obj)
-    %             % This part is for initializing an array of objects
-    %             % such as doing obj(5,2) = ciat.RectangularInterval
-    %             % Might not be the place or the way to do it
+        function obj = parenAssign(obj,indexOp,varargin)
+            % disp('parenAssign')
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.RectangularInterval
+                % Might not be the place or the way to do it
 
-    %             % Instanciate object with zero values of correct size.
-    %             obj = ciat.RectangularInterval;
-    %             obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-    %             obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                % Instanciate object with zero values of correct size.
+                obj = ciat.PolygonalInterval;
+                obj.Tolerance = 1e-6 * ones([indexOp.Indices{:}]);
+                obj.Boundary = cell([indexOp.Indices{:}]);
 
-    %             % obj = varargin{1};
-    %             varargin{1} = obj.(indexOp);
-    %         end
-    %         if isscalar(indexOp)
-    %             assert(nargin==3);
-    %             rhs = varargin{1};
-    %             obj.Real.(indexOp) = rhs.Real;
-    %             obj.Imag.(indexOp) = rhs.Imag;
-    %             return;
-    %         end
-    %         [obj.(indexOp(2:end))] = varargin{:};
-    %     end
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.Tolerance.(indexOp) = rhs.Tolerance;
+                obj.Boundary.(indexOp) = rhs.Boundary;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
 
-    %     function n = parenListLength(obj,indexOp,ctx)
-    %         % disp('parenListLength')
-    %         if numel(indexOp) <= 2
-    %             n = 1;
-    %             return;
-    %         end
-    %         containedObj = obj.(indexOp(1:2));
-    %         n = listLength(containedObj,indexOp(3:end),ctx);
-    %     end
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
 
-    %     function obj = parenDelete(obj,indexOp)
-    %         % disp('parenDelete')
-    %         obj.Real.(indexOp) = [];
-    %         obj.Imag.(indexOp) = [];
-    %     end
-    % end
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Tolerance.(indexOp) = [];
+            obj.Boundary.(indexOp) = [];
+        end
+    end
 
-    % methods (Access=public)
-    %     function out = cat(dim,varargin)
-    %         % disp('cat')
-    %         numCatArrays = nargin-1;
-    %         newArgs = cell(numCatArrays,1);
-    %         for ix = 1:numCatArrays
-    %             if isa(varargin{ix},'RealInterval')
-    %                 newArgs{ix} = varargin{ix}.Real;
-    %                 newArgs{ix} = varargin{ix}.Imag;
-    %             else
-    %                 newArgs{ix} = varargin{ix};
-    %             end
-    %         end
-    %         out = RealInterval(cat(dim,newArgs{:}));
-    %     end
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            % disp('cat')
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                newArgs{ix} = varargin{ix}.Tolerance;
+                newArgs{ix} = varargin{ix}.Boundary;
+            end
+            out = ciat.PolygonalInterval(cat(dim,newArgs{:}));
+        end
 
-    %     function varargout = size(obj,varargin)
-    %         % disp('size')
-    %         [varargout{1:nargout}] = size(obj.Real,varargin{:});
-    %     end
-    % end
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Tolerance,varargin{:});
+        end
+    end
 
-    % methods (Static, Access=public)
-    %     function obj = empty()
-    %         disp('empty')
-    %         obj = ciat.RectangularInterval;
-    %     end
-    % end
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.PolygonalInterval;
+        end
+    end
 end
 

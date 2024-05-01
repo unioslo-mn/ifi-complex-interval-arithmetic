@@ -1,7 +1,8 @@
-classdef Edge
+classdef Edge < matlab.mixin.indexing.RedefinesParen
 
 	properties
-        Endpoints       % Endpoints of the edge as complex numbers
+        Start           % First point of the edge
+        Stop            % Last point of the edge
     end	
 
 	properties (Dependent)
@@ -31,9 +32,11 @@ classdef Edge
                 case 0
                     % This is for initializing an array of objects
                 case 1
-                    obj.Endpoints = [varargin{1},varargin{1}];
+                    obj.Start = varargin{1};
+                    obj.Stop = obj.Start;
                 case 2
-                    obj.Endpoints = [varargin{1},varargin{2}];
+                    obj.Start = varargin{1};
+                    obj.Stop = varargin{2};
             end
 		end
 
@@ -41,24 +44,23 @@ classdef Edge
 
         % Midpoint
         function value = get.Midpoint(obj)
-            value = sum(obj.Endpoints)/2;
+            value = (obj.Start+obj.Stop)/2;
         end
 
         % Vector
         function value = get.Vector(obj)
-            value = diff(obj.Endpoints);
+            value = obj.Stop - obj.Start;
         end
 
         % Slope
 		function value = get.Slope(obj)
             vd = obj.Vector;
-            value = imag(vd)/real(vd);
+            value = imag(vd)./real(vd);
         end
 
         % Zero crossing
 		function value = get.ZeroCrossing(obj)
-            v1 = obj.Endpoints(1);
-            value = real(v1) - imag(v1) / obj.Slope;
+            value = real(obj.Start) - imag(obj.Start) ./ obj.Slope;
         end
 
         % Length
@@ -74,7 +76,8 @@ classdef Edge
 
         % Log-GaussMap
 		function value = get.LogGaussMap(obj)
-            value = obj.GaussMap - ciat.RealInterval(angle(obj.Endpoints));
+            value = obj.GaussMap - ciat.RealInterval(angle(obj.Start), ...
+                                                     angle(obj.Stop));
         end
 
         % Normalization factor
@@ -83,25 +86,26 @@ classdef Edge
                 value = 0;
             else
                 % Extract line parameters
-                v1 = obj.Endpoints(1);
+                v1 = obj.Start;
                 va = obj.Slope;        
                 
                 % Find scale-rotate factor
                 vr = exp(-1i*(atan(va)+pi/2));   % rotation factor
-                vs = 1/real(vr * v1);       % scale factor
-                value = vr * vs;                        % complex factor
+                vs = 1 ./ real(vr .* v1);            % scale factor
+                value = vr .* vs;                 % complex factor
 
             end
         end
 
         function value = get.CurveParameter(obj)
-            value = ciat.RealInterval(imag(obj.Endpoints * obj.NormFactor));
+            value = ciat.RealInterval(imag(obj.Start .* obj.NormFactor),...
+                                        imag(obj.Stop .* obj.NormFactor));
         end
 
         % Real
         function value = get.Real(obj)
-            value = ciat.RealInterval(min(real(obj.Endpoints)),...
-                                      max(real(obj.Endpoints)));
+            value = ciat.RealInterval(min(real(obj.Start),real(obj.Stop)),...
+                                      max(real(obj.Start),real(obj.Stop)));
         end
         function value = real(obj)
             [M,N] = size(obj);
@@ -110,8 +114,8 @@ classdef Edge
         
         % Imag
         function value = get.Imag(obj)
-            value = ciat.RealInterval(min(imag(obj.Endpoints)),...
-                                      max(imag(obj.Endpoints)));
+            value = ciat.RealInterval(min(imag(obj.Start),imag(obj.Stop)),...
+                                      max(imag(obj.Start),imag(obj.Stop)));
         end
         function value = imag(obj)
             [M,N] = size(obj);
@@ -123,9 +127,9 @@ classdef Edge
             if obj.CurveParameter.isin(0)
                 minAbs = 1/abs(obj.NormFactor);
             else
-                minAbs = min(abs(obj.Endpoints));
+                minAbs = min(abs(obj.Start),abs(obj.Stop));
             end
-            maxAbs = max(abs(obj.Endpoints));
+            maxAbs = max(abs(obj.Start),abs(obj.Stop));
             value = ciat.RealInterval(minAbs,maxAbs);
         end
         function value = abs(obj)
@@ -135,8 +139,8 @@ classdef Edge
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval(min(angle(obj.Endpoints)),...
-                                      max(angle(obj.Endpoints)));
+            value = ciat.RealInterval(min(angle(obj.Start),min(angle(obj.Stop))),...
+                                      max(angle(obj.Start),max(angle(obj.Stop))));
         end
         function value = angle(obj)
             [M,N] = size(obj);
@@ -170,7 +174,7 @@ classdef Edge
             hold on
             h = [];
             for n = 1:length(obj(:))
-                points = obj(n).Endpoints;
+                points = [obj(n).Start , obj(n).Stop];
                 if obj(n).Length ~= 0
                     h = [h;plot(real(points), imag(points), varargin{:})];    
                 else
@@ -203,9 +207,9 @@ classdef Edge
                 end
 
                 % Set arrow positions
-                p(1) = edge.Endpoints(1);
+                p(1) = edge.Start;
                 p(2) = edge.Midpoint;
-                p(3) = edge.Endpoints(2);
+                p(3) = edge.Stop;
 
                 % Set vector lengths
                 if length(map) == 1
@@ -241,5 +245,127 @@ classdef Edge
 
     end
 
+    %% Vectorizing the object
+
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Start = obj.Start.(indexOp(1));
+            obj.Stop = obj.Stop.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % POTENTIAL UNPEXPECTED BEHAVIOUR HERE
+            % Only works for 2D arrays, not all is tested
+            % Probably not all cases are covered
+
+            % Warning, does not work for operations like
+            % obj(1,1).Stop = 1;
+            % Should use
+            % obj.Stop(1,1) = 1;
+
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % Object must be of the correct size
+                
+                % If rhs is of size 1, then use indices to set size
+                if isscalar(varargin{1})
+                    sz = [indexOp.Indices{:}];
+                    obj = ciat.Edge;
+                    obj.Start = zeros(sz);
+                    obj.Stop = zeros(sz);
+                else
+                    obj = varargin{1};
+                end
+            end
+            if isempty(varargin{1})
+                % When rhs is empty, allocate memory for the object, size of indexOp.
+
+                % Size to allocate
+                tmp = indexOp.Indices;
+                % Replace ':' with 1, to avoid errors when indexing into empty arrays.
+                tmp(strcmp(':', indexOp.Indices)) = {1};
+                sz = max(cellfun(@numel, tmp), cellfun(@max, tmp));
+                
+                obj = ciat.Edge;
+                obj.Start = zeros(sz);
+                obj.Stop = zeros(sz);
+                return;
+            end
+            if numel(indexOp) == 1
+                if isscalar(indexOp(1))
+                    assert(nargin==3);
+                    rhs = varargin{1};
+                    % If rhs is not an interval, then convert it to one.
+                    if ~isa(rhs, 'ciat.Edge')
+                        rhs = ciat.Edge(rhs);
+                    end
+                    obj.Start.(indexOp(1)) = rhs.Start;
+                    obj.Stop.(indexOp(1)) = rhs.Stop;
+                    return;
+                end
+            end
+            tmp = obj.(indexOp(1));
+            [tmp.(indexOp(2:end))] = varargin{:};
+            obj.(indexOp(1)) = tmp;
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Start.(indexOp) = [];
+            obj.Stop.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.Edge')
+                    newArgs{ix} = varargin{ix}.Start;
+                    newArgs2{ix} = varargin{ix}.Stop;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.Edge(cat(dim,newArgs{:}), cat(dim,newArgs2{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Start,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            %disp('empty')
+            obj = ciat.Edge;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Start = reshape(obj.Start,varargin{:});
+            obj.Stop = reshape(obj.Stop,varargin{:});
+        end
+    end
 
 end

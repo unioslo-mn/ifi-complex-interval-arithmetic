@@ -229,8 +229,8 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         
         % Area
         function value = get.Area(obj)
-            value = 0.5 * width(obj.Angle) * ( obj.Abs.Supremum^2 - ...
-                                               obj.Abs.Infimum^2 );
+            value = 0.5 * width(obj.Angle) .* ( obj.Abs.Supremum.^2 - ...
+                                                obj.Abs.Infimum.^2 );
         end 
         function value = area(obj)
         % Area of polar intervals
@@ -413,7 +413,12 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
             for n = 1:length(r(:))
                 r(n).Angle = r(n).Angle + pi;
             end
-        end   
+        end    
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end 
         
         % Plot
         function h = plot(obj, varargin)
@@ -489,8 +494,10 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
 
                 % Instanciate object with zero values of correct size.
                 obj = ciat.PolarInterval;
-                obj.Abs = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-                obj.Angle = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Abs = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                            nan([indexOp.Indices{:}]));
+                obj.Angle = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                              nan([indexOp.Indices{:}]));
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);

@@ -30,10 +30,10 @@ gI = ciat.PolygonalInterval([1-1i, 3-2i, 2-3i, 1-2i]);
 gI.plot('b-');
 
 % Polyarcular interval
-aI = ciat.PolyarcularInterval([ciat.Arc(3+0.5i,1,ciat.RealInterval([-.7,-.4]*pi)),...
-                               ciat.Arc(4+2.5i,-0.7,ciat.RealInterval([.3,.5]*pi)),...
-                               ciat.Arc(2+1.5i,0,ciat.RealInterval(0))]);
-aI.plot('b-');
+% aI = ciat.PolyarcularInterval([ciat.Arc(3+0.5i,1,ciat.RealInterval([-.7,-.4]*pi)),...
+%                                ciat.Arc(4+2.5i,-0.7,ciat.RealInterval([.3,.5]*pi)),...
+%                                ciat.Arc(2+1.5i,0,ciat.RealInterval(0))]);
+% aI.plot('b-');
 %% Cast complex interval types
 
 % Rectangular to circular
@@ -44,9 +44,13 @@ rcI.plot('r--');
 rpI = ciat.PolarInterval(rI);
 rpI.plot('r--');
 
-% Rectangular to polyarcular
-raI = ciat.PolyarcularInterval(rI);
-raI.plot('k:','LineWidth',2);
+% Rectangular to polygonal
+rgI = ciat.PolygonalInterval(rI);
+rgI.plot('k:','LineWidth',2);
+
+% % Rectangular to polyarcular
+% raI = ciat.PolyarcularInterval(rI);
+% raI.plot('k:','LineWidth',2);
 
 % Circular to rectangular
 crI = ciat.RectangularInterval(cI);
@@ -60,9 +64,9 @@ cpI.plot('r--');
 cgI = ciat.PolygonalInterval(cI);
 cgI.plot('r--');
 
-% Circular to polyarcular
-caI = ciat.PolyarcularInterval(cI);
-caI.plot('k:','LineWidth',2);
+% % Circular to polyarcular
+% caI = ciat.PolyarcularInterval(cI);
+% caI.plot('k:','LineWidth',2);
 
 % Polar to rectangular
 prI = ciat.RectangularInterval(pI);
@@ -76,9 +80,9 @@ pcI.plot('r--');
 pgI = ciat.PolygonalInterval(pI);
 pgI.plot('r--');
 
-% Polar to polyarcular
-paI = ciat.PolyarcularInterval(pI);
-paI.plot('k:','LineWidth',2);
+% % Polar to polyarcular
+% paI = ciat.PolyarcularInterval(pI);
+% paI.plot('k:','LineWidth',2);
 
 % Polygonal to rectangular
 grI = ciat.RectangularInterval(gI);
@@ -92,17 +96,17 @@ gcI.plot('r--');
 gpI = ciat.PolarInterval(gI);
 gpI.plot('r--');
 
-% Polygonal to polyarcular
-gaI = ciat.PolyarcularInterval(gI);
-gaI.plot('k:','LineWidth',2);
+% % Polygonal to polyarcular
+% gaI = ciat.PolyarcularInterval(gI);
+% gaI.plot('k:','LineWidth',2);
 
-% Polyarcular to rectangular
-arI = ciat.RectangularInterval(aI);
-arI.plot('r--');
+% % Polyarcular to rectangular
+% arI = ciat.RectangularInterval(aI);
+% arI.plot('r--');
 
-% Polyarcular to polar
-apI = ciat.PolarInterval(aI);
-apI.plot('r--');
+% % Polyarcular to polar
+% apI = ciat.PolarInterval(aI);
+% apI.plot('r--');
 
 %% Transform complex intervals
 
@@ -146,9 +150,9 @@ gI_plus.plot('g-')
 gI_times = rgI * cgI;
 gI_times.plot('g-');
 
-% Add polyarcular intervals
-aI_plus = ciat.PolyarcularInterval(-pI) + aI;
-aI_plus.plot('g-');
+% % Add polyarcular intervals
+% aI_plus = ciat.PolyarcularInterval(-pI) + aI;
+% aI_plus.plot('g-');
 
 %% Unite or intersect complex intervals
 

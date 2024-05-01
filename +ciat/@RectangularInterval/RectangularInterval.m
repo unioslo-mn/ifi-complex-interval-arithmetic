@@ -634,6 +634,11 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             r.Real = -r.Real;
             r.Imag = -r.Imag;
         end  
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end
         
         % Plot
         function h = plot(obj, varargin)
@@ -712,8 +717,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
 
                 % Instanciate object with zero values of correct size.
                 obj = ciat.RectangularInterval;
-                obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-                obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Real = ciat.RealInterval(nan([indexOp.Indices{:}]), nan([indexOp.Indices{:}]));
+                obj.Imag = ciat.RealInterval(nan([indexOp.Indices{:}]), nan([indexOp.Indices{:}]));
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);
