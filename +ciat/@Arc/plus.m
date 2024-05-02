@@ -58,34 +58,15 @@ function r = plus(obj1,obj2)
         case 'ciat.Arc'
             center = obj1.Center + obj2.Center;
             radius = obj1.Radius + obj2.Radius;
-            
-            % Intersect Gauss-maps
-            G1 = obj1.GaussMap;
-            G2 = obj2.GaussMap;
-            if size(G1,3) > 1 && size(G2,3) > 1
-                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
-                               cap(G1(:,:,1),G2(:,:,2)), ...
-                               cap(G1(:,:,2),G2(:,:,1)), ...
-                               cap(G1(:,:,2),G2(:,:,2)) );
-                angleCap = sort(angleCap,3);
-                nanLayer = all(isnan(angleCap),[1,2]);
-                nanLayer = find(nanLayer,1,'first');
-                angles = angleCap(:,:,1:nanLayer-1);
+            angles = capGaussMap(obj1.GaussMap,obj2.GaussMap);
 
-            elseif size(G1,3) == 1 && size(G2,3) > 1
-                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
-                               cap(G1(:,:,1),G2(:,:,2)) );
-                angleCap = sort(angleCap,3);
-                nanLayer = all(isnan(:,:,2));
-                angles = angleCap(:,:,1:nanLayer+1);
-            elseif size(G1,3) > 1 && size(G2,3) == 1
-                angleCap = cat(3,cap(G1(:,:,1),G2(:,:,1)), ...
-                               cap(G1(:,:,2),G2(:,:,1)) );
-                angleCap = sort(angleCap,3);
-                nanLayer = all(isnan(:,:,2));
-                angles = angleCap(:,:,1:nanLayer+1);
-            else
-                angles = cap(G1,G2);
+            if size(angles,3) > 1
+                priMask = ~isnan(angles(:,:,1));
+                secMask = ~isnan(angles(:,:,2));
+                center = [ center(priMask) ; center(secMask) ];
+                radius = [ radius(priMask) ; radius(secMask) ];
+                angles = [ angles(priMask) ; angles(secMask) ];
+                [M1,N1] = size(angles);
             end
 
         case 'double'
@@ -105,4 +86,81 @@ function r = plus(obj1,obj2)
     end
 end
 
+%% Function for intersecting the Gauss map intervals
+
+function output = capGaussMap(input1, input2)
+    
+    % Split angles
+    input1 = splitAngle(input1);
+    input2 = splitAngle(input2);
+    M = size(input1,1);
+    N = size(input1,2);
+    L1 = size(input1,3) > 1;
+    L2 = size(input2,3) > 1;
+
+    % Intersect angles
+    primaryCap = cap(input1(:,:,1),input2(:,:,1));
+    if ~L1 && L2
+        secondaryCap = cap(input1(:,:,1),input2(:,:,2));
+    elseif L1 && ~L2
+        secondaryCap = cap(input1(:,:,2),input2(:,:,1));
+    elseif L1 && L2
+        % Merge the adjacent intersections 
+        infPositive = primaryCap.Infimum > 0;
+        tempCap = cap(input1(:,:,2),input2(:,:,2));
+        primaryCap = union( primaryCap - infPositive*2*pi, ...
+                            tempCap + ~infPositive*2*pi);
+
+        % There can be only one secondary intersection
+        tempCap = cat( 3 , cap(input1(:,:,1),input2(:,:,2)) , ...
+                           cap(input1(:,:,2),input2(:,:,1)) );
+        secondaryCap(M,N) = ciat.RealInterval;
+        secondaryCap( sum(~isnan(tempCap),3)>0 ) = tempCap(~isnan(tempCap));
+
+    end
+
+    % Join primary and secondary caps
+    moveMask = isnan(primaryCap) & ~isnan(secondaryCap);
+    if any(moveMask,'all')
+        emptyInterval(1) = ciat.RealInterval;
+        primaryCap(moveMask) = secondaryCap(moveMask);
+        secondaryCap(moveMask) = emptyInterval;
+    end
+    
+    if all(isnan(secondaryCap),'all')
+        output = primaryCap;
+    else
+        output = cat(3 , primaryCap , secondaryCap);
+        lastwarn('Surplus angle intersections found!')
+    end
+
+
+end
+
+
+%% Function for splitting the angles including the -pi or pi value
+
+function output = splitAngle(input)
+
+    % Check if any elements contain the -pi or pi value
+    mask = input.Infimum < -pi | input.Supremum > pi;
+    
+    % Create a second layer of the array in the 3rd dimension
+    if any(mask,'all')
+        [M,N] = size(input);
+        input2(M,N) = ciat.RealInterval;
+        input2(mask) = ciat.RealInterval(...
+                             -pi*ones(sum(mask,'all'),1) , ...
+                             wrapToPi(input.Supremum(mask)));
+        input(mask) = ciat.RealInterval( ...
+                            wrapToPi(input.Infimum(mask)) , ...
+                            pi*ones(sum(mask,'all'),1));
+        output = cat(3,input,input2);
+    else
+        output = ciat.RealInterval(...
+                            wrapToPi(input.Infimum) , ...
+                            wrapToPi(input.Supremum) );
+    end
+
+end
         

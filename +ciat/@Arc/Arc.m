@@ -54,46 +54,25 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         %% Defining properties
                    
-        % Set angles (store in the hidden property ArcAngleStore after wrapping)
+        % Set angles (store in the hidden property ArcAngleStore)
+        % wrap angles and split at pi, 
+        % return vector of arcs no matter the input format
         function obj = set.ArcAngle(obj,angleArray)
 
-            % Check input size
-            if ndims(angleArray) > 2
-                M = size(angleArray,1);
-                N = size(angleArray,2);
-                O = size(angleArray,3);
-            else
-                [M,N] = size(angleArray);
-                O = 1;
-            end
-            assert(size(obj,1)==M && size(obj,2)==N)
+            [M,N] = size(obj);
+            [Ma,Na] = size(angleArray);
+            assert(M==Ma && N==Na)
 
-            % Initialize angle array
-            emptyInterval(1) = ciat.RealInterval;
-            angleStore = repmat(emptyInterval,M,N,O);
+            % Initialize ArcAngle property if necessary
+            if isempty(obj.ArcAngle)
+                obj.ArcAngleStore = repmat(ciat.RealInterval(0),M,N);
+            end
 
             for m = 1:M
             for n = 1:N
-                % Wrap and split all angle intervals for the given arc
-                angles = [];
-                for o = 1:O
-                    angles = cat(3,angles,...
-                                ciat.Arc.wrapArcAngle(angleArray(m,n,o)) );
-                end
-                % Add angle intervals to the storage, 
-                % increase size if necessary
-                Oa = size(angles,3);
-                Os = size(angleStore,3);
-                if Os < Oa
-                    angleStore = cat(3,angleStore, ...
-                                    repmat(emptyInterval,M,N,Oa-Os));
-                end
-                angleStore(m,n,1:Oa) = angles;
+                obj.ArcAngleStore(m,n) = ciat.Arc.wrapArcAngle(angleArray(m,n));
             end
             end
-
-            % Assign all angle intervals to the object storage
-            obj.ArcAngleStore = angleStore;
         end
 
         % Get points (retrieve ArcAngle from hidden property ArcAngleStore)
@@ -135,33 +114,35 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         % Gauss map angle interval
         function value = get.GaussMap(obj)
 
-            % Start by assigning the arc-angle values
-            value = obj.ArcAngle;
-            [M,N] = size(value);
+            value = obj.ArcAngleStore;
 
-            % Check if any elements contain the -pi or pi value
-            mask = ~isnan(value) & ...
-                   ( value.isin(-pi) | value.isin(pi) ) & ...
-                   ( value.Infimum ~= -pi | value.Infimum ~= pi | ...
-                     value.Supremum ~= -pi | value.Supremum ~= pi);
-            % Create a second layer of the array in the 3rd dimension
-            if any(mask)
-                value2(M,N) = ciat.RealInterval;
-                value2(mask) = ciat.RealInterval(...
-                                     -pi , ...
-                                     wrapToPi(value.Supremum(mask)));
-                value(mask) = ciat.RealInterval( ...
-                                    wrapToPi(value.Infimum(mask)) , ...
-                                    pi);
-                value(~mask) = ciat.RealInterval(...
-                                    wrapToPi(value.Infimum(~mask)) , ...
-                                    wrapToPi(value.Supremum(~mask)) );
-                value = cat(3,value,value2);
-            else
-                value = ciat.RealInterval(...
-                                    wrapToPi(value.Infimum) , ...
-                                    wrapToPi(value.Supremum) );
-            end
+            % % Start by assigning the arc-angle values
+            % value = obj.ArcAngle;
+            % [M,N] = size(value);
+            % 
+            % % Check if any elements contain the -pi or pi value
+            % mask = ~isnan(value) & ...
+            %        ( value.isin(-pi) | value.isin(pi) ) & ...
+            %        ( value.Infimum ~= -pi | value.Infimum ~= pi | ...
+            %          value.Supremum ~= -pi | value.Supremum ~= pi);
+            % % Create a second layer of the array in the 3rd dimension
+            % if any(mask)
+            %     value2(M,N) = ciat.RealInterval;
+            %     value2(mask) = ciat.RealInterval(...
+            %                          -pi , ...
+            %                          wrapToPi(value.Supremum(mask)));
+            %     value(mask) = ciat.RealInterval( ...
+            %                         wrapToPi(value.Infimum(mask)) , ...
+            %                         pi);
+            %     value(~mask) = ciat.RealInterval(...
+            %                         wrapToPi(value.Infimum(~mask)) , ...
+            %                         wrapToPi(value.Supremum(~mask)) );
+            %     value = cat(3,value,value2);
+            % else
+            %     value = ciat.RealInterval(...
+            %                         wrapToPi(value.Infimum) , ...
+            %                         wrapToPi(value.Supremum) );
+            % end
         end
 
         % Log-Gauss map angle interval

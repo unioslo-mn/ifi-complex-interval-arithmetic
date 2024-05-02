@@ -616,19 +616,51 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             
             [M,N] = size(obj);
-            if M*N > 1
-                if size(varargin) == 0
-                    varargin = {1};
+            if size(varargin) == 0 | isa(varargin{1},'double')
+                if M*N > 1
+                    if size(varargin) == 0
+                        varargin = {1};
+                    end
+                    
+                    minInf = min(obj.Infimum,[],varargin{:});
+                    maxSup = max(obj.Supremum,[],varargin{:});
+    
+                    r = ciat.RealInterval( minInf , maxSup );
+    
+                    r(width(intersection(obj,varargin{:}))==0) = 0;
+                else
+                    r = obj;
                 end
+            elseif isa(varargin{1},'ciat.RealInterval')
+                % Point-wise union between two matrices
+                [M2,N2] = size(varargin{1});
                 
-                minInf = min(obj.Infimum,[],varargin{:});
-                maxSup = max(obj.Supremum,[],varargin{:});
+                if M == M2 && N == N2
+                    obj = cat(3,obj,varargin{1});
+                elseif N == 1 && M2 == 1
+                    obj = cat( 3 , repmat(obj,1,N2) , repmat(varargin{1},M,1) );
+                elseif M == 1 && N2 == 1
+                    obj = cat( 3 , repmat(obj,M2,1) , repmat(varargin{1},1,N) );
+                else
 
-                r = ciat.RealInterval( minInf , maxSup );
+                end
 
-                r(width(intersection(obj,varargin{:}))==0) = 0;
-            else
-                r = obj;
+                % To find the union bounds
+                minInf = min(obj.Infimum,[],3);
+                maxSup = max(obj.Supremum,[],3);
+                
+                % To check if the union is connected
+                maxInf = max(obj.Infimum,[],3);
+                minSup = min(obj.Supremum,[],3);
+                
+                [M3,N3] = size(maxInf);
+                % Assign bounds
+                mask = maxInf <= minSup | any(isnan(obj),3);
+                r(M3,N3) = ciat.RealInterval;
+                if any(mask)
+                    r(mask) = ciat.RealInterval( minInf(mask) , ...
+                                                 maxSup(mask) );
+                end
             end
         end
         % alias for the union
@@ -662,7 +694,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             [M,N] = size(obj);
             if size(varargin) == 0 | isa(varargin{1},'double')
                 % Intersection within a matrix
-        	    if M*N > 1
+                if M*N > 1
                     if size(varargin) == 0
                         varargin = {1};
                     end
@@ -683,16 +715,25 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             elseif isa(varargin{1},'ciat.RealInterval')
                 % Point-wise intersection between two matrices
                 [M2,N2] = size(varargin{1});
-                assert(M == M2 && N == N2);
-                obj = cat(3,obj,varargin{1});
                 
+                if M == M2 && N == N2
+                    obj = cat(3,obj,varargin{1});
+                elseif N == 1 && M2 == 1
+                    obj = cat( 3 , repmat(obj,1,N2) , repmat(varargin{1},M,1) );
+                elseif M == 1 && N2 == 1
+                    obj = cat( 3 , repmat(obj,M2,1) , repmat(varargin{1},1,N) );
+                else
+
+                end
+
                 maxInf = max(obj.Infimum,[],3);
                 minSup = min(obj.Supremum,[],3);
+                [M3,N3] = size(maxInf);
                 
                 % Assign bounds
-                mask = maxInf < minSup;
-                r(M,N) = ciat.RealInterval;
-                if any(mask)
+                mask = maxInf <= minSup & all(~isnan(obj),3);
+                r(M3,N3) = ciat.RealInterval;
+                if any(mask,'all')
                     r(mask) = ciat.RealInterval( maxInf(mask) , ...
                                                  minSup(mask) );
                 end

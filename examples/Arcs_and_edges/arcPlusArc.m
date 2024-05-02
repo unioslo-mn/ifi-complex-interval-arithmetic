@@ -3,18 +3,39 @@ clear
 
 %%  Generate a random arc
 
-M = 2;
-N = 1;
+M = 3;
+N = 3;
+L = 2;
 
 % Create arc array
-centers = 3*complex(rand(M,N),rand(M,N));
-radii = 2*rand(M,N)-1;
-angInf = 2*pi*rand(M,N);
-angSup = 2*pi*rand(M,N);
-arcs = ciat.Arc(centers, radii, ciat.RealInterval(angInf,angSup));
+centers = 3*complex(rand(M,N,L),rand(M,N,L));
+radii = 2*rand(M,N,L)-1;
+angInf = 2*pi*rand(M,N,L);
+angSup = 2*pi*rand(M,N,L);
+arcs1 = ciat.Arc(centers(:,:,1), radii(:,:,1), ...
+                 ciat.RealInterval(angInf(:,:,1),angSup(:,:,1)));
+arcs2 = ciat.Arc(centers(:,:,2), radii(:,:,2), ...
+                 ciat.RealInterval(angInf(:,:,2),angSup(:,:,2)));
+  
 
 % Add arcs
-arcPlus = arcs(1) + arcs(2);
+arcPlus = arcs1 + arcs2;
+%% 
+
+% startPoint = centers + radii .* exp(1j*angInf);
+% endPoint = centers + radii .* exp(1j*angSup);
+% 
+% figure;clf;hold on;axis equal
+% arcs1.plot
+% plot(real(startPoint(:,:,1)),imag(startPoint(:,:,1)),'>')
+% plot(real(endPoint(:,:,1)),imag(endPoint(:,:,1)),'s')
+
+
+%% 
+
+
+
+%% 
 
 % Normalize arcs
 arcsNorm = arcs + (-arcs.Center);
