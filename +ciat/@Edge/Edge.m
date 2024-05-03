@@ -206,6 +206,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         end
 
         %% Function headers
+        r = plus(obj1,obj2)
         h = plotMap(obj,logMap,arrowSize,varargin)
 
     end

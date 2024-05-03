@@ -1,12 +1,7 @@
 classdef PolyarcularInterval
 
-	properties
-        Tolerance;      % Maximum distance from the boundary of the represented interval
-    end
-
-    properties (Dependent)
-        Arcs;        	% Arcs defining the polygonal interval boundary
-        ArcCount;     	% Number of vertex points
+	properties (Dependent)
+        Arcs;           % Defining arcs of the polygonal interval boundary
         Edges;          % Implicit edges
         Vertices;       % Implicit vertices 
         Real;           % Projection of the polygonal interval to the real axis
@@ -17,7 +12,7 @@ classdef PolyarcularInterval
     end
 
     properties (Access = private)
-       Boundary         % Storage property for the boundary arc segments
+       ArcStorage         % Storage property for the boundary arc segments
     end
 
 	methods
@@ -49,7 +44,6 @@ classdef PolyarcularInterval
                     end
                 otherwise
                     % Input object will be casted
-                    tol = obj.Tolerance;
                     [M,N] = size(inObj);
                     obj(M,N) = obj;
                     for n = 1:M*N
@@ -60,7 +54,7 @@ classdef PolyarcularInterval
         
         %% Defining properties
                    
-        % Set points (store in the hidden property Boundary after sorting)
+        % Set points (store in the hidden property ArcStorage after sorting)
         function obj = set.Arcs(obj,arcs)
             N = length(arcs);
             if N > 1
@@ -81,101 +75,100 @@ classdef PolyarcularInterval
                         end
                         
                         angMin = angle(arcCurr.Center - ...
-                                       arcPrev.Endpoints(2)) - pi/2;
-                        angMax = angle(arcNext.Endpoints(1) - ...
+                                       arcPrev.Endpoint) - pi/2;
+                        angMax = angle(arcNext.Startpoint - ...
                                        arcCurr.Center) - pi/2;
                         if angMin > angMax
                             angMax = angMax + 2*pi;
                         end
-                        arcs(n).Angles = ciat.RealInterval(angMin,angMax);
+                        arcs(n).ArcAngle = ciat.RealInterval(angMin,angMax);
                     end
                 end
             else
-                arcs.Angles = ciat.RealInterval(-pi,pi);
+                arcs.ArcAngle = ciat.RealInterval(-pi,pi);
             end
-            obj.Boundary = arcs;
+            obj.ArcStorage = arcs;
         end 
     
-        % Get points (retrieve from hidden property Boundary)
+        % Get points (retrieve from hidden property ArcStorage)
         function value = get.Arcs(obj)
-            value = obj.Boundary;
+            value = obj.ArcStorage(obj.ArcStorage.Length ~= 0);
         end
 
         %% Dependent properties
-                        
-        % Get arc count
-        function value = get.ArcCount(obj)
-            value = length(obj.Arcs);
-        end
 
+                       
         % Get implicit edges
         function value = get.Edges(obj)
-            N = obj.ArcCount;
-            value(N,1) = ciat.Edge;
-            for n=1:N-1
-                value(n).Endpoints = [obj.Arcs(n).Endpoints(2);...
-                                      obj.Arcs(n+1).Endpoints(1)];
-            end
-            value(N).Endpoints = [obj.Arcs(N).Endpoints(2);...
-                                      obj.Arcs(1).Endpoints(1)];
+            % N = length(obj.ArcStorage);
+            % value(N,1) = ciat.Edge;
+            % for n=1:N-1
+            %     value(n).Startpoint =  obj.Arcs(n).Endpoint;
+            %     value(n).Endpoint = obj.Arcs(n+1).Startpoint;
+            % end
+            % value(N).Startpoint =  obj.Arcs(N).Endpoint;
+            % value(N).Endpoint = obj.Arcs(1).Startpoint;
+
+            value = ciat.Edge(obj.ArcStorage.Endpoint , ...
+                              circshift(obj.ArcStorage.Startpoint,-1));
+            value = value(value.Length>0);
         end
 
         % Get implicit vertices
         function value = get.Vertices(obj)
-            % Filter out vertices with zero radius
-            N = obj.ArcCount;
-            M = sum([obj.Arcs.Radius]~=0);
-            if N > 1 && M > 0
-                value(2*M,1) = ciat.Arc;
-                
-                % Initialize vertex-pair index
-                m = 1;
-                for n=1:N
-                    arc = obj.Arcs(n);
-                    if arc.Radius ~= 0
-                        % Extract neighbouring edges
-                        edgeNext = obj.Edges(n);
-                        if n==1
-                            edgePrev = obj.Edges(N);
-                        else
-                            edgePrev = obj.Edges(n-1);                   
-                        end
-        
-                        % Calculate angle intervals
-                        ang1Min = edgePrev.GaussMap.Midpoint;
-                        ang2Max = edgeNext.GaussMap.Midpoint;
-                        if arc.Radius >= 0
-                            ang1Max = arc.Angles.Infimum;
-                            ang2Min = arc.Angles.Supremum;
-                        else
-                            ang1Max = arc.Angles.Supremum;
-                            ang2Min = arc.Angles.Infimum;
-                        end
 
-                        % Adjust order of angle bounds
-                        if ang1Min > ang1Max
-                            ang1Max = ang1Max + 2*pi;
-                        end
-                        if ang2Min > ang2Max
-                            ang2Max = ang2Max + 2*pi;
-                        end
-                        
-                        % Set vertex parameters
-                        value(2*m-1).Center = arc.Endpoints(1);
-                        value(2*m-1).Radius = 0;
-                        value(2*m-1).Angles = ciat.RealInterval(ang1Min,ang1Max);
-        
-                        value(2*m).Center = arc.Endpoints(2);
-                        value(2*m).Radius = 0;
-                        value(2*m).Angles = ciat.RealInterval(ang2Min,ang2Max);
-                        
-                        % Increase vertex-pair index
-                        m = m + 1;
-                    end
-                end
-            else
-                value = [];
-            end
+             % Extract elements
+            arcStart = obj.Arcs.Startpoint;
+            arcEnd = obj.Arcs.Endpoint;
+            arcRadius = obj.Arcs.Radius;
+            arcGauss = obj.Arcs.GaussMap;
+            arcStartAngle = (arcRadius>0) .* arcGauss.Infimum + ...
+                            (arcRadius<0) .* arcGauss.Supremum;
+            arcEndAngle = (arcRadius>0) .* arcGauss.Supremum + ...
+                          (arcRadius<0) .* arcGauss.Infimum;
+            edgeStart = obj.Edges.Startpoint;
+            edgeEnd = obj.Edges.Endpoint;
+            edgeAngle = obj.Edges.GaussMap.Infimum;
+
+            % Define vertices at the intersection of arc pairs
+            [M,N] = find(arcEnd == arcStart.');
+            angInf = arcEndAngle(M);
+            angSup = arcStartAngle(N);
+            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            adjArcVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
+                                       ciat.RealInterval(angInf,angSup) );
+
+
+            % Define vertices at the intersection of edge pairs
+            [M,N] = find(edgeEnd == edgeStart.');
+            angInf = edgeAngle(M);
+            angSup = edgeAngle(N);
+            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            adjEdgeVertices = ciat.Arc(edgeEnd(M), zeros(length(M),1),...
+                                       ciat.RealInterval(angInf,angSup) );
+
+            % Define vertices at the intersection of arc-edge pairs
+            [M,N] = find(arcEnd == edgeStart.');
+            angInf = arcEndAngle(M);
+            angSup = edgeAngle(N);
+            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            adjArcEdgeVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
+                                       ciat.RealInterval(angInf,angSup) );
+
+
+            % Define vertices at the intersection of edge-arc pairs
+            [M,N] = find(edgeEnd == arcStart.');
+            angInf = edgeAngle(M);
+            angSup = arcStartAngle(N);
+            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            adjEdgeArcVertices = ciat.Arc(edgeEnd(M),  zeros(length(M),1),...
+                                       ciat.RealInterval(angInf,angSup) );
+
+            value = [adjArcVertices ; ...
+                    adjEdgeVertices ; ...
+                    adjArcEdgeVertices ; ...
+                    adjEdgeArcVertices];
+
         end
 
         % Real

@@ -22,9 +22,11 @@ arcs.plot;
 
 arcCenter = arcs.Center;
 arcRadius = arcs.Radius;
-arcMidAngle = arcs.ArcAngles.Midpoint;
-arcStart = arcs.StartPoint;
-arcStop = arcs.StopPoint;
+arcMidAngle = arcs.ArcAngle.Midpoint;
+arcStart = arcs.Startpoint;
+arcStop = arcs.Endpoint;
+startPoint = centers + radii .* exp(1j*angInf);
+endPoint = centers + radii .* exp(1j*angSup);
 
 radLine = [arcCenter(:) , arcCenter(:) + arcRadius(:) .* exp(1i*arcMidAngle(:))].';
 
@@ -32,6 +34,9 @@ plot(real(arcCenter),imag(arcCenter),'x')
 plot(real(radLine),imag(radLine),'--')
 plot(real(arcStart),imag(arcStart),'>')
 plot(real(arcStop),imag(arcStop),'s')
+plot(real(startPoint(:,:,1)),imag(startPoint(:,:,1)),'>')
+plot(real(endPoint(:,:,1)),imag(endPoint(:,:,1)),'s')
+
 
 %% Enclose them in rectangular intervals
 

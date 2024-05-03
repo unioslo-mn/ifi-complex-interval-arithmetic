@@ -30,10 +30,13 @@ gI = ciat.PolygonalInterval([1-1i, 3-2i, 2-3i, 1-2i]);
 gI.plot('b-');
 
 % Polyarcular interval
-% aI = ciat.PolyarcularInterval([ciat.Arc(3+0.5i,1,ciat.RealInterval([-.7,-.4]*pi)),...
-%                                ciat.Arc(4+2.5i,-0.7,ciat.RealInterval([.3,.5]*pi)),...
-%                                ciat.Arc(2+1.5i,0,ciat.RealInterval(0))]);
-% aI.plot('b-');
+arcCenter = [ 3+0.5i ; 4+2.5i ; 2+1.5i];
+arcRadius = [ 1 ; -0.7 ; 0 ];
+arcAngles = [ [-.7,-.4] ; [.3,.5] ; [0 0] ] *pi;
+arcAngles = ciat.RealInterval(arcAngles(:,1),arcAngles(:,2));
+arcs = ciat.Arc(arcCenter,arcRadius,arcAngles);
+aI = ciat.PolyarcularInterval( arcs );
+aI.plot('b-');
 %% Cast complex interval types
 
 % Rectangular to circular

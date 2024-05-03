@@ -40,9 +40,10 @@ function r = plus(obj1,obj2)
     % Check if one of the objects is an arc
     assert(isa(obj1,'ciat.Arc') || isa(obj2,'ciat.Arc'))
 
-    % If any of the objects is an edge, forward to the edge plus function
-    if isa(obj1,'ciat.Edge') || isa(obj2,'ciat.Edge')
-        r = ciat.Edge.plus(obj1,obj2);
+    % If the second objects is an edge, forward to the edge plus function
+    if isa(obj2,'ciat.Edge')
+        r = obj2 + obj1;
+        return
     end
 
     % If the first object is a double, flip the objects
@@ -120,21 +121,23 @@ function output = capGaussMap(input1, input2)
     end
 
     % Join primary and secondary caps
-    moveMask = isnan(primaryCap) & ~isnan(secondaryCap);
-    if any(moveMask,'all')
-        emptyInterval(1) = ciat.RealInterval;
-        primaryCap(moveMask) = secondaryCap(moveMask);
-        secondaryCap(moveMask) = emptyInterval;
-    end
-    
-    if all(isnan(secondaryCap),'all')
+    if ~L1 && ~L2
         output = primaryCap;
     else
-        output = cat(3 , primaryCap , secondaryCap);
-        lastwarn('Surplus angle intersections found!')
+        moveMask = isnan(primaryCap) & ~isnan(secondaryCap);
+        if any(moveMask,'all')
+            emptyInterval(1) = ciat.RealInterval;
+            primaryCap(moveMask) = secondaryCap(moveMask);
+            secondaryCap(moveMask) = emptyInterval;
+        end
+        
+        if all(isnan(secondaryCap),'all')
+            output = primaryCap;
+        else
+            output = cat(3 , primaryCap , secondaryCap);
+            lastwarn('Surplus angle intersections found!')
+        end
     end
-
-
 end
 
 

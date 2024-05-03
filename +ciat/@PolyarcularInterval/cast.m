@@ -64,6 +64,7 @@ function outObj = cast(inObj)
             inAngle = [inObj.Angle];
             maxAbs = [inAbs.Supremum];
             minAbs = [inAbs.Infimum];
+            outArcs(2,1) = ciat.Arc;
             outArcs(1) = ciat.Arc(0,-minAbs,inAngle+pi);
             outArcs(2) = ciat.Arc(0,maxAbs,inAngle);
         case 'ciat.PolygonalInterval'
