@@ -562,7 +562,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
         
         % Union
-        function r = union(obj)
+        function r = union(obj,varargin)
         % Union of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -582,12 +582,15 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             N = length(obj(:));
             assert(N>1)
-            r = ciat.RectangularInterval(union([obj.Real]) , ...
-                                         union([obj.Imag]));
+            r = ciat.RectangularInterval(union(obj.Real,varargin{:}) , ...
+                                         union(obj.Imag,varargin{:}));
+        end
+        function r = cup(obj,varargin)
+            r = union(obj,varargin{:});
         end
         
         % Intersection
-        function r = intersection(obj)
+        function r = intersection(obj,varargin)
         % Intersection of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -605,10 +608,22 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   rectInt = intersection([ciat.RectangularInterval(0,1,2,3), ...
         %                    ciat.RectangularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            N = length(obj(:));
-            assert(N>1)
-            r = ciat.RectangularInterval(intersection([obj.Real]) , ...
-                                         intersection([obj.Imag]));
+            if isempty(varargin) || isa(varargin{1},'double')
+                r = ciat.RectangularInterval( ...
+                                intersection(obj.Real,varargin{:}) , ...
+                                intersection(obj.Imag,varargin{:}));
+            elseif isa(varargin{1},'ciat.RectangularInterval')
+                obj2 = varargin{1};
+                r = ciat.RectangularInterval( ...
+                                intersection(obj.Real,obj2.Real) , ...
+                                intersection(obj.Imag,obj2.Imag));
+            else
+                error('Incorrect input type')
+            end
+        end
+
+        function r = cap(obj,varargin)
+            r = intersection(obj,varargin{:});
         end
         
         % Negative (uminus)
@@ -634,6 +649,11 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             r.Real = -r.Real;
             r.Imag = -r.Imag;
         end  
+
+        % Inside
+        function r = isin(obj,x)
+            r = obj.Real.isin(real(x)) && obj.Imag.isin(imag(x));
+        end
 
         % IsNaN
         function r = isnan(obj)

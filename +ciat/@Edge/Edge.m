@@ -9,6 +9,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         Midpoint        % Midpoint of the arc as complex numbers
         Vector          % Endpoint difference as a complex vector
         Slope           % Slope of the line the edge fits on
+        Offset          % Offset of the line the edge fits on
         ZeroCrossing    % Real axis crossing point of the line the edge fits on
 		Length			% Length of the edge curve
 		GaussMap        % Gauss map of the curve as real interval
@@ -58,6 +59,11 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             value = imag(vd)./real(vd);
         end
 
+        % Offset (the imaginary value at zero real value)
+        function value = get.Offset(obj)
+            value = imag(obj.Startpoint) - real(obj.Startpoint) .* obj.Slope;
+        end
+
         % Zero crossing
 		function value = get.ZeroCrossing(obj)
             value = real(obj.Startpoint) - imag(obj.Startpoint) ./ obj.Slope;
@@ -70,7 +76,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % GaussMap
 		function value = get.GaussMap(obj)
-            value = ciat.RealInterval(ciat.wrapToPi(angle(obj.Vector)-pi/2));
+            GaussAngle = ciat.wrapToPi(angle(obj.Vector)-pi/2);
+            value = ciat.RealInterval(GaussAngle,GaussAngle);
             % value = ciat.wrapToPi(angle(obj.Vector)-pi/2);
         end
 
@@ -155,10 +162,49 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         %% Other methods
 
-         % IsNaN
+        % Intersection
+        function r = intersection(obj1,obj2)
+
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            
+            if isa(obj2,'ciat.Edge')
+                % Find the intersection point of two lines
+                a1 = obj1.Slope;
+                b1 = obj1.Offset;
+                a2 = obj2.Slope;
+                b2 = obj2.Offset;
+                xCoord = (b2 - b1) ./ (a1 - a2);
+                yCoord = a1 * xCoord + b1;
+
+                % Assign values
+                r = nan(M1,N1);
+                mask = obj1.Real.isin(xCoord) & obj1.Imag.isin(yCoord) & ...
+                       obj2.Real.isin(xCoord) & obj2.Imag.isin(yCoord);
+                if any(mask,'all')
+                    r(mask) = xCoord(mask) + 1i * yCoord(mask);
+                end
+            elseif isa(obj2,'ciat.Arc')
+                r = obj2.intersection(obj1);
+            else
+                error('Invalid input type')
+            end
+        end
+        function r = cap(obj1,obj2)
+            r = intersection(obj1,obj2);
+        end
+
+        % IsNaN
         function r = isnan(obj)
             r = isnan(obj.Length);
         end 
+
+        % Transpose
+        function r = transpose(obj)
+            [M,N] = size(obj);
+            r = reshape(obj,N,M);
+        end
 
         % Plot
         function h = plot(obj, varargin)
@@ -198,6 +244,21 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             end
         end
 
+        function h = plotLine(obj,varargin)
+            tf = ishold;
+            if tf == false 
+                clf
+            end
+            hold on
+            h = [];
+            for n = 1:length(obj(:))
+                fimplicit(@(x,y) obj.Slope .* x + obj.Offset - y,varargin{:})
+            end
+            if tf == false 
+                hold off
+            end
+        end
+
         function h = plotGaussMap(obj, arrowSize, varargin)
             h = obj.plotMap(0,arrowSize,varargin{:});
         end
@@ -211,6 +272,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
     end
 
+   
     %% Vectorizing the object
 
     methods (Access=protected)

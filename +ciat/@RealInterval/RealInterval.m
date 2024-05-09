@@ -692,7 +692,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             
             [M,N] = size(obj);
-            if size(varargin) == 0 | isa(varargin{1},'double')
+            if isempty(varargin) || isa(varargin{1},'double')
                 % Intersection within a matrix
                 if M*N > 1
                     if size(varargin) == 0
@@ -723,7 +723,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                 elseif M == 1 && N2 == 1
                     obj = cat( 3 , repmat(obj,M2,1) , repmat(varargin{1},1,N) );
                 else
-
+                    error('Incorrect input type')
                 end
 
                 maxInf = max(obj.Infimum,[],3);

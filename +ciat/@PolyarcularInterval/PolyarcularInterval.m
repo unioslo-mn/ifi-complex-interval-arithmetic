@@ -295,5 +295,8 @@ classdef PolyarcularInterval
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
+        [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
+        [arcOut,edgeOut] = trimSegments(arcIn,edgeIn)
+        seg = orderSegments(obj)
     end
 end

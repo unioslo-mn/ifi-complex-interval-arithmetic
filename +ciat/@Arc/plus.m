@@ -67,7 +67,6 @@ function r = plus(obj1,obj2)
                 center = [ center(priMask) ; center(secMask) ];
                 radius = [ radius(priMask) ; radius(secMask) ];
                 angles = [ angles(priMask) ; angles(secMask) ];
-                [M1,N1] = size(angles);
             end
 
         case 'double'
@@ -77,7 +76,8 @@ function r = plus(obj1,obj2)
     end
 
     % Create new object        
-    r(M1,N1) = ciat.Arc;
+    [M,N] = size(angles);
+    r(M,N) = ciat.Arc;
     mask = ~isnan(angles);
     if any(mask)
         % r(mask) = ciat.Arc(center(mask),radius(mask),angles(mask));
@@ -91,14 +91,35 @@ end
 
 function output = capGaussMap(input1, input2)
     
+    % Extract sizes
+    [M1,N1] = size(input1);
+    [M2,N2] = size(input2);
+
     % Split angles
     input1 = splitAngle(input1);
     input2 = splitAngle(input2);
-    M = size(input1,1);
-    N = size(input1,2);
     L1 = size(input1,3) > 1;
     L2 = size(input2,3) > 1;
 
+    % If the inputs are two arrays of different orientation
+    % form matrices
+    if (M1 == M2) && (N1 == N2)
+        M = size(input1,1);
+        N = size(input1,2);
+    elseif (N1 == 1) && (M2 == 1)
+        input1 = repmat(input1,1,N2);
+        input2 = repmat(input2,M1,1);
+        M = M1;
+        N = N2;
+    elseif (M1 == 1) && (N2 == 1)
+        input1 = repmat(input1,M2,1);
+        input2 = repmat(input2,1,N1);
+        M = M2;
+        N = N1;
+    else
+        error('Incorrect input size for operation.')
+    end
+  
     % Intersect angles
     primaryCap = cap(input1(:,:,1),input2(:,:,1));
     if ~L1 && L2

@@ -108,7 +108,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Length
         function value = get.Length(obj)
-            value = 2*pi*obj.Radius .* obj.ArcAngle.Width/(2*pi);
+            value = abs(2*pi*obj.Radius .* obj.ArcAngle.Width/(2*pi));
         end
 
         % Gauss map angle interval
@@ -289,6 +289,80 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
 		%% Other methods
 
+        % Intersection
+        function r = intersection(obj1,obj2)
+
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2)
+            
+            if isa(obj2,'ciat.Arc')
+                % Find the intersection point of two lines
+                x1 = real(obj1.Center);
+                y1 = imag(obj1.Center);
+                r1 = obj1.Radius;
+                x2 = real(obj2.Center);
+                y2 = imag(obj2.Center);
+                r2 = obj2.Radius;
+                R = sqrt( (x2 - x1).^2 + (y2 - y1).^2 );
+                coeff1 = (r1.^2 - r2.^2) ./ (2*R.^2);
+                coeff2 = 0.5 * sqrt( 2*(r1.^2+r2.^2)/R.^2 - ...
+                                     (r1^2-r2.^2).^2/R.^4 - 1);
+
+                xCoord1 = 0.5*(x1+x2) + coeff1*(x2-x1) - coeff2*(y2-y1);
+                xCoord2 = 0.5*(x1+x2) + coeff1*(x2-x1) + coeff2*(y2-y1);
+                yCoord1 = 0.5*(y1+y2) + coeff1*(y2-y1) - coeff2*(x1-x2);
+                yCoord2 = 0.5*(y1+y2) + coeff1*(y2-y1) + coeff2*(x1-x2);
+
+            elseif isa(obj2,'ciat.Edge')
+                xc = real(obj1.Center);
+                yc = imag(obj1.Center);
+                r = obj1.Radius;
+                x1 = real(obj2.Startpoint) - xc;
+                y1 = imag(obj2.Startpoint) - yc;
+                x2 = real(obj2.Endpoint) - xc;
+                y2 = imag(obj2.Endpoint) - yc;
+                
+                dx = x2 - x1;
+                dy = y2 - y1;
+                dr = sqrt(dx.^2 + dy.^2);
+                D = x1.*y2 - x2.*y1;
+                coeff = sqrt(r.^2 .* dr.^2 - D.^2);
+
+                xCoord1 = (D.*dy - sign(dy).*dx * coeff) ./ dr.^2 + xc;
+                xCoord2 = (D.*dy + sign(dy).*dx * coeff) ./ dr.^2 + xc;
+                yCoord1 = (-D.*dx - abs(dy) * coeff) ./ dr.^2 + yc;
+                yCoord2 = (-D.*dx + abs(dy) * coeff) ./ dr.^2 + yc;
+
+            else
+                error('Invalid input type')
+            end
+
+            % Assign values
+            r = nan(M1,N1);
+            mask1 = obj1.Real.isin(xCoord1) & obj1.Imag.isin(yCoord1) & ...
+                    obj2.Real.isin(xCoord1) & obj2.Imag.isin(yCoord1);
+            mask2 = obj1.Real.isin(xCoord2) & obj1.Imag.isin(yCoord2) & ...
+                    obj2.Real.isin(xCoord2) & obj2.Imag.isin(yCoord2);
+            if any(mask1 & mask2,'all')
+                if M1*N1 ==1
+                    r = [xCoord1 + 1i*yCoord1 ; xCoord2 + 1i*yCoord2];
+                else
+                    warning('Not all results could be returned')
+                end
+            else
+                if any(mask1,'all')
+                    r(mask1) = xCoord1(mask1) + 1i * yCoord1(mask1);
+                end
+                if any(mask2,'all')
+                    r(mask2) = xCoord2(mask2) + 1i * yCoord2(mask2);
+                end
+            end
+        end
+        function r = cap(obj1,obj2)
+            r = intersection(obj1,obj2);
+        end
+
         % IsNaN
         function r = isnan(obj)
             r = isnan(obj.Length);
@@ -307,6 +381,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                                    exp(1j*linspace(angInf,angSup,nPoints));
             end
             end
+        end
+
+        function r = transpose(obj)
+            [M,N] = size(obj);
+            r = reshape(obj,N,M);
         end
 
         % Plot
@@ -357,6 +436,23 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                         h = [h; plot(cr,ci,varargin{:},'Marker','.')];
                     end
                 end
+            end
+            if tf == false 
+                hold off
+            end
+        end
+
+        function h = plotCircle(obj,varargin)
+            tf = ishold;
+            if tf == false 
+                clf
+            end
+            hold on
+            h = [];
+            for n = 1:length(obj(:))
+                fimplicit(@(x,y) (x-real(obj.Center)).^2 + ...
+                                 (y-imag(obj.Center)).^2 - ...
+                                 obj.Radius.^2 , varargin{:})
             end
             if tf == false 
                 hold off

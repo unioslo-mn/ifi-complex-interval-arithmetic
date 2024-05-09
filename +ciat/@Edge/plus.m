@@ -37,8 +37,9 @@ function r = plus(obj1,obj2)
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
     
-    % Check if one of the objects is an arc
+    % Check if one of the objects is an edge
     assert(isa(obj1,'ciat.Edge') || isa(obj2,'ciat.Edge'))
+    
 
     % If the first object is a double, flip the objects
     if isa(obj1,'double')
@@ -46,14 +47,34 @@ function r = plus(obj1,obj2)
         obj1 = obj2;
         obj2 = objTemp;
     end
+
+    % If the inputs are two arrays of different orientation
+    % form matrices
+    if (M1 == M2) && (N1 == N2)
+        M = size(obj1,1);
+        N = size(obj1,2);
+    elseif (N1 == 1) && (M2 == 1)
+        obj1 = repmat(obj1,1,N2);
+        obj2 = repmat(obj2,M1,1);
+        M = M1;
+        N = N2;
+    elseif (M1 == 1) && (N2 == 1)
+        obj1 = repmat(obj1,M2,1);
+        obj2 = repmat(obj2,1,N1);
+        M = M2;
+        N = N1;
+    else
+        error('Incorrect input size for operation.')
+    end
         
     % Calculate parameters
     switch class(obj2)
         case 'ciat.Edge'
             mask = (obj1.GaussMap == obj2.GaussMap);
-            p1 = obj1.Endpoints(1) + obj2.Endpoints(2);
-            p2 = obj1.Endpoints(1) + obj2.Endpoints(2);
-
+            if any(mask,'all')
+                p1 = obj1.Startpoint + obj2.Startpoint;
+                p2 = obj1.Endpoint + obj2.Endpoint;
+            end
         case 'double'
             p1 = obj1.Startpoint + obj2;
             p2 = obj1.Endpoint + obj2;
@@ -64,13 +85,13 @@ function r = plus(obj1,obj2)
             edgeGauss = obj1.GaussMap.Midpoint;
             mask = isin( arcGauss , edgeGauss ) | ...
                    isin( arcGauss , edgeGauss - sign(edgeGauss)*2*pi);
-            offset = obj2.Radius .* exp(1i*edgeGauss);
+            offset = obj2.Center + obj2.Radius .* exp(1i*edgeGauss);
             p1 = obj1.Startpoint + offset;
             p2 = obj1.Endpoint + offset;
     end
 
     % Create new object        
-    r(M1,N1) = ciat.Edge;
+    r(M,N) = ciat.Edge;
     if any(mask,'all')
         r.Startpoint(mask) = p1(mask);
         r.Endpoint(mask) = p2(mask);

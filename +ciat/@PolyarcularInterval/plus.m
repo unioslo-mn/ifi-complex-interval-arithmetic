@@ -67,49 +67,46 @@ end
 function r = add(obj1,obj2)
     
     % Extract curve segments by type
-    %   - extract arcs with non-zero radius
-    arc1 = obj1.Arcs(abs([obj1.Arcs.Radius])>0);
-    arc2 = obj2.Arcs(abs([obj2.Arcs.Radius])>0);
+    %   - extract arcs including vertices
+    arc1 = [obj1.Arcs ; obj1.Vertices];
+    arc2 = [obj2.Arcs ; obj2.Vertices];
     %   - extract edges with non-zero length
-    edge1 = obj1.Edges([obj1.Edges.Length]>0);
-    edge2 = obj2.Edges([obj2.Edges.Length]>0);    
-    %   - extract all vertices including zero arcs and zero edges
-    vert1 = [obj1.Vertices ; ...
-             obj1.Arcs(abs([obj1.Arcs.Radius])==0) ; ...
-             obj1.Edges([obj1.Edges.Length]==0)];
-    vert2 = [obj2.Vertices ; ...
-             obj2.Arcs(abs([obj2.Arcs.Radius])==0) ; ...
-             obj2.Edges([obj2.Edges.Length]==0)];
-
-
-    % Add arcs and vertices
+    edge1 = obj1.Edges;
+    edge2 = obj2.Edges;    
     
+    % Add arcs and vertices
+    arcPlusArc = arc1 + arc2.';
+    arcPlusEdge = arc1 + edge2.';
+    edgePlusArc = edge1 + arc2.';
+    
+    % Extract valid segments
+    arc3 = arcPlusArc(~isnan(arcPlusArc));
+    edge3 = [ arcPlusEdge(~isnan(arcPlusEdge)) ; ...
+              edgePlusArc(~isnan(edgePlusArc)) ];
 
+    % Extract non-vertex segments
+    arc3 = arc3(arc3.Length~=0);
+    edge3 = edge3(edge3.Length~=0);
 
-    % Generate result arcs and vertices
-    K = sum(mapMatchMat,'all');
-    seg3(K,1) = ciat.Arc;
-    k = 0;
-    for n=1:N
-        for m = find(mapMatchMat(n,:))
-            k = k + 1;
-            seg3(k).Center = seg1(n).Center + seg2(m).Center; 
-            seg3(k).Radius = seg1(n).Radius + seg2(m).Radius;
-            seg3(k).Angles = mapMatchVal(n,m);
-        end
-    end
-
-
-
-
-
-
-
-
-    r = ciat.PolyarcularInterval(seg3);
-
+    % Split segments
+    [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
+    
+    % Trim segments
+    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3);
+    
+    % Generate polyarc
+    r = ciat.PolyarcularInterval(arc3);
 
 end
+
+%% Function for finding defining arcs of a boundary
+
+function arc3 = findDefArcs(arc3,edge3);
+    
+
+end
+
+
 
 %% Function for adding two convex polyarcs
 
@@ -156,51 +153,3 @@ function r = addConvex(obj1,obj2)
 
 end
 
-
-%% Function for creating an ordered set of arcs and vertices
-
-function seg = orderSegments(obj)
-    N = obj.ArcCount;
-    M = sum([obj.Arcs.Radius]~=0);
-    if N > 1 && M > 0
-        seg(length(obj.Arcs)+length(obj.Vertices),1) = ciat.Arc;
-        segIdx = 1;
-        vertIdx = 1;
-        for arcIdx = 1:length(obj.Arcs)
-            if obj.Arcs(arcIdx).Radius ~= 0 
-                seg(segIdx) = obj.Vertices(2*vertIdx-1);
-                seg(segIdx+1) = obj.Arcs(arcIdx);
-                seg(segIdx+2) = obj.Vertices(2*vertIdx);
-                vertIdx = vertIdx + 1;
-                segIdx = segIdx + 3;
-            else
-                seg(segIdx) = obj.Arcs(arcIdx);
-                segIdx = segIdx + 1;
-            end
-        end
-    else
-        seg = obj.Arcs;
-    end
-
-    % Find and split segments with two Gauss intervals
-    n = 1;
-    while n<=length(seg)
-        if length(seg(n).GaussMap)>1
-            if n<length(seg)
-                seg = [seg(1:n) ; seg(n) ; seg(n+1:end)];
-            else
-                seg = [seg(1:n) ; seg(n)];
-            end
-            seg(n+1).Angles = seg(n).GaussMap(2);
-            seg(n).Angles = seg(n).GaussMap(1);
-        end
-        n=n+1;
-    end
-
-    % Shift order so the first segment is at -pi
-    [~,n0] = min(inf([seg.GaussMap]));
-    seg = circshift(seg,1-n0);
-
-
-
-end
