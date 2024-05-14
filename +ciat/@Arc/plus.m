@@ -137,7 +137,8 @@ function output = capGaussMap(input1, input2)
         tempCap = cat( 3 , cap(input1(:,:,1),input2(:,:,2)) , ...
                            cap(input1(:,:,2),input2(:,:,1)) );
         secondaryCap(M,N) = ciat.RealInterval;
-        secondaryCap( sum(~isnan(tempCap),3)>0 ) = tempCap(~isnan(tempCap));
+        secondaryCap.Infimum = max(tempCap.Infimum,[],3);
+        secondaryCap.Supremum = max(tempCap.Supremum,[],3);
 
     end
 
@@ -173,12 +174,10 @@ function output = splitAngle(input)
     if any(mask,'all')
         [M,N] = size(input);
         input2(M,N) = ciat.RealInterval;
-        input2(mask) = ciat.RealInterval(...
-                             -pi*ones(sum(mask,'all'),1) , ...
-                             wrapToPi(input.Supremum(mask)));
-        input(mask) = ciat.RealInterval( ...
-                            wrapToPi(input.Infimum(mask)) , ...
-                            pi*ones(sum(mask,'all'),1));
+        angInf = wrapToPi(input.Infimum(mask));
+        angSup = wrapToPi(input.Supremum(mask));
+        input2(mask) = ciat.RealInterval(-pi*ones(size(angSup)),angSup);
+        input(mask) = ciat.RealInterval( angInf , pi*ones(size(angInf)));
         output = cat(3,input,input2);
     else
         output = ciat.RealInterval(...

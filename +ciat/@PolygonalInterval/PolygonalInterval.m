@@ -98,6 +98,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                         % This is the default way of defining polygonal
                         % intervals the points are assumed to belong to a
                         % single interval no matter how many dimensions
+                        obj(1) = ciat.PolygonalInterval;
                         obj.Points = {inObj(:)};
                     end
                 case 'cell'
@@ -108,9 +109,10 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                     obj.Points = inObj;
                 otherwise
                     % Input object will be casted
-                    tol = obj.Tolerance;
+                    tol = optional.tolerance;
                     [M,N] = size(inObj);
-                    obj(M,N) = obj;
+                    % obj(M,N) = obj;
+                    obj(M,N) = ciat.PolygonalInterval;
                     if isempty(inObj2)
                         for n = 1:M*N
                             obj(n) = ciat.PolygonalInterval.cast(inObj(n),...
@@ -240,7 +242,9 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             end
 
             value = ciat.RealInterval( minAbs,maxAbs );
-            value(pointIn) = 0;
+            if any(pointIn,'all')
+                value(pointIn) = 0;
+            end
         end
         function value = abs(obj)
         % Absolute value of polygonal intervals
@@ -279,8 +283,10 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             end
 
             value = ciat.RealInterval( minAng,maxAng );
-            value(pointIn).Infimum = 0;
-            value(pointIn).Supremum = 2*pi;
+            if any(pointIn,'all')
+                value(pointIn).Infimum = 0;
+                value(pointIn).Supremum = 2*pi;
+            end
         end
         function value = angle(obj)
         % Angle of polygonal intervals
@@ -305,11 +311,19 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         
         % Area
         function value = get.Area(obj)
-            if obj.PointCount == 0
-                value = nan;
-            else
-                value = polyarea(real(obj.Points{:}),imag(obj.Points{:}));
+            [M,N] = size(obj);
+            value = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    if obj.PointCount(m,n) == 0
+                        value(m,n) = nan;
+                    else
+                        value(m,n) = polyarea(real(obj(m,n).Points{:}), ...
+                                              imag(obj(m,n).Points{:}));
+                    end
+                end
             end
+            
         end
         function value = area(obj)
         % Area of polygonal intervals
@@ -484,7 +498,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                points = cat(1,obj(n).Points, obj(n).Points(1));
+                points = cat(1,obj(n).Points{:}, obj(n).Points{1});
                 h = [h;plot(real(points), imag(points), varargin{:})];    
             end
             if tf == false 

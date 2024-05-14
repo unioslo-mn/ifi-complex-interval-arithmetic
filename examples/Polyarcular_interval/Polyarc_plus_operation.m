@@ -4,20 +4,20 @@ clear
 %% Define a specific and a random polyarc 
 
 % % Specify polyarc
-% center1 = [ 3+0.5i ; 3.1 - 0.5i ; 4+2.5i ; 2+1.5i];
-% radius1 = [ 1 ; .1 ; -0.7 ; 0 ];
-% arcAngles = [ [-.7,-.5] ; [-1,-.3] ; [.3,.5] ; [0 0] ] *pi;
-% arcAngles = ciat.RealInterval(arcAngles(:,1),arcAngles(:,2));
-% arcs1 = ciat.Arc(center1,radius1,arcAngles);
-% aI1 = ciat.PolyarcularInterval( arcs1 );
-
-% Specify polyarc
-center1 = [ 3+0.5i ;  4+2.5i ; 2+1.5i];
-radius1 = [ 1 ; -0.7 ; 0 ];
-arcAngles = [ [-.7,-.5] ; [.3,.5] ; [0 0] ] *pi;
+center1 = [ 3+0.5i ; 3.1 - 0.5i ; 4+2.5i ; 2+1.5i];
+radius1 = [ 1 ; .1 ; -0.7 ; 0 ];
+arcAngles = [ [-.7,-.5] ; [-1,-.3] ; [.3,.5] ; [0 0] ] *pi;
 arcAngles = ciat.RealInterval(arcAngles(:,1),arcAngles(:,2));
 arcs1 = ciat.Arc(center1,radius1,arcAngles);
 aI1 = ciat.PolyarcularInterval( arcs1 );
+
+% % Specify polyarc
+% center1 = [ 3+0.5i ;  4+2.5i ; 2+1.5i];
+% radius1 = [ 1 ; -0.7 ; 0 ];
+% arcAngles = [ [-.7,-.5] ; [.3,.5] ; [0 0] ] *pi;
+% arcAngles = ciat.RealInterval(arcAngles(:,1),arcAngles(:,2));
+% arcs1 = ciat.Arc(center1,radius1,arcAngles);
+% aI1 = ciat.PolyarcularInterval( arcs1 );
 
 %%
 % Polyarc from a random polar interval
@@ -55,8 +55,7 @@ capMask = tril(~isnan(capBox) & capBox.Area>0,-1);
 %% Run the plus function
 
 % Add the two intervals
-% aIsum = aI1 + aI2;
-
+aIsum = aI1 + aI2;
 
 %%
 % figure;
@@ -66,11 +65,13 @@ aI1.plotGaussMap(.1,'k');
 aI2.plot('k-');
 aI2.plotGaussMap(.1,'k');
 
+aIsum.plot('k-','linewidth',2)
 aI3Arc.plot('r')
 aI3Edge.plot('b')
 aI3ArcBox.plot('r--')
 aI3EdgeBox.plot('b--')
 
-aI3ArcMid = arcIn.Center + arcIn.Radius .* exp(1j*arcIn.ArcAngle.Midpoint);
+aI3ArcMid = aI3Arc.Center + aI3Arc.Radius .* exp(1j*aI3Arc.ArcAngle.Midpoint);
 text(aI3ArcBox.Real.Midpoint,aI3ArcBox.Imag.Midpoint,string(1:length(aI3Arc))');
 text(real(aI3Edge.Midpoint),imag(aI3Edge.Midpoint),string(1:length(aI3Edge)));
+

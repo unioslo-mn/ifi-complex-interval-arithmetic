@@ -38,13 +38,20 @@ function r = plus(obj1,obj2)
     M = max([M1,M2]);
     N = max([N1,N2]);
     
-    % Turn scalars to degenerate intervals
+    % % Turn scalars to degenerate intervals
+    % if isa(obj1, 'double')
+    %     obj1 = ciat.PolyarcularInterval(obj1);
+    % end
+    % if isa(obj2, 'double')
+    %     obj2 = ciat.PolyarcularInterval(obj2);
+    % end 
+
+    % If the first object is a double make that the second
     if isa(obj1, 'double')
-        obj1 = ciat.PolyarcularInterval(obj1);
+        objTemp = obj1;
+        obj1 = obj2;
+        obj2 = objTemp;
     end
-    if isa(obj2, 'double')
-        obj2 = ciat.PolyarcularInterval(obj2);
-    end 
             
     % Loop throught the arrays
     r(M,N) = ciat.PolyarcularInterval;
@@ -57,14 +64,20 @@ function r = plus(obj1,obj2)
             n2 = min(n,N2);
             
             % Calculate sum
-            r(M,N) = add( obj1(m1,n1) , obj2(m2,n2) );
+            if isa(obj2,'double')
+                r(M,N) = obj1(m1,n1);
+                r(M,N).ArcStorage.Center = r(M,N).ArcStorage.Center + ...
+                                            obj2(m2,n2);
+            else
+                r(M,N) = addConcaveArcs( obj1(m1,n1) , obj2(m2,n2) );
+            end
         end
     end
 end
 
 %% Function for adding two concave polyarcs
 
-function r = add(obj1,obj2)
+function r = addConcaveArcs(obj1,obj2)
     
     % Extract curve segments by type
     %   - extract arcs including vertices
@@ -85,11 +98,13 @@ function r = add(obj1,obj2)
               edgePlusArc(~isnan(edgePlusArc)) ];
 
     % Extract non-vertex segments
-    arc3 = arc3(arc3.Length~=0);
-    edge3 = edge3(edge3.Length~=0);
+    arc3 = arc3(abs(arc3.Length)>10*eps);
+    edge3 = edge3(abs(edge3.Length)>10*eps);
 
     % Split segments
     [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
+    arc3 = arc3(abs(arc3.Length)>10*eps); % This should be unnecessary
+    edge3 = edge3(abs(edge3.Length)>10*eps);
     
     % Trim segments
     arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3);
@@ -99,14 +114,6 @@ function r = add(obj1,obj2)
 
 end
 
-%% Function for finding defining arcs of a boundary
-
-function arc3 = findDefArcs(arc3,edge3);
-    
-
-end
-
-
 
 %% Function for adding two convex polyarcs
 
@@ -114,7 +121,7 @@ function r = addConvex(obj1,obj2)
     
     % Create ordered lists of segments (arcs and vertices)
     seg1 = orderSegments(obj1);
-    seg2 = orderSegments(obj2);
+    seg2 = orderSegments(obj2);aIsum.plot('k-','linewidth',2)
 
     % Create match matrix
     N = length(seg1);

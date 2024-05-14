@@ -107,7 +107,7 @@ function outObj = cast(inObj,inObj2,options)
             error('Invalid input type at position 1')
     end  
     outObj = ciat.PolygonalInterval(outPoints);       
-    outObj = reshape(outObj,M,N);  
+    % outObj = reshape(outObj,M,N);  
 end
 
 %% Utility function

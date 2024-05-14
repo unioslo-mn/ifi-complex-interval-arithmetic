@@ -28,10 +28,12 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 arcAngInf = arcIn(k).ArcAngle.Infimum;
                 arcAngSup = arcIn(k).ArcAngle.Supremum;
                 splitAngle = angle(splitPoint-arcCenter) + pi*(arcRadius<0);
+                % splitAngle = sort(wrapToPi(splitAngle));
+                splitAngle = wrapTo2Pi(splitAngle)-2*pi;
+                splitAngle = splitAngle + 2*pi*(splitAngle<arcAngInf);
                 splitAngle = sort(splitAngle);
-                splitAngle = splitAngle + 2*pi*(splitAngle(1)<arcAngInf);
-                splitAngle = [arcAngInf ; splitAngle ; ...
-                              arcAngSup + 2*pi*(splitAngle(end)>arcAngSup) ];
+                splitAngle = [arcAngInf ; splitAngle ; arcAngSup ];
+                splitAngle = uniquetol(splitAngle,10*eps);
                 for l = 1:length(splitAngle)-1
                     arcOut = [arcOut ; ...
                                 ciat.Arc(arcCenter,arcRadius,...
@@ -45,7 +47,8 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
             arcOut = [arcOut;arcIn(k)];
         end
     end
-        % Split edges
+    
+    % Split edges
     edgeOut = [];
     for k = 1:length(edgeIn)
         capBox = cap([arcBox;edgeBox(setdiff(1:end,k))],edgeBox(k));
@@ -67,9 +70,11 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
             if ~isempty(splitPoint)
                 p1 = edgeIn(k).Startpoint;
                 p2 = edgeIn(k).Endpoint;
-                sortIdx = sort(abs(splitPoint-p1));
+                [~,sortIdx] = sort(abs(splitPoint-p1));
                 splitPoint = [p1 ; splitPoint(sortIdx); p2];
-                for l = 1:length(splitAngle)-1
+                [~,uniqueIdx,~] = uniquetol(abs(splitPoint-p1),10*eps);
+                splitPoint = splitPoint(uniqueIdx);
+                for l = 1:length(splitPoint)-1
                     edgeOut = [edgeOut ; ...
                                 ciat.Edge(splitPoint(l),splitPoint(l+1))];
                 end

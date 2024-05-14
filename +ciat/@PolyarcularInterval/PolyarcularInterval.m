@@ -111,7 +111,7 @@ classdef PolyarcularInterval
 
             value = ciat.Edge(obj.ArcStorage.Endpoint , ...
                               circshift(obj.ArcStorage.Startpoint,-1));
-            value = value(value.Length>0);
+            value = value(value.Length>10*eps);
         end
 
         % Get implicit vertices
@@ -131,36 +131,47 @@ classdef PolyarcularInterval
             edgeAngle = obj.Edges.GaussMap.Infimum;
 
             % Define vertices at the intersection of arc pairs
-            [M,N] = find(arcEnd == arcStart.');
-            angInf = arcEndAngle(M);
-            angSup = arcStartAngle(N);
-            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            [M,N] = find(abs(arcEnd - arcStart.')<10*eps);
+            angStart = arcEndAngle(M);
+            angEnd = arcStartAngle(N);
+            angDif = wrapToPi(angEnd - angStart);
+            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
+            angSup = angInf + sign(angDif) .* angDif;
             adjArcVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
                                        ciat.RealInterval(angInf,angSup) );
 
 
             % Define vertices at the intersection of edge pairs
-            [M,N] = find(edgeEnd == edgeStart.');
-            angInf = edgeAngle(M);
-            angSup = edgeAngle(N);
-            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            [M,N] = find(abs(edgeEnd - edgeStart.')<10*eps);
+            angStart = edgeAngle(M);
+            angEnd = edgeAngle(N);
+            angDif = wrapToPi(angEnd - angStart);
+            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
+            angSup = angInf + sign(angDif) .* angDif;
+            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
             adjEdgeVertices = ciat.Arc(edgeEnd(M), zeros(length(M),1),...
                                        ciat.RealInterval(angInf,angSup) );
 
             % Define vertices at the intersection of arc-edge pairs
-            [M,N] = find(arcEnd == edgeStart.');
-            angInf = arcEndAngle(M);
-            angSup = edgeAngle(N);
-            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            [M,N] = find(abs(arcEnd - edgeStart.')<10*eps);
+            angStart = arcEndAngle(M);
+            angEnd = edgeAngle(N);
+            angDif = wrapToPi(angEnd - angStart);
+            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
+            angSup = angInf + sign(angDif) .* angDif;
+            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
             adjArcEdgeVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
                                        ciat.RealInterval(angInf,angSup) );
 
 
             % Define vertices at the intersection of edge-arc pairs
-            [M,N] = find(edgeEnd == arcStart.');
-            angInf = edgeAngle(M);
-            angSup = arcStartAngle(N);
-            angSup = angSup + (angInf>0 & angSup<0)*2*pi;
+            [M,N] = find(abs(edgeEnd - arcStart.')<10*eps);
+            angStart = edgeAngle(M);
+            angEnd = arcStartAngle(N);
+            angDif = wrapToPi(angEnd - angStart);
+            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
+            angSup = angInf + sign(angDif) .* angDif;
+            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
             adjEdgeArcVertices = ciat.Arc(edgeEnd(M),  zeros(length(M),1),...
                                        ciat.RealInterval(angInf,angSup) );
 
@@ -212,7 +223,49 @@ classdef PolyarcularInterval
             value = reshape([obj.Angle],M,N);
         end
 
+        % Area
+        function value = get.Area(obj)
+            [M,N] = size(obj);
+            value = zeros(M,N);
+            % Calculate the polygon area for each polyarcular interval
+            for m = 1:M
+                for n = 1:N
+                    if isempty(obj.ArcStorage)
+                        value(m,n) = nan;
+                    else
+                        points = [obj(m,n).ArcStorage.Startpoint , ...
+                                  obj(m,n).ArcStorage.Endpoint].';
+                        polygonArea = polyarea(real(points(:)), ...
+                                               imag(points(:)));
+                        arcArea = sum(obj(m,n).Arcs.Area);
+                        value(m,n) = polygonArea + arcArea;
+                    end
+                end
+            end
+        end
+
         %% Other functions
+
+        % Sample
+        function value = sample(obj, nPoints)
+            [M,N] = size(obj);
+            value = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    % Sample arcs and edges
+                    arcs = obj(m,n).ArcStorage;
+                    edges = ciat.Edge(arcs.Endpoint , ...
+                                      circshift(arcs.Startpoint,-1));
+                    arcPoints = sample(arcs,nPoints);
+                    edgePoints = sample(edges,nPoints);
+
+                    % Interleave arc and edge samples
+                    allPoints = [arcPoints.';edgePoints.'];
+                    allPoints = allPoints(:);
+                    value{m,n} = [allPoints{:}];
+                end
+            end
+        end
 
         % Plot
         function h = plot(obj, varargin)
@@ -286,6 +339,9 @@ classdef PolyarcularInterval
                 hold off
             end
         end
+
+        %% Function headers
+        r = sum(obj,varargin)
 
     end % methods
 

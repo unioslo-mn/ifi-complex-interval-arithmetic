@@ -23,6 +23,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         Imag;           % Projection of the polygonal interval to the imaginary axis
         Abs;            % Projection of the polygonal interval to the absolute value axis
         Angle;          % Projection of the polygonal interval to the angle axis
+        Area;           % Area of the arc with its endpoints connected by an edge
     end
 
 	methods
@@ -285,6 +286,22 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = angle(obj)
             value = obj.Angle;
         end
+
+        % Area
+        function value = get.Area(obj)
+            % Area of the sector
+            sectorArea = obj.Radius.^2 .* obj.ArcAngle.Width / 2;
+            
+            % Area of triangle (center and arc endpoints)
+            triBase = abs(obj.Startpoint - obj.Endpoint);
+            triSide = abs(obj.Startpoint - obj.Center);
+            triHeight = sqrt(triSide.^2 - (triBase/2).^2);
+            triArea = triBase .* triHeight / 2;
+
+            % Combine the triangle area and the sector area
+            combSign = sign(obj.ArcAngle.Width - pi);
+            value = (sectorArea + combSign .* triArea) .* sign(obj.Radius);
+        end
         
 
 		%% Other methods
@@ -368,6 +385,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             r = isnan(obj.Length);
         end 
 
+        % Sample
         function points = sample(obj, nPoints)
             [M,N] = size(obj);
             points = cell(M,N);
@@ -379,10 +397,14 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 angSup = obj(m,n).ArcAngle.Supremum;
                 points{m,n} = center + radius * ...
                                    exp(1j*linspace(angInf,angSup,nPoints));
+                if radius < 0
+                    points{m,n} = flip(points{m,n});
+                end
             end
             end
         end
 
+        % Transpose
         function r = transpose(obj)
             [M,N] = size(obj);
             r = reshape(obj,N,M);

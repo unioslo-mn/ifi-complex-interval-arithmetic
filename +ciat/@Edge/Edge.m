@@ -200,6 +200,18 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             r = isnan(obj.Length);
         end 
 
+        % Sample
+        function points = sample(obj, nPoints)
+            [M,N] = size(obj);
+            points = cell(M,N);
+            for m = 1:M
+            for n = 1:N
+                points{m,n} = linspace(obj(m,n).Startpoint,...
+                                       obj(m,n).Endpoint,nPoints);
+            end
+            end
+        end
+
         % Transpose
         function r = transpose(obj)
             [M,N] = size(obj);
