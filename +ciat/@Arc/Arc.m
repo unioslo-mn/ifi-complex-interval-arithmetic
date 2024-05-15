@@ -95,7 +95,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Midpoint
         function value = get.Midpoint(obj)
-            value = obj.Center + obj.Radius * exp(1i*obj.ArcAngle.Midpoint);
+            value = obj.Center + obj.Radius .* exp(1i*obj.ArcAngle.Midpoint);
         end
 
         % Endpoint

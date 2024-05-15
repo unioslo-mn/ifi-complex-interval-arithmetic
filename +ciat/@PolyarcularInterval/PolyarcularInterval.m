@@ -267,6 +267,11 @@ classdef PolyarcularInterval
             end
         end
 
+        % % IsNaN
+        % function r = isnan(obj)
+        %     r = isnan(obj.Area);
+        % end 
+
         % Plot
         function h = plot(obj, varargin)
         % Plot polygonal intervals 
@@ -354,5 +359,8 @@ classdef PolyarcularInterval
         [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         [arcOut,edgeOut] = trimSegments(arcIn,edgeIn)
         seg = orderSegments(obj)
-    end
+     end
+
+
+  
 end

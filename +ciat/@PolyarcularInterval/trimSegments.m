@@ -7,16 +7,17 @@ mustBeA(edgeIn,'ciat.Edge')
 K = length(arcIn) + length(edgeIn);
 arcOut(K,1) = ciat.Arc;
 startPoints = [arcIn.Startpoint ; edgeIn.Startpoint];
-midGauss = [arcIn.GaussMap.Midpoint ; edgeIn.GaussMap.Midpoint];
 startGauss = [arcIn.GaussMap.Infimum .* (arcIn.Radius > 0) + ...
               arcIn.GaussMap.Supremum .* (arcIn.Radius < 0) ; ... 
               edgeIn.GaussMap.Midpoint];
 endGauss = [arcIn.GaussMap.Supremum .* (arcIn.Radius > 0) + ...
               arcIn.GaussMap.Infimum .* (arcIn.Radius < 0) ; ... 
               edgeIn.GaussMap.Midpoint];
+segLength = [arcIn.Length ; edgeIn.Length];
+segMidReal = real([arcIn.Midpoint; edgeIn.Midpoint]);
 
 % Find starting object
-[~,idx] = min([arcIn.Real.Infimum ; edgeIn.Real.Infimum]);
+idx = find(segMidReal == min(segMidReal),1);
 startIdx = idx;
 
 % Follow the boundary
@@ -44,8 +45,20 @@ while k==1 || (k<=K && idx~=startIdx)
         error('Boundary incontinuity')
     end
     if length(idx) > 1
-        [~,minIdx] = min(wrapToPi(startGauss(idx)-endGauss(prevIdx)));
-        idx = idx(minIdx);
+        if any(idx == startIdx)
+            idx = startIdx;
+        else
+            % Select the segment with the smaller initial Gauss angle
+            diffGauss = wrapToPi(startGauss(idx)-endGauss(prevIdx));
+            idx = idx(diffGauss == min(diffGauss));
+        end
+        if length(idx) > 1
+            % Select the segment with the smallest Gauss angle derivative
+            diffGauss = wrapToPi(endGauss(idx)-startGauss(idx))./segLength(idx);
+            minIdx = find(diffGauss == min(diffGauss),1);
+            idx = idx(minIdx);
+        end
+        % [~,minIdx] = min(wrapToPi(startGauss(idx)-endGauss(prevIdx)));
     end
 
     % Increment counter

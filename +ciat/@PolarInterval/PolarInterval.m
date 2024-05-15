@@ -472,6 +472,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
        outObj = cast(inObj)
     end
 
+    %% Vectorization
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')

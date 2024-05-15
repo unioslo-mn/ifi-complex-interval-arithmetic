@@ -472,6 +472,11 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                 r(n).Points = -r(n).Points;
             end
         end 
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end 
         
         % Plot
         function h = plot(obj, varargin)
@@ -522,6 +527,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         points = sortPoints(points,tolerance)
     end
 
+    %% Vectorization
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')
