@@ -652,7 +652,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
 
         % Inside
         function r = isin(obj,x)
-            r = obj.Real.isin(real(x)) && obj.Imag.isin(imag(x));
+            r = obj.Real.isin(real(x)) & obj.Imag.isin(imag(x));
         end
 
         % IsNaN

@@ -66,7 +66,7 @@ function r = plus(obj1,obj2)
             % Calculate sum
             if isa(obj2,'double')
                 r(M,N) = obj1(m1,n1);
-                r(M,N).ArcStorage.Center = r(M,N).ArcStorage.Center + ...
+                r.ArcStorage{M,N}.Center = r.ArcStorage{M,N}.Center + ...
                                             obj2(m2,n2);
             else
                 r(M,N) = addConcaveArcs( obj1(m1,n1) , obj2(m2,n2) );
@@ -81,11 +81,11 @@ function r = addConcaveArcs(obj1,obj2)
     
     % Extract curve segments by type
     %   - extract arcs including vertices
-    arc1 = [obj1.Arcs ; obj1.Vertices];
-    arc2 = [obj2.Arcs ; obj2.Vertices];
+    arc1 = [obj1.Arcs{:} ; obj1.Vertices{:}];
+    arc2 = [obj2.Arcs{:} ; obj2.Vertices{:}];
     %   - extract edges with non-zero length
-    edge1 = obj1.Edges;
-    edge2 = obj2.Edges;    
+    edge1 = obj1.Edges{:};
+    edge2 = obj2.Edges{:};    
     
     % Add arcs and vertices
     arcPlusArc = arc1 + arc2.';

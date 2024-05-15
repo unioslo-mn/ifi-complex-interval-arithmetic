@@ -230,20 +230,20 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             [M,N] = size(obj);
             minAbs = zeros(M,N);
             maxAbs = zeros(M,N);
-            pointIn = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    minAbs(m,n) = min(abs(obj.Points{m,n}));
-                    maxAbs(m,n) = min(abs(obj.Points{m,n}));
-                    pointIn(m,n) = obj.PointCount(m,n) >= 3 && ...
-                                  inpolygon(0,0,real(obj.Points{m,n}), ...
-                                                imag(obj.Points{m,n}));
+                    edges = ciat.Edge(obj.Points{m,n} , ...
+                                         circshift(obj.Points{m,n},-1));
+                    minAbs(m,n) = min(edges.Abs.Infimum);
+                    maxAbs(m,n) = max(edges.Abs.Supremum);
                 end
             end
-
             value = ciat.RealInterval( minAbs,maxAbs );
+
+            % Check for intervals that contain the zero
+            pointIn = obj.isin(0);
             if any(pointIn,'all')
-                value(pointIn) = 0;
+                value(pointIn).Infimum = 0;
             end
         end
         function value = abs(obj)
@@ -472,6 +472,21 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                 r(n).Points = -r(n).Points;
             end
         end 
+
+        % Inside
+        function r = isin(obj,x)
+            [M,N] = size(obj);
+            r(M,N) = false;
+            for m = 1:M
+                for n = 1:N
+                    if obj.PointCount(m,n) >= 2
+                        r(m,n) = inpolygon(real(x),imag(x),...
+                                           real(obj.Points{m,n}), ...
+                                           imag(obj.Points{m,n})); 
+                    end
+                end
+            end
+        end
 
         % IsNaN
         function r = isnan(obj)

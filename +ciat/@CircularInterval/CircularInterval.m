@@ -436,6 +436,11 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
             r = obj1 + (-obj2);
         end
 
+        % Inside
+        function r = isin(obj,x)
+            r = abs(x - obj.Center) < obj.Radius;
+        end
+
         % IsNaN
         function r = isnan(obj)
             r = isnan(obj.Area);

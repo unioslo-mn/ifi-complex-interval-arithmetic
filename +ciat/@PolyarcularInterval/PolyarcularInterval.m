@@ -1,4 +1,4 @@
-classdef PolyarcularInterval
+classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
 	properties (Dependent)
         Arcs;           % Defining arcs of the polygonal interval boundary
@@ -33,15 +33,17 @@ classdef PolyarcularInterval
                     % This is the default way of defining polygonal
                     % intervals the points are assumed to belong to a
                     % single interval no matter how many dimensions
-                    obj.Arcs = inObj(:);
+                    obj(1) = ciat.PolyarcularInterval;
+                    obj.Arcs = {inObj(:)};
                 case 'cell'
                     % This is how multiple polyarcs can be defined using
                     % cells of ciat.Arc arrays
                     [M,N] = size(inObj);
-                    obj(M,N) = obj;
-                    for n = 1:M*N
-                        obj(n).Arcs = inObj{n};
-                    end
+                    obj(M,N) = ciat.PolyarcularInterval;
+                    obj.Arcs = inObj;
+                    % for n = 1:M*N
+                    %     obj(n).Arcs = inObj{n};
+                    % end
                 otherwise
                     % Input object will be casted
                     [M,N] = size(inObj);
@@ -56,43 +58,25 @@ classdef PolyarcularInterval
                    
         % Set points (store in the hidden property ArcStorage after sorting)
         function obj = set.Arcs(obj,arcs)
-            N = length(arcs);
-            if N > 1
-                for n=1:N
-                    % Fix the angles property of zero radius arcs
-                    if arcs(n).Radius == 0
-                        % set current, previous and next arc
-                        arcCurr = arcs(n);
-                        if n > 1
-                            arcPrev = arcs(n-1);
-                        else
-                            arcPrev = arcs(N);
-                        end
-                        if n < N
-                            arcNext = arcs(n+1);
-                        else
-                            arcNext = arcs(1);
-                        end
-                        
-                        angMin = angle(arcCurr.Center - ...
-                                       arcPrev.Endpoint) - pi/2;
-                        angMax = angle(arcNext.Startpoint - ...
-                                       arcCurr.Center) - pi/2;
-                        if angMin > angMax
-                            angMax = angMax + 2*pi;
-                        end
-                        arcs(n).ArcAngle = ciat.RealInterval(angMin,angMax);
-                    end
+            [M,N] = size(arcs);
+            for m = 1:M
+                for n = 1:N
+                    obj.ArcStorage(m,n) = {ciat.PolyarcularInterval.setArcs( ...
+                                                        arcs{m,n})};
                 end
-            else
-                arcs.ArcAngle = ciat.RealInterval(-pi,pi);
             end
-            obj.ArcStorage = arcs;
         end 
     
         % Get points (retrieve from hidden property ArcStorage)
         function value = get.Arcs(obj)
-            value = obj.ArcStorage(obj.ArcStorage.Length ~= 0);
+            [M,N] = size(obj);
+            value = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = obj.ArcStorage{m,n};
+                    value{m,n} = arcs(arcs.Length ~= 0);
+                end
+            end
         end
 
         %% Dependent properties
@@ -100,127 +84,108 @@ classdef PolyarcularInterval
                        
         % Get implicit edges
         function value = get.Edges(obj)
-            % N = length(obj.ArcStorage);
-            % value(N,1) = ciat.Edge;
-            % for n=1:N-1
-            %     value(n).Startpoint =  obj.Arcs(n).Endpoint;
-            %     value(n).Endpoint = obj.Arcs(n+1).Startpoint;
-            % end
-            % value(N).Startpoint =  obj.Arcs(N).Endpoint;
-            % value(N).Endpoint = obj.Arcs(1).Startpoint;
-
-            value = ciat.Edge(obj.ArcStorage.Endpoint , ...
-                              circshift(obj.ArcStorage.Startpoint,-1));
-            value = value(value.Length>10*eps);
+            [M,N] = size(obj);
+            value = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = obj.ArcStorage{m,n};
+                    edges = ciat.Edge(arcs.Endpoint , ...
+                                      circshift(arcs.Startpoint,-1));
+                    value{m,n} = edges(edges.Length>10*eps);
+                end
+            end
         end
 
         % Get implicit vertices
         function value = get.Vertices(obj)
-
-             % Extract elements
-            arcStart = obj.Arcs.Startpoint;
-            arcEnd = obj.Arcs.Endpoint;
-            arcRadius = obj.Arcs.Radius;
-            arcGauss = obj.Arcs.GaussMap;
-            arcStartAngle = (arcRadius>0) .* arcGauss.Infimum + ...
-                            (arcRadius<0) .* arcGauss.Supremum;
-            arcEndAngle = (arcRadius>0) .* arcGauss.Supremum + ...
-                          (arcRadius<0) .* arcGauss.Infimum;
-            edgeStart = obj.Edges.Startpoint;
-            edgeEnd = obj.Edges.Endpoint;
-            edgeAngle = obj.Edges.GaussMap.Infimum;
-
-            % Define vertices at the intersection of arc pairs
-            [M,N] = find(abs(arcEnd - arcStart.')<10*eps);
-            angStart = arcEndAngle(M);
-            angEnd = arcStartAngle(N);
-            angDif = wrapToPi(angEnd - angStart);
-            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
-            angSup = angInf + sign(angDif) .* angDif;
-            adjArcVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
-                                       ciat.RealInterval(angInf,angSup) );
-
-
-            % Define vertices at the intersection of edge pairs
-            [M,N] = find(abs(edgeEnd - edgeStart.')<10*eps);
-            angStart = edgeAngle(M);
-            angEnd = edgeAngle(N);
-            angDif = wrapToPi(angEnd - angStart);
-            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
-            angSup = angInf + sign(angDif) .* angDif;
-            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
-            adjEdgeVertices = ciat.Arc(edgeEnd(M), zeros(length(M),1),...
-                                       ciat.RealInterval(angInf,angSup) );
-
-            % Define vertices at the intersection of arc-edge pairs
-            [M,N] = find(abs(arcEnd - edgeStart.')<10*eps);
-            angStart = arcEndAngle(M);
-            angEnd = edgeAngle(N);
-            angDif = wrapToPi(angEnd - angStart);
-            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
-            angSup = angInf + sign(angDif) .* angDif;
-            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
-            adjArcEdgeVertices = ciat.Arc(arcEnd(M),  zeros(length(M),1),...
-                                       ciat.RealInterval(angInf,angSup) );
-
-
-            % Define vertices at the intersection of edge-arc pairs
-            [M,N] = find(abs(edgeEnd - arcStart.')<10*eps);
-            angStart = edgeAngle(M);
-            angEnd = arcStartAngle(N);
-            angDif = wrapToPi(angEnd - angStart);
-            angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
-            angSup = angInf + sign(angDif) .* angDif;
-            % angSup = angSup + (angInf>0 & angSup<0)*2*pi;
-            adjEdgeArcVertices = ciat.Arc(edgeEnd(M),  zeros(length(M),1),...
-                                       ciat.RealInterval(angInf,angSup) );
-
-            value = [adjArcVertices ; ...
-                    adjEdgeVertices ; ...
-                    adjArcEdgeVertices ; ...
-                    adjEdgeArcVertices];
-
+            [M,N] = size(obj);
+            value = cell(M,N);
+            arcs = obj.Arcs;
+            edges = obj.Edges;
+            for m = 1:M
+                for n = 1:N
+                    % value{m,n} = ciat.PolyarcularInterval.getVertices(...
+                    %                             arcs{m,n},edges{m,n});
+                    [value{m,n},~] = obj(m,n).getVertices;
+                end
+            end
         end
 
         % Real
         function value = get.Real(obj)
-            value = ciat.RealInterval(min(inf(real(obj.Arcs))),...
-                                      max(sup(real(obj.Arcs))));
+            [M,N] = size(obj);
+            minReal = zeros(M,N);
+            maxReal = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minReal(m,n) = min(inf(real(obj.ArcStorage{m,n})));
+                    maxReal(m,n) = max(sup(real(obj.ArcStorage{m,n})));
+                end
+            end
+            value = ciat.RealInterval( minReal,maxReal );
         end
         function value = real(obj)
-            [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
         function value = get.Imag(obj)
-            value = ciat.RealInterval(min(inf(imag(obj.Arcs))),...
-                                      max(sup(imag(obj.Arcs))));
+            [M,N] = size(obj);
+            minImag = zeros(M,N);
+            maxImag = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minImag(m,n) = min(inf(imag(obj.ArcStorage{m,n})));
+                    maxImag(m,n) = max(sup(imag(obj.ArcStorage{m,n})));
+                end
+            end
+            value = ciat.RealInterval( minImag,maxImag );
         end
         function value = imag(obj)
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         % Abs
         function value = get.Abs(obj)
-            value = ciat.RealInterval(min(min(inf(abs(obj.Arcs))),...
-                                            min(inf(abs(obj.Edges))) ),...
-                                      max(sup(abs(obj.Arcs))));
+            [M,N] = size(obj);
+            minAbs = zeros(M,N);
+            maxAbs = zeros(M,N);
+            pointIn = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minAbs(m,n) = min(min(inf(abs(obj.ArcStorage{m,n}))),...
+                                      min(inf(abs(obj.Edges{m,n}))) );
+                    maxAbs(m,n) = max(sup(abs(obj.ArcStorage{m,n})));
+                    
+                end
+            end
+            value = ciat.RealInterval( minAbs,maxAbs );
+
+            % Check for intervals that contain the zero
+            pointIn = obj.isin(0);
+            if any(pointIn,'all')
+                value(pointIn).Infimum = 0;
+            end
         end
         function value = abs(obj)
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval(min(inf(angle(obj.Arcs))),...
-                                      max(sup(angle(obj.Arcs))));         
+            [M,N] = size(obj);
+            minImag = zeros(M,N);
+            maxImag = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    minImag(m,n) = min(inf(angle(obj.ArcStorage{m,n})));
+                    maxImag(m,n) = max(sup(angle(obj.ArcStorage{m,n})));
+                end
+            end
+            value = ciat.RealInterval( minImag,maxImag );
         end
         function value = angle(obj)
-            [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
 
         % Area
@@ -230,14 +195,14 @@ classdef PolyarcularInterval
             % Calculate the polygon area for each polyarcular interval
             for m = 1:M
                 for n = 1:N
-                    if isempty(obj.ArcStorage)
+                    if isempty(obj.ArcStorage{m,n})
                         value(m,n) = nan;
                     else
-                        points = [obj(m,n).ArcStorage.Startpoint , ...
-                                  obj(m,n).ArcStorage.Endpoint].';
+                        points = [obj.ArcStorage{m,n}.Startpoint , ...
+                                  obj.ArcStorage{m,n}.Endpoint].';
                         polygonArea = polyarea(real(points(:)), ...
                                                imag(points(:)));
-                        arcArea = sum(obj(m,n).Arcs.Area);
+                        arcArea = sum(obj.Arcs{m,n}.Area);
                         value(m,n) = polygonArea + arcArea;
                     end
                 end
@@ -253,7 +218,7 @@ classdef PolyarcularInterval
             for m = 1:M
                 for n = 1:N
                     % Sample arcs and edges
-                    arcs = obj(m,n).ArcStorage;
+                    arcs = obj.ArcStorage{m,n};
                     edges = ciat.Edge(arcs.Endpoint , ...
                                       circshift(arcs.Startpoint,-1));
                     arcPoints = sample(arcs,nPoints);
@@ -267,10 +232,77 @@ classdef PolyarcularInterval
             end
         end
 
-        % % IsNaN
-        % function r = isnan(obj)
-        %     r = isnan(obj.Area);
-        % end 
+        % Inside
+        function r = isin(obj,x)
+            [M,N] = size(obj);
+            r(M,N) = false;
+            for m = 1:M
+                for n = 1:N
+                    arcs = obj.ArcStorage{m,n};
+                    % Check if the point is inside the vertex polygon
+                    vertexPoly = [arcs.Startpoint , arcs.Endpoint].';
+                    vertexPoly = [unique(vertexPoly(:),'stable') ; ...
+                                     obj.ArcStorage{m,n}.Startpoint(1)];
+                    inVertexPoly = inpolygon(real(x),imag(x),...
+                                                real(vertexPoly),...
+                                                imag(vertexPoly));
+
+                    % Check if the point is inside the arcs
+                    convexArcs = arcs(arcs.Radius>0);
+                    concaveArcs = arcs(arcs.Radius<0);
+                    inConvexArcs = any(convexArcs.isin(x),'all');
+                    inConcaveArcs = any(concaveArcs.isin(x),'all');
+
+                    % Combine conditions
+                    r(m,n) = (inVertexPoly & ~inConcaveArcs) | inConvexArcs;
+                end
+            end
+        end
+
+        % Convex
+        function r = isconvex(obj)
+            [M,N] = size(obj);
+            r(M,N) = false;
+            for m = 1:M
+                for n = 1:N
+                    % Check if all vertices are convex
+                    [~,vertexConvexity] = obj(m,n).getVertices;
+                    r(m,n) = all(vertexConvexity,'all') && ...
+                             all(obj.Arcs{m,n}.Radius >= 0);
+                end
+            end
+        end
+
+        % Convexify
+        function outObj = convexify(inObj)
+            [M,N] = size(inObj);
+            outObj(M,N) = ciat.PolyarcularInterval;
+            for m = 1:M
+                for n = 1:N
+                    arcs = inObj.ArcStorage{m,n};
+                    % edges = inObj.Edges{m,n};
+
+                    % Create convex hull
+                    vertexPoly = [arcs.Startpoint , arcs.Endpoint].';
+                    idx = convhull(real(vertexPoly),imag(vertexPoly));
+                    edges = ciat.Edge(vertexPoly(idx),...
+                                      circshift(vertexPoly(idx),-1));
+                    arcs = arcs(arcs.Radius>0);
+                    [arcs,edges] = ciat.PolyarcularInterval.splitSegments(arcs,edges);
+                    arcs = arcs(arcs.Length > 10*eps);
+                    edges = edges(edges.Length > 10*eps);
+                    arcs = ciat.PolyarcularInterval.trimSegments(arcs,edges);
+                    outObj(m,n) = ciat.PolyarcularInterval(arcs);
+                end
+            end
+            
+
+        end
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end 
 
         % Plot
         function h = plot(obj, varargin)
@@ -297,8 +329,8 @@ classdef PolyarcularInterval
             hold on
             h = [];
             for n = 1:length(obj(:))
-                h = [h;obj(n).Arcs.plot(varargin{:})];    
-                h = [h;obj(n).Edges.plot(varargin{:})];    
+                h = [h;obj.Arcs{n}.plot(varargin{:})];    
+                h = [h;obj.Edges{n}.plot(varargin{:})];    
             end
             if tf == false 
                 hold off
@@ -315,11 +347,11 @@ classdef PolyarcularInterval
             h = [];
 
             % Plot normal vectors
-            % for n = 1:obj.ArcCount
-                h = [h; obj.Arcs.plotGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Edges.plotGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Vertices.plotGaussMap(arrowSize,varargin{:})];
-            % end
+            for n = 1:length(obj(:))
+                h = [h; obj.Arcs{n}.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Edges{n}.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Vertices{n}.plotGaussMap(arrowSize,varargin{:})];
+            end
 
             if tf == false 
                 hold off
@@ -334,10 +366,10 @@ classdef PolyarcularInterval
             h = [];
 
             % Plot normal vectors
-            for n = 1:obj.ArcCount
-                h = [h; obj.Arcs(n).plotLogGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Edges(n).plotLogGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Vertices(n).plotLogGaussMap(arrowSize,varargin{:})];
+            for n = 1:length(obj(:))
+                h = [h; obj.Arcs{n}.plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Edges{n}.plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj.Vertices{n}.plotLogGaussMap(arrowSize,varargin{:})];
             end
 
             if tf == false 
@@ -347,12 +379,15 @@ classdef PolyarcularInterval
 
         %% Function headers
         r = sum(obj,varargin)
+        [vertices,convexity] = getVertices(obj)
 
     end % methods
 
 	 %% Static methods
      methods (Static)
         % Function headers
+        arcOut = setArcs(arcIn)
+        % [vertices,convexity] = getVertices(arcs,edges)
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
@@ -362,5 +397,79 @@ classdef PolyarcularInterval
      end
 
 
-  
+     %% Vectorization
+     methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.ArcStorage = obj.ArcStorage.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % disp('parenAssign')
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.RectangularInterval
+                % Might not be the place or the way to do it
+
+                % Instanciate object with zero values of correct size.
+                obj = ciat.PolyarcularInterval;
+                obj.ArcStorage = cell([indexOp.Indices{:}]);
+
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.ArcStorage.(indexOp) = rhs.ArcStorage;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.ArcStorage.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            % disp('cat')
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                newArgs{ix} = varargin{ix}.ArcStorage;
+            end
+            out = ciat.PolyarcularInterval(cat(dim,newArgs{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.ArcStorage,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.PolyarcularInterval;
+        end
+    end
 end

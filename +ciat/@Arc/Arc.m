@@ -117,33 +117,6 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
             value = obj.ArcAngleStore;
 
-            % % Start by assigning the arc-angle values
-            % value = obj.ArcAngle;
-            % [M,N] = size(value);
-            % 
-            % % Check if any elements contain the -pi or pi value
-            % mask = ~isnan(value) & ...
-            %        ( value.isin(-pi) | value.isin(pi) ) & ...
-            %        ( value.Infimum ~= -pi | value.Infimum ~= pi | ...
-            %          value.Supremum ~= -pi | value.Supremum ~= pi);
-            % % Create a second layer of the array in the 3rd dimension
-            % if any(mask)
-            %     value2(M,N) = ciat.RealInterval;
-            %     value2(mask) = ciat.RealInterval(...
-            %                          -pi , ...
-            %                          wrapToPi(value.Supremum(mask)));
-            %     value(mask) = ciat.RealInterval( ...
-            %                         wrapToPi(value.Infimum(mask)) , ...
-            %                         pi);
-            %     value(~mask) = ciat.RealInterval(...
-            %                         wrapToPi(value.Infimum(~mask)) , ...
-            %                         wrapToPi(value.Supremum(~mask)) );
-            %     value = cat(3,value,value2);
-            % else
-            %     value = ciat.RealInterval(...
-            %                         wrapToPi(value.Infimum) , ...
-            %                         wrapToPi(value.Supremum) );
-            % end
         end
 
         % Log-Gauss map angle interval
@@ -380,6 +353,25 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             r = intersection(obj1,obj2);
         end
 
+        % Inside
+        function r = isin(obj,x)
+            % Check if the point is in the circle of the arc
+            inCircle = abs(x - obj.Center) < abs(obj.Radius);
+
+            % Check if the point is in the sector
+            inSector = abs(wrapToPi( angle(x - obj.Center) - ...
+                                     obj.ArcAngle.Infimum  + ...
+                                    (obj.Radius<0)*pi ) ) ...
+                            < obj.ArcAngle.Width;
+
+            % Check if the point is in the rectangle around the circle
+            arcBox = ciat.RectangularInterval(obj);
+            inBox = arcBox.isin(x);
+
+            % Combine conditions
+            r = inCircle & inSector & inBox;
+        end
+
         % IsNaN
         function r = isnan(obj)
             r = isnan(obj.Length);
@@ -589,8 +581,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         function obj = parenDelete(obj,indexOp)
             % disp('parenDelete')
-            obj.Infimum.(indexOp) = [];
-            obj.Supremum.(indexOp) = [];
+            obj.Center.(indexOp) = [];
+            obj.Radius.(indexOp) = [];
         end
     end
 

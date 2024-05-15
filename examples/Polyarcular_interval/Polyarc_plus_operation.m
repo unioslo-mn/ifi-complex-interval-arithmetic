@@ -26,11 +26,11 @@ aI2 = ciat.PolyarcularInterval(pI);
 
 %% Demonstrate detailed method of the plus function
 
-aI1Arcs = [aI1.Arcs ; aI1.Vertices];
-aI2Arcs = [aI2.Arcs ; aI2.Vertices];
+aI1Arcs = [aI1.Arcs{:} ; aI1.Vertices{:}];
+aI2Arcs = [aI2.Arcs{:} ; aI2.Vertices{:}];
 
-aI1Edges = aI1.Edges;
-aI2Edges = aI2.Edges;
+aI1Edges = aI1.Edges{:};
+aI2Edges = aI2.Edges{:};
 
 aI3ArcPlusArc = aI1Arcs + aI2Arcs.';
 aI3EdgePlusEdge = aI1Edges + aI2Edges.';
@@ -65,11 +65,11 @@ aI1.plotGaussMap(.1,'k');
 aI2.plot('k-');
 aI2.plotGaussMap(.1,'k');
 
-aIsum.plot('k-','linewidth',2)
-aI3Arc.plot('r')
-aI3Edge.plot('b')
-aI3ArcBox.plot('r--')
-aI3EdgeBox.plot('b--')
+aIsum.plot('k-','linewidth',2);
+aI3Arc.plot('r');
+aI3Edge.plot('b');
+aI3ArcBox.plot('r--');
+aI3EdgeBox.plot('b--');
 
 aI3ArcMid = aI3Arc.Center + aI3Arc.Radius .* exp(1j*aI3Arc.ArcAngle.Midpoint);
 text(aI3ArcBox.Real.Midpoint,aI3ArcBox.Imag.Midpoint,string(1:length(aI3Arc))');

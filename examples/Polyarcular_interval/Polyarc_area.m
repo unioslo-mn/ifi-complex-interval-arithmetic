@@ -19,12 +19,16 @@ aIsampArea = polyarea(real(aIsamp{:}),imag(aIsamp{:}));
 
 %%
 
-aI.Area - aIsampArea
+sprintf(['Area of the polyarc: %0.3f\n',...
+        'Area of its polygonal approximation: %0.3f\n',...
+        'Area difference: %0.3e\n'],...
+        aI.Area,...
+        aIsampArea,...
+        aI.Area - aIsampArea)
 
 
 % Plot
 % figure;
 clf;hold on;axis equal
-aI.plot('g-')
-% aIpoly.plot('r:')
-plot(real(aIsamp{:}),imag(aIsamp{:}),'b--')
+aI.plot('g-');  
+plot(real(aIsamp{:}),imag(aIsamp{:}),'b--');

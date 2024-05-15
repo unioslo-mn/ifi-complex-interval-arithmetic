@@ -135,11 +135,10 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         
         % Abs
         function value = get.Abs(obj)
-            if obj.CurveParameter.isin(0)
-                minAbs = 1/abs(obj.NormFactor);
-            else
-                minAbs = min(abs(obj.Startpoint),abs(obj.Endpoint));
-            end
+            curveParamZero = obj.CurveParameter.isin(0);
+            minAbs =  curveParamZero ./ abs(obj.NormFactor) + ...
+                     ~curveParamZero .* min(abs(obj.Startpoint), ...
+                                            abs(obj.Endpoint));
             maxAbs = max(abs(obj.Startpoint),abs(obj.Endpoint));
             value = ciat.RealInterval(minAbs,maxAbs);
         end

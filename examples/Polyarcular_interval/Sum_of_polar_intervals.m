@@ -40,14 +40,14 @@ arcTime = toc;
 % figure;clf
 cla;hold on; axis equal
 
-recElementInt.plot('g-')
-recArrayInt.plot('g-','linewidth',2)
+recElementInt.plot('g-');
+recArrayInt.plot('g-','linewidth',2);
 
-gonElementInt.plot('r-')
-gonArrayInt.plot('r-','linewidth',2)
+gonElementInt.plot('r-');
+gonArrayInt.plot('r-','linewidth',2);
 
-arcElementInt.plot('b-')
-arcArrayInt.plot('b-','linewidth',2)
+arcElementInt.plot('b-');
+arcArrayInt.plot('b-','linewidth',2);
 
 %%
 recArea = bp_rec.ArrayInterval.Area;
