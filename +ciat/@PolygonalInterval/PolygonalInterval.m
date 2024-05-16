@@ -493,6 +493,12 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             r = isnan(obj.Area);
         end 
         
+        % Transpose
+        function r = transpose(obj)
+            [M,N] = size(obj);
+            r = reshape(obj,N,M);
+        end
+
         % Plot
         function h = plot(obj, varargin)
         % Plot polygonal intervals 
@@ -620,6 +626,13 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         function obj = empty()
             disp('empty')
             obj = ciat.PolygonalInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Tolerance = reshape(obj.Tolerance,varargin{:});
+            obj.Boundary = reshape(obj.Boundary,varargin{:});
         end
     end
 end

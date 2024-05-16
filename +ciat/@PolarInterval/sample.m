@@ -32,34 +32,41 @@ function points = sample(obj, nPoints)
         nPoints (1,1)   {mustBeInteger,mustBePositive} = 10;
     end
 
-    % Extract parameters
-    maxAbs = obj.Abs.Supremum;
-    minAbs = obj.Abs.Infimum;
-    maxAng = obj.Angle.Supremum;
-    minAng = obj.Angle.Infimum;                     
-    
-    % Calculate length of each side
-    lenArcMin = minAbs * (maxAng-minAng);
-    lenArcMax = maxAbs * (maxAng-minAng);
-    lenEdge = maxAbs - minAbs;
-    lenTotal = lenArcMin + lenArcMax + 2*lenEdge;
-    
-    % Divide the points between the sides
-    cntEdge = floor(nPoints * lenEdge / lenTotal);
-    cntArcMax = floor(nPoints * lenArcMax / lenTotal);
-    cntArcMin = nPoints - cntArcMax - 2*cntEdge;   
-    
+    [M,N] = size(obj);
+    points = cell(M,N);
 
-    % Generate points in counter-clockwise order
-    pntEdgeMin = linspace(minAbs, maxAbs, cntEdge+1) * exp(1j*minAng);
-    pntArcMax = (maxAbs) * exp(1j * linspace(minAng, maxAng, cntArcMax+1));
-    pntEdgeMax = linspace(maxAbs, minAbs, cntEdge+1) * exp(1j*maxAng);
-    pntArcMin = (minAbs) * exp(1j * linspace(maxAng, minAng, cntArcMin+1));
-    
-    % Assemble the point array and remove douplicate points
-    points = [pntEdgeMin(1:end-1), ...
-              pntArcMax(1:end-1), ...
-              pntEdgeMax(1:end-1),...
-              pntArcMin(1:end-1)].';
+    for m = 1:M
+        for n = 1:N
+            % Extract parameters
+            maxAbs = obj(m,n).Abs.Supremum;
+            minAbs = obj(m,n).Abs.Infimum;
+            maxAng = obj(m,n).Angle.Supremum;
+            minAng = obj(m,n).Angle.Infimum;                     
+            
+            % Calculate length of each side
+            lenArcMin = minAbs .* (maxAng-minAng);
+            lenArcMax = maxAbs .* (maxAng-minAng);
+            lenEdge = maxAbs - minAbs;
+            lenTotal = lenArcMin + lenArcMax + 2*lenEdge;
+            
+            % Divide the points between the sides
+            cntEdge = floor(nPoints * lenEdge / lenTotal);
+            cntArcMax = floor(nPoints * lenArcMax / lenTotal);
+            cntArcMin = nPoints - cntArcMax - 2*cntEdge;   
+            
+        
+            % Generate points in counter-clockwise order
+            pntEdgeMin = linspace(minAbs, maxAbs, cntEdge+1) * exp(1j*minAng);
+            pntArcMax = (maxAbs) * exp(1j * linspace(minAng, maxAng, cntArcMax+1));
+            pntEdgeMax = linspace(maxAbs, minAbs, cntEdge+1) * exp(1j*maxAng);
+            pntArcMin = (minAbs) * exp(1j * linspace(maxAng, minAng, cntArcMin+1));
+            
+            % Assemble the point array and remove douplicate points
+            points{m,n} = [pntEdgeMin(1:end-1), ...
+                      pntArcMax(1:end-1), ...
+                      pntEdgeMax(1:end-1),...
+                      pntArcMin(1:end-1)].';
+        end
+    end
 
 end        

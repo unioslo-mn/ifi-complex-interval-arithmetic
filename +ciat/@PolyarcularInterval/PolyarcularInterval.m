@@ -232,33 +232,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             end
         end
 
-        % Inside
-        function r = isin(obj,x)
-            [M,N] = size(obj);
-            r(M,N) = false;
-            for m = 1:M
-                for n = 1:N
-                    arcs = obj.ArcStorage{m,n};
-                    % Check if the point is inside the vertex polygon
-                    vertexPoly = [arcs.Startpoint , arcs.Endpoint].';
-                    vertexPoly = [unique(vertexPoly(:),'stable') ; ...
-                                     obj.ArcStorage{m,n}.Startpoint(1)];
-                    inVertexPoly = inpolygon(real(x),imag(x),...
-                                                real(vertexPoly),...
-                                                imag(vertexPoly));
-
-                    % Check if the point is inside the arcs
-                    convexArcs = arcs(arcs.Radius>0);
-                    concaveArcs = arcs(arcs.Radius<0);
-                    inConvexArcs = any(convexArcs.isin(x),'all');
-                    inConcaveArcs = any(concaveArcs.isin(x),'all');
-
-                    % Combine conditions
-                    r(m,n) = (inVertexPoly & ~inConcaveArcs) | inConvexArcs;
-                end
-            end
-        end
-
+        
         % Convex
         function r = isconvex(obj)
             [M,N] = size(obj);
@@ -303,6 +277,12 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         function r = isnan(obj)
             r = isnan(obj.Area);
         end 
+
+        % Transpose
+        function r = transpose(obj)
+            [M,N] = size(obj);
+            r = reshape(obj,N,M);
+        end
 
         % Plot
         function h = plot(obj, varargin)
@@ -379,6 +359,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
         %% Function headers
         r = sum(obj,varargin)
+        r = isin(obj,x)
         [vertices,convexity] = getVertices(obj)
 
     end % methods
@@ -470,6 +451,12 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         function obj = empty()
             disp('empty')
             obj = ciat.PolyarcularInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.ArcStorage = reshape(obj.ArcStorage,varargin{:});
         end
     end
 end

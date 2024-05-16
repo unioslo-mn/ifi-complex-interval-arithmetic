@@ -356,20 +356,22 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         % Inside
         function r = isin(obj,x)
             % Check if the point is in the circle of the arc
-            inCircle = abs(x - obj.Center) < abs(obj.Radius);
+            inCircle = abs(x - obj.Center) <= abs(obj.Radius);
 
             % Check if the point is in the sector
             inSector = abs(wrapToPi( angle(x - obj.Center) - ...
                                      obj.ArcAngle.Infimum  + ...
                                     (obj.Radius<0)*pi ) ) ...
-                            < obj.ArcAngle.Width;
+                            <= obj.ArcAngle.Width;
 
-            % Check if the point is in the rectangle around the circle
-            arcBox = ciat.RectangularInterval(obj);
-            inBox = arcBox.isin(x);
+            % Check if the point is outside the chord connecting the end
+            % points
+            rotateCoeff = exp(-1j*obj.ArcAngle.Midpoint);
+            outChord = real(x.* rotateCoeff) >= ...
+                       real(obj.Startpoint .* rotateCoeff);
 
             % Combine conditions
-            r = inCircle & inSector & inBox;
+            r = inCircle & inSector & outChord;
         end
 
         % IsNaN

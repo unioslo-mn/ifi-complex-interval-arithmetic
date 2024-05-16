@@ -2,63 +2,42 @@ clear
 % close all
 
 %%
-% Define array
-array = biat.SensorArray(   'ElCount',5,...
-                            'ElDiameterRatio',0,...
-                            'Curvature',0.2,...
-                            'TaperType','chebwin',...
-                            'TaperParam',20,...
-                            'GainError',5/100,...
-                            'PhaseError',deg2rad(4),...
-                            'SteeringAngle',deg2rad(5));
 
-bp_rec = biat.BeamPattern(array,'rectangular','BeamResolutionDeg',0.35/2);
-bp_gon = biat.BeamPattern(array,'polygonal','BeamResolutionDeg',0.35/2, ...
-                                            'PolygonTolerance',1e-6);
-bp_arc = biat.BeamPattern(array,'polyarcular','BeamResolutionDeg',0.35/2);
+% Define random polar intervals
+N = 3;
+absMin = rand(N,1);
+absMax = absMin + rand(N,1)/10;
+angMin = 2*pi*rand(N,1);
+angMax = angMin + 2*pi*rand(N,1)/20;
+pI = ciat.PolarInterval(absMin,absMax,angMin,angMax);
+paI = ciat.PolyarcularInterval(pI);
+paIc = paI.convexify;
+pIsmp = pI.sample(10);
 
-%% Calculate sum and measure time
+% Sum samples
+pIsmpSum = 0;
+for n = 1:N
+    pIsmpSum = pIsmpSum(:) + pIsmp{n}.';
+end
+pIsmpSum = pIsmpSum(:);
 
-recElementInt = bp_rec.ElementIntervals;
-tic
-recArrayInt = sum(recElementInt);
-recTime = toc;
+% Sum intervals
+paIsum = sum(paI);
+paIcSum = sum(paIc);
 
-gonElementInt = bp_gon.ElementIntervals;
-tic
-gonArrayInt = sum(gonElementInt);
-gonTime = toc;
+% Check if points are inside the sum
+smpInside = paIsum.isin(pIsmpSum);
 
-arcElementInt = bp_arc.ElementIntervals;
-tic
-arcArrayInt = sum(arcElementInt);
-arcTime = toc;
-
-
-%% Plot
-
+%% 
 % figure;clf
-cla;hold on; axis equal
-
-recElementInt.plot('g-');
-recArrayInt.plot('g-','linewidth',2);
-
-gonElementInt.plot('r-');
-gonArrayInt.plot('r-','linewidth',2);
-
-arcElementInt.plot('b-');
-arcArrayInt.plot('b-','linewidth',2);
-
-%%
-recArea = bp_rec.ArrayInterval.Area;
-gonArea = bp_gon.ArrayInterval.Area;
-arcArea = bp_arc.ArrayInterval.Area;
-
-sprintf(['Rectangular area: %0.4f (tightness: %0.1f%%), Time: %0.1fms\n'...
-         'Polygonal area: %0.4f (tightness: %0.1f%%), Time: %0.1fms\n'...
-         'Polyarcular area: %0.4f (tightness: %0.1f%%), Time: %0.1fms'], ...
-         recArea, arcArea / recArea * 100, recTime*1e3,...
-         gonArea, arcArea / gonArea * 100, gonTime*1e3,...
-         arcArea, arcArea / arcArea * 100, arcTime*1e3)
+cla;hold on;axis equal
+paI.plot('b')
+paI.plotGaussMap(0.05,'c');
+paIsum.plot('k','linewidth',2)
+paIsum.plotGaussMap(0.05,'k');
+paIcSum.plot('y','linewidth',2)
+paIcSum.plotGaussMap(0.05,'k');
+scatter(real([pIsmp{:}]),imag([pIsmp{:}]),10,'co')
+scatter(real(pIsmpSum),imag(pIsmpSum),1,'k.')
 
 

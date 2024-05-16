@@ -55,7 +55,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         % double type input this results in degenerate intervals.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.PolarInterval(center,radius)
+        %   ciat.PolarInterval(absMin,absMax,angleMin,angleMax)
         %   ciat.PolarInterval(obj)
         %   ciat.PolarInterval
         % _________________________________________________________________________
@@ -419,6 +419,24 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         function r = isnan(obj)
             r = isnan(obj.Area);
         end 
+
+        % Inside
+        function r = isin(obj,x)
+            % Check if the point is in between the circles
+            inCircle = obj.Abs.isin( abs(x - obj.Center) );
+
+            % Check if the point is in the sector
+            inSector = abs(wrapToPi( angle(x - obj.Center) - ...
+                                     obj.Angle.Infimum ) ) ...
+                                    <= obj.Angle.Width;
+
+            % Check if the point is in the rectangle around the circle
+            arcBox = ciat.RectangularInterval(obj);
+            inBox = arcBox.isin(x);
+
+            % Combine conditions
+            r = inCircle & inSector & inBox;
+        end
         
         % Plot
         function h = plot(obj, varargin)

@@ -38,14 +38,6 @@ function r = plus(obj1,obj2)
     M = max([M1,M2]);
     N = max([N1,N2]);
     
-    % % Turn scalars to degenerate intervals
-    % if isa(obj1, 'double')
-    %     obj1 = ciat.PolyarcularInterval(obj1);
-    % end
-    % if isa(obj2, 'double')
-    %     obj2 = ciat.PolyarcularInterval(obj2);
-    % end 
-
     % If the first object is a double make that the second
     if isa(obj1, 'double')
         objTemp = obj1;
@@ -69,7 +61,11 @@ function r = plus(obj1,obj2)
                 r.ArcStorage{M,N}.Center = r.ArcStorage{M,N}.Center + ...
                                             obj2(m2,n2);
             else
-                r(M,N) = addConcaveArcs( obj1(m1,n1) , obj2(m2,n2) );
+                if obj1(m1,n1).isconvex && obj2(m2,n2).isconvex
+                    r(M,N) = addConvex( obj1(m1,n1) , obj2(m2,n2) );
+                else
+                    r(M,N) = addConcave( obj1(m1,n1) , obj2(m2,n2) );
+                end
             end
         end
     end
@@ -77,7 +73,7 @@ end
 
 %% Function for adding two concave polyarcs
 
-function r = addConcaveArcs(obj1,obj2)
+function r = addConcave(obj1,obj2)
     
     % Extract curve segments by type
     %   - extract arcs including vertices
@@ -118,45 +114,72 @@ end
 %% Function for adding two convex polyarcs
 
 function r = addConvex(obj1,obj2)
+
+    % Extract arcs including vertices
+    arc1 = [obj1.Arcs{:} ; obj1.Vertices{:}];
+    arc2 = [obj2.Arcs{:} ; obj2.Vertices{:}];
+
+    % Split arcs with angle interval including pi
+    arc1 = splitArc(arc1);
+    arc2 = splitArc(arc2);
+
+    % Sort arcs by angle
+    [~,idx] = sort(arc1.ArcAngle.Infimum);
+    arc1 = arc1(idx);
+    [~,idx] = sort(arc2.ArcAngle.Infimum);
+    arc2 = arc2(idx);
+
+    % Taken from the polygonal plus function
+    ang1 = arc1.ArcAngle.Supremum;
+    ang2 = arc2.ArcAngle.Supremum;
+    N1 = length(arc1);
+    N2 = length(arc2);
+    N3 = N1 + N2;
+    arc3(N3,1) = ciat.Arc;
+    n1 = 1;
+    n2 = 1;
+    n3 = 0;
+    eps10 = eps*10;
+    while (n1 <= N1) && (n2 <= N2) % continue finding more points
+        n3 = n3 + 1;
+        arc3(n3) = arc1(n1) + arc2(n2); % add what we found
+
+        if  ang1(n1) < ang2(n2) + eps10 
+            n1 = n1 + 1;
+        elseif ang1(n1) > ang2(n2) + eps10
+            n2 = n2 + 1;
+        else
+            n1 = n1 + 1;
+            n2 = n2 + 1;
+        end            
+    end
+
+    % Generate polyarc
+    r = ciat.PolyarcularInterval(arc3(1:n3));
     
-    % Create ordered lists of segments (arcs and vertices)
-    seg1 = orderSegments(obj1);
-    seg2 = orderSegments(obj2);aIsum.plot('k-','linewidth',2)
-
-    % Create match matrix
-    N = length(seg1);
-    M = length(seg2);
-    segMatch = zeros(N,M);
-    segMatchIntv(N,M) = ciat.RealInterval;
-    for n = 1:N
-        for m = 1:M
-            segCap = intersection([seg1(n).GaussMap,seg2(m).GaussMap]);
-            segMatch(n,m) = ~isempty(segCap);
-            if segMatch(n,m)
-                segMatchIntv(n,m) = segCap;
-            end
-        end
-    end
-    seg1.GaussMap;
-
-    % Generate result arcs
-    arcs = [];
-    currGauss = -pi;
-    for n=1:N
-        while sum(segMatch(n,:))
-            infGauss = [segMatchIntv(n,:).Infimum];
-            m = find(infGauss==currGauss);
-            arcs = [arcs; ciat.Arc(seg1(n).Center + seg2(m).Center,...
-                                   seg1(n).Radius + seg2(m).Radius,...
-                                   segMatchIntv(n,m)) ];
-            currGauss = segMatchIntv(n,m).Supremum;
-            segMatch(n,m) = 0;
-        end
-    end
-
-
-    r = ciat.PolyarcularInterval(arcs);
-
-
 end
 
+
+%% Function for splitting arcs with angle interval crossing pi
+
+function arcOut = splitArc(arcIn)
+    % Find arcIn with angle interval including -pi or pi
+    mask = arcIn.ArcAngle.isin(-pi) | arcIn.ArcAngle.isin(pi);
+
+    % Create new arcIn with angle from pi to the supremum 
+    newArc = arcIn(mask);
+    newArc.ArcAngle = ciat.RealInterval(-pi * ones(length(newArc),1),...
+                                    wrapToPi(newArc.ArcAngle.Supremum));
+    
+    % Modify the original arcIn to have angle from the infimum to pi
+    arcIn(mask).ArcAngle = ciat.RealInterval(...
+                                wrapToPi(arcIn(mask).ArcAngle.Infimum),...
+                                pi * ones(sum(mask),1) );
+    
+    % Wrap the angles of all the other arcs
+    arcIn(~mask).ArcAngle.Infimum = wrapToPi(arcIn(~mask).ArcAngle.Infimum);
+    arcIn(~mask).ArcAngle.Supremum = wrapToPi(arcIn(~mask).ArcAngle.Supremum);
+
+    % Add new arcIn to the array
+    arcOut = [arcIn ; newArc];
+end

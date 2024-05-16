@@ -6,7 +6,11 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         % Split arcs
     arcOut = [];
     for k = 1:length(arcIn)
-        capBox = cap([arcBox(setdiff(1:end,k));edgeBox],arcBox(k));
+        if length(arcIn)>1
+            capBox = cap([arcBox(setdiff(1:end,k));edgeBox],arcBox(k));
+        else
+            capBox = cap(edgeBox,arcBox(k));
+        end
         boxMask = ~isnan(capBox) & capBox.Area>0;
         if any(boxMask,'all')
             boxIdx = find(boxMask);
@@ -51,7 +55,11 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
     % Split edges
     edgeOut = [];
     for k = 1:length(edgeIn)
-        capBox = cap([arcBox;edgeBox(setdiff(1:end,k))],edgeBox(k));
+        if length(edgeIn)>1
+            capBox = cap([arcBox;edgeBox(setdiff(1:end,k))],edgeBox(k));
+        else
+            capBox = cap(arcBox,edgeBox(k));
+        end
         boxMask = ~isnan(capBox) & capBox.Area>0;
         if any(boxMask,'all')
             boxIdx = find(boxMask);
