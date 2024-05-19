@@ -18,23 +18,23 @@ function r = sum(obj,varargin)
 % _________________________________________________________________________
 
     [M,N] = size(obj);
+    allConvex = all(obj.isconvex,'all');
     if ( M == 1 && N == 1)
         r = obj;
-    elseif ( M == 1 || N == 1 )
-        r = 0;
-        for n = 1:max(M,N)
-            r = r + obj(n);
-        end
+    elseif M == 1
+        r = sum2(obj,allConvex);
+    elseif N == 1
+        r = sum1(obj,allConvex);
     else
         if size(varargin) == 0
-            r = sum1(obj);
+            r = sum1(obj,allConvex);
         else
             if varargin{1} == 1
-                r = sum1(obj);
+                r = sum1(obj,allConvex);
             elseif varargin{1} == 2
-                r = sum2(obj);
+                r = sum2(obj,allConvex);
             elseif strcmp(varargin{1},'all')
-                r = sumAll(obj);
+                r = sumAll(obj,allConvex);
             else
                 error('Parameter two is invalid.')
             end
@@ -43,34 +43,46 @@ function r = sum(obj,varargin)
 end
 
 %% Function for summing along dimension 1
-function r = sum1(obj)
+function r = sum1(obj,allConvex)
     [M,N] = size(obj);
     r = obj(1,:);
     for n = 1:N
         for m = 2:M
-            r(n) = r(n) + obj(m, n);
+            % r(n) = r(n) + obj(m, n);
+            r(n) = addPolyarc(r(n),obj(m, n),allConvex);
         end
     end
 end
 
 %% Function for summing along dimension 2
-function r = sum2(obj)
+function r = sum2(obj,allConvex)
     [M,N] = size(obj);
     r = obj(:,1);
     for m = 1:M
         for n = 2:N
-            r(m) = r(m) + obj(m, n);
+            % r(m) = r(m) + obj(m, n);
+            r(m) = addPolyarc(r(m),obj(m, n),allConvex);
         end
     end
 end
 
 %% Function for summing along all dimension
-function r = sumAll(obj)
+function r = sumAll(obj,allConvex)
     [M,N] = size(obj);
     r = 0;
     for m = 1:M
         for n = 1:N
-            r = r + obj(m, n);
+            % r = r + obj(m, n);
+            r = addPolyarc(r,obj(m, n),allConvex);
         end
+    end
+end
+
+%% Function for adding two polyarcs
+function r = addPolyarc(a,b,allConvex)
+    if allConvex
+        r = ciat.PolyarcularInterval.plusConvex(a,b);
+    else
+        r = ciat.PolyarcularInterval.plusConcave(a,b);
     end
 end

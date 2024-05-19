@@ -14,6 +14,8 @@ paI = ciat.PolyarcularInterval(pI);
 paIc = paI.convexify;
 pIsmp = pI.sample(10);
 
+%% Sum polar intervals
+
 % Sum samples
 pIsmpSum = 0;
 for n = 1:N

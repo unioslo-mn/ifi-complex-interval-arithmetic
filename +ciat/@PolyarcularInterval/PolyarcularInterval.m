@@ -70,11 +70,13 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         % Get points (retrieve from hidden property ArcStorage)
         function value = get.Arcs(obj)
             [M,N] = size(obj);
-            value = cell(M,N);
+            % value = cell(M,N);
+            value = obj.ArcStorage;
             for m = 1:M
                 for n = 1:N
-                    arcs = obj.ArcStorage{m,n};
-                    value{m,n} = arcs(arcs.Length ~= 0);
+                    % arcs = obj.ArcStorage{m,n};
+                    % value{m,n} = arcs(arcs.Length ~= 0);
+                    value{m,n} = value{m,n}(value{m,n}.Length~=0);
                 end
             end
         end
@@ -104,8 +106,6 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             edges = obj.Edges;
             for m = 1:M
                 for n = 1:N
-                    % value{m,n} = ciat.PolyarcularInterval.getVertices(...
-                    %                             arcs{m,n},edges{m,n});
                     [value{m,n},~] = obj(m,n).getVertices;
                 end
             end
@@ -368,13 +368,14 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
      methods (Static)
         % Function headers
         arcOut = setArcs(arcIn)
-        % [vertices,convexity] = getVertices(arcs,edges)
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
         [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         [arcOut,edgeOut] = trimSegments(arcIn,edgeIn)
         seg = orderSegments(obj)
+        r = plusConvex(obj1,obj2)
+        r = plusConcave(obj1,obj2)
      end
 
 

@@ -1,0 +1,1 @@
+arcxArrayInt = sum(arcxElementInt);
