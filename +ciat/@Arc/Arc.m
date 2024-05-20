@@ -3,14 +3,15 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 	properties
         Center          % Arc center as a complex number
         Radius          % Arc radius as a real number (negative means concave arc, zero means vertex)
+        ArcAngle		% Arc angle as a real interval (always counter-clockwise)
     end	
 
-    properties (Access = private)
-       ArcAngleStore        % Storage property for the arc angle
-    end
+    % properties (Access = private)
+       % ArcAngleStore        % Storage property for the arc angle
+    % end
 
 	properties (Dependent)
-    	ArcAngle		% Arc angle as a real interval (always counter-clockwise)
+    	% ArcAngle		% Arc angle as a real interval (always counter-clockwise)
 		Startpoint		% First point of the arc as complex numbers
         Midpoint        % Midpoint of the arc as complex numbers
         Endpoint		% Last point of the arc as complex numbers
@@ -44,42 +45,41 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     obj.Center = center;
                     obj.Radius = radius;
                     if isa(angles,'double')
-                        obj.ArcAngle = ciat.RealInterval(angles);
-                    else
-                        obj.ArcAngle = angles;
+                        angles = ciat.RealInterval(angles);
                     end
+                    obj.ArcAngle = ciat.Arc.wrapArcAngle(angles);
                 otherwise
                     error('incorrect number of input')
             end
         end
 
-        %% Defining properties
-                   
-        % Set angles (store in the hidden property ArcAngleStore)
-        % wrap angles and split at pi, 
-        % return vector of arcs no matter the input format
-        function obj = set.ArcAngle(obj,angleArray)
-
-            [M,N] = size(obj);
-            [Ma,Na] = size(angleArray);
-            assert(M==Ma && N==Na)
-
-            % Initialize ArcAngle property if necessary
-            if isempty(obj.ArcAngle)
-                obj.ArcAngleStore = repmat(ciat.RealInterval(0),M,N);
-            end
-
-            for m = 1:M
-            for n = 1:N
-                obj.ArcAngleStore(m,n) = ciat.Arc.wrapArcAngle(angleArray(m,n));
-            end
-            end
-        end
-
-        % Get points (retrieve ArcAngle from hidden property ArcAngleStore)
-        function value = get.ArcAngle(obj)
-            value = obj.ArcAngleStore; 
-        end
+        % %% Defining properties
+        % 
+        % % Set angles (store in the hidden property ArcAngleStore)
+        % % wrap angles and split at pi, 
+        % % return vector of arcs no matter the input format
+        % function obj = set.ArcAngle(obj,angleArray)
+        % 
+        %     [M,N] = size(obj);
+        %     [Ma,Na] = size(angleArray);
+        %     assert(M==Ma && N==Na)
+        % 
+        %     % Initialize ArcAngle property if necessary
+        %     if isempty(obj.ArcAngle)
+        %         obj.ArcAngleStore = repmat(ciat.RealInterval(0),M,N);
+        %     end
+        % 
+        %     for m = 1:M
+        %     for n = 1:N
+        %         obj.ArcAngleStore(m,n) = ciat.Arc.wrapArcAngle(angleArray(m,n));
+        %     end
+        %     end
+        % end
+        % 
+        % % Get points (retrieve ArcAngle from hidden property ArcAngleStore)
+        % function value = get.ArcAngle(obj)
+        %     value = obj.ArcAngleStore; 
+        % end
 
 		%% Dependent properties
         
@@ -114,9 +114,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Gauss map angle interval
         function value = get.GaussMap(obj)
-
-            value = obj.ArcAngleStore;
-
+            % value = obj.ArcAngleStore;
+            value = obj.ArcAngle;
         end
 
         % Log-Gauss map angle interval
@@ -501,7 +500,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             % disp('parenReference')
             obj.Center = obj.Center.(indexOp(1));
             obj.Radius = obj.Radius.(indexOp(1));
-            obj.ArcAngleStore = obj.ArcAngleStore.(indexOp(1));
+            obj.ArcAngle = obj.ArcAngle.(indexOp(1));
+            % obj.ArcAngleStore = obj.ArcAngleStore.(indexOp(1));
             if isscalar(indexOp)
                 varargout{1} = obj;
                 return;
@@ -529,9 +529,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     obj = ciat.RealInterval;
                     obj.Center = nan(sz);
                     obj.Radius = nan(sz);
-                    ang(sz) = ciat.RealInterval;
-                    obj.ArcAngleStore = ang;
-                    obj.ArcAngleStore = repmat(ciat.RealInterval,sz);
+                    % ang(sz) = ciat.RealInterval;
+                    % obj.ArcAngleStore = ang;
+                    % obj.ArcAngleStore = repmat(ciat.RealInterval,sz);
+                    % obj.ArcAngle = ang;
+                    obj.ArcAngle = repmat(ciat.RealInterval,sz);
                 else
                     obj = varargin{1};
                 end
@@ -549,7 +551,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 obj.Center = nan(sz);
                 obj.Radius = nan(sz);
                 ang(sz(1),sz(2)) = ciat.RealInterval;
-                obj.ArcAngleStore = ang;
+                % obj.ArcAngleStore = ang;
+                obj.ArcAngle = ang;
                 return;
             end
             if numel(indexOp) == 1
@@ -562,7 +565,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     end
                     obj.Center.(indexOp(1)) = rhs.Center;
                     obj.Radius.(indexOp(1)) = rhs.Radius;
-                    obj.ArcAngleStore.(indexOp(1)) = rhs.ArcAngleStore;
+                    % obj.ArcAngleStore.(indexOp(1)) = rhs.ArcAngleStore;
+                    obj.ArcAngle.(indexOp(1)) = rhs.ArcAngle;
                     return;
                 end
             end
@@ -598,7 +602,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 if isa(varargin{ix},'ciat.Arc')
                     newArgs{ix} = varargin{ix}.Center;
                     newArgs2{ix} = varargin{ix}.Radius;
-                    newArgs3{ix} = varargin{ix}.ArcAngleStore;
+                    % newArgs3{ix} = varargin{ix}.ArcAngleStore;
+                    newArgs3{ix} = varargin{ix}.ArcAngle;
                 else
                     newArgs{ix} = varargin{ix};
                 end
@@ -625,7 +630,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function obj = reshape(obj,varargin)
             obj.Center = reshape(obj.Center,varargin{:});
             obj.Radius = reshape(obj.Radius,varargin{:});
-            obj.ArcAngleStore = reshape(obj.ArcAngleStore,varargin{:});
+            % obj.ArcAngleStore = reshape(obj.ArcAngleStore,varargin{:});
+            obj.ArcAngle = reshape(obj.ArcAngle,varargin{:});
         end
     end
 end

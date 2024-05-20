@@ -1,5 +1,4 @@
 classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
-
 	properties (Dependent)
         Arcs;           % Defining arcs of the polygonal interval boundary
         Edges;          % Implicit edges
@@ -17,9 +16,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
 	methods
 		%% Constructor
-        function obj = PolyarcularInterval(inObj)
+        function obj = PolyarcularInterval(inObj,optional)
             arguments
                 inObj                (:,:)   = []
+                optional.convex      (1,1)   {mustBeNumericOrLogical} = false
             end    
 
             switch class(inObj)
@@ -35,15 +35,13 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % single interval no matter how many dimensions
                     obj(1) = ciat.PolyarcularInterval;
                     obj.Arcs = {inObj(:)};
+                    
                 case 'cell'
                     % This is how multiple polyarcs can be defined using
                     % cells of ciat.Arc arrays
                     [M,N] = size(inObj);
                     obj(M,N) = ciat.PolyarcularInterval;
                     obj.Arcs = inObj;
-                    % for n = 1:M*N
-                    %     obj(n).Arcs = inObj{n};
-                    % end
                 otherwise
                     % Input object will be casted
                     [M,N] = size(inObj);
@@ -52,6 +50,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                         obj(n) = ciat.PolyarcularInterval.cast(inObj(n));
                     end
             end % switch
+            if optional.convex
+                obj = obj.convexify;
+            end
         end % function
         
         %% Defining properties
@@ -254,7 +255,6 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     arcs = inObj.ArcStorage{m,n};
-                    % edges = inObj.Edges{m,n};
 
                     % Create convex hull
                     vertexPoly = [arcs.Startpoint , arcs.Endpoint].';
@@ -266,6 +266,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     arcs = arcs(arcs.Length > 10*eps);
                     edges = edges(edges.Length > 10*eps);
                     arcs = ciat.PolyarcularInterval.trimSegments(arcs,edges);
+
+                    % Generate output object
                     outObj(m,n) = ciat.PolyarcularInterval(arcs);
                 end
             end
@@ -361,6 +363,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         r = sum(obj,varargin)
         r = isin(obj,x)
         [vertices,convexity] = getVertices(obj)
+        r = quickSum(obj)
 
     end % methods
 
