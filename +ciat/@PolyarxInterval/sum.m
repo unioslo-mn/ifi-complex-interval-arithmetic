@@ -1,45 +1,33 @@
-function r = quickSum(obj)
+function r = sum(obj)
     
     % This function assumes that the input is a vertical array of convex 
     % polyarcular intervals, other input results unexpected behaviour
 
-    % Prepare arcs
-    N = length(obj);
-    arcs = cell(N,1);
-    for n = 1:N
-        arcs{n} = [obj(n).Arcs{:} ; obj(n).Vertices{:}];
-        [~,idx] = sort(arcs{n}.ArcAngle.Infimum);
-        arcs{n} = arcs{n}(idx);
-        if arcs{n}(1).ArcAngle.Infimum ~= -pi
-            arcs{n} = [arcs{n}(end) ; arcs{n}];
-            arcs{n}(1).ArcAngle.Infimum = -pi;
-            arcs{n}(1).ArcAngle.Supremum = arcs{n}(1).ArcAngle.Supremum - 2*pi;
-            arcs{n}(end).ArcAngle.Supremum= pi;
-        end
-    end
-    
+    arx = obj.Arx;
+    N = length(arx);
+
     % Sum arcs
-    arcsSum = arcs{1};
+    arxSum = arx{1};
     for n = 2:N
-        arcsSum = quickPlus(arcsSum,arcs{n});
+        arxSum = quickPlus(arxSum,arx{n});
     end
     
     % Generate output interval
-    r = ciat.PolyarcularInterval(arcsSum);
+    r = ciat.PolyarxInterval(arxSum);
 
 end
 
 %% Function for quick convex addition
 
-function r = quickPlus(arc1,arc2)
+function r = quickPlus(arx1,arx2)
 
     % Extract parameters
-    cen1 = arc1.Center;
-    rad1 = arc1.Radius;
-    ang1 = arc1.ArcAngle.Supremum;
-    cen2 = arc2.Center;
-    rad2 = arc2.Radius;
-    ang2 = arc2.ArcAngle.Supremum;
+    cen1 = complex(arx1(:,1),arx1(:,2));
+    rad1 = arx1(:,3);
+    ang1 = arx1(:,4);
+    cen2 = complex(arx2(:,1),arx2(:,2));
+    rad2 = arx2(:,3);
+    ang2 = arx2(:,4);
     
     % Taken from the polygonal plus function
     N1 = size(ang1,1);
@@ -73,12 +61,7 @@ function r = quickPlus(arc1,arc2)
     cen3 = cen3(1:n3,:);
     rad3 = rad3(1:n3,:);
     ang3 = ang3(1:n3,:);
-    
-    
-    % Calculate angle infimum and supremum values
-    angInf = [-pi ; ang3(1:end-1)];
-    angSup = ang3;
-    
+       
     % Generate polyarc
-    r = ciat.Arc(cen3,rad3, ciat.RealInterval(angInf,angSup));
+    r = [real(cen3),imag(cen3),rad3,ang3];
 end

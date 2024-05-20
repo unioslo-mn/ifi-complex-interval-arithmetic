@@ -20,12 +20,6 @@ function r = sum(obj,varargin)
     [M,N] = size(obj);
     allConvex = all(obj.isconvex,'all');
 
-    % Check for special case
-    if allConvex && M == 1
-        r = obj.quickSum;
-        return
-    end
-
     if ( M == 1 && N == 1)
         r = obj;
     elseif M == 1
