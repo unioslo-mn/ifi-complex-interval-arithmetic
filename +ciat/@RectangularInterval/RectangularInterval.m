@@ -229,19 +229,26 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            alt = zeros(1,4);
-            alt(1) = obj.Real.Infimum  + 1j*obj.Imag.Infimum;
-            alt(2) = obj.Real.Infimum  + 1j*obj.Imag.Supremum;
-            alt(3) = obj.Real.Supremum + 1j*obj.Imag.Infimum;
-            alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
-            value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
-            
-            value.Infimum(obj.Real.Infimum <= 0 & ...
-                          obj.Imag.Infimum <= 0 & ...
-                          obj.Imag.Supremum >= 0) = 0;
-            value.Supremum(obj.Real.Infimum <= 0 & ...
-                           obj.Imag.Infimum <= 0 & ...
-                           obj.Imag.Supremum >= 0) = 2*pi;
+            [M,N] = size(obj);
+            minAng = zeros(M,N);
+            maxAng = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    edges = obj.Edges{m,n};
+                    if obj(m,n).isin(0)
+                        minAng(m,n) = -pi;
+                        maxAng(m,n) = pi;
+                    elseif obj(m,n).Imag.isin(0) && ...
+                           obj(m,n).Real.Supremum < 0
+                        minAng(m,n) = min(wrapToPi(inf(angle(edges)+pi)))+pi;
+                        maxAng(m,n) = max(wrapToPi(sup(angle(edges)+pi)))+pi;
+                    else
+                        minAng(m,n) = min(inf(angle(edges)));
+                        maxAng(m,n) = max(sup(angle(edges)));
+                    end
+                end
+            end
+            value = ciat.RealInterval( minAng,maxAng );
         end
         function value = angle(obj)
         % Angle of rectangular intervals

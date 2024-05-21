@@ -243,11 +243,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             % pntSup = max(angle(obj.Startpoint),angle(obj.Endpoint));
             angStart = angle(obj.Startpoint);
             angEnd = angle(obj.Endpoint);
-            pntInf = (angStart * ~isConcave + angEnd * isConcave) * originIn + ...
-                     min(angle(obj.Startpoint),angle(obj.Endpoint)) * ~originIn;
-            pntSup = (angStart * isConcave + angEnd * ~isConcave) * originIn + ...
-                     max(angle(obj.Startpoint),angle(obj.Endpoint)) * ~originIn;
-            pntSup = pntSup + originIn*(pntSup < pntInf)*2*pi;
+            pntInf = (angStart .* ~isConcave + angEnd .* isConcave) .* originIn + ...
+                     min(angle(obj.Startpoint),angle(obj.Endpoint)) .* ~originIn;
+            pntSup = (angStart .* isConcave + angEnd .* ~isConcave) .* originIn + ...
+                     max(angle(obj.Startpoint),angle(obj.Endpoint)) .* ~originIn;
+            pntSup = pntSup + originIn .* (pntSup < pntInf)*2*pi;
 
             % Calculate angle bounds of the envelope
             if obj.Radius <= abs(obj.Center)

@@ -149,14 +149,13 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval(min(angle(obj.Startpoint), ...
-                                      min(angle(obj.Endpoint))),...
-                                      max(angle(obj.Startpoint), ...
-                                      max(angle(obj.Endpoint))));
+            value = ciat.RealInterval(min([angle(obj.Startpoint), ...
+                                             angle(obj.Endpoint)],[],2),...
+                                        max([angle(obj.Startpoint), ...
+                                             angle(obj.Endpoint)],[],2));
         end
         function value = angle(obj)
-            [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
 
         %% Other methods

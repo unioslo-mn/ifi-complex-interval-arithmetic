@@ -280,16 +280,25 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % Angle
         function value = get.Angle(obj)
             [M,N] = size(obj);
-            minImag = zeros(M,N);
-            maxImag = zeros(M,N);
+            minAng = zeros(M,N);
+            maxAng = zeros(M,N);
             for m = 1:M
                 for n = 1:N
                     arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
-                    minImag(m,n) = min(inf(angle(arcs)));
-                    maxImag(m,n) = max(sup(angle(arcs)));
+                    if obj(m,n).isin(0)
+                        minAng(m,n) = -pi;
+                        maxAng(m,n) = pi;
+                    elseif obj(m,n).Imag.isin(0) && ...
+                           obj(m,n).Real.Supremum < 0
+                        minAng(m,n) = min(wrapToPi(inf(angle(arcs)+pi)))+pi;
+                        maxAng(m,n) = max(wrapToPi(sup(angle(arcs)+pi)))+pi;
+                    else
+                        minAng(m,n) = min(inf(angle(arcs)));
+                        maxAng(m,n) = max(sup(angle(arcs)));
+                    end
                 end
             end
-            value = ciat.RealInterval( minImag,maxImag );
+            value = ciat.RealInterval( minAng,maxAng );
         end
         function value = angle(obj)
             value = obj.Angle;
