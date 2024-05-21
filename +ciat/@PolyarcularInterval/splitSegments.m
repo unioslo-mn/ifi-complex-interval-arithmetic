@@ -35,6 +35,8 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 arcAngSup = arcIn(k).ArcAngle.Supremum;
                 splitAngle = angle(splitPoint-arcCenter) + pi*(arcRadius<0);
                 splitAngle = wrapTo2Pi(splitAngle)-2*pi;
+                splitAngle = splitAngle( abs(splitAngle-arcAngInf)>10*eps & ...
+                                         abs(splitAngle-arcAngSup)>10*eps);
                 splitAngle = splitAngle + 2*pi*(splitAngle<arcAngInf);
                 splitAngle = sort(splitAngle);
                 splitAngle = [arcAngInf ; splitAngle ; arcAngSup ];

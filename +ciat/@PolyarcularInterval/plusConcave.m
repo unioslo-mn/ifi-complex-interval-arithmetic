@@ -28,7 +28,7 @@ function r = plusConcave(obj1,obj2)
     edge3 = edge3(abs(edge3.Length)>10*eps);
     
     % Trim segments
-    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3);
+    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,1);
     
     % Generate polyarc
     r = ciat.PolyarcularInterval(arc3);

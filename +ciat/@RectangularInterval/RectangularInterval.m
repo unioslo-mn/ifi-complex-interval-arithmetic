@@ -26,6 +26,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
     end
     
      properties (Dependent)
+        Points; % Corner points of the rectangle in complex values
+        Edges;  % Edges of the rectangle in ciat.Edge type
         Abs;    % Projection of the rectangular interval to the absolute value axis
         Angle;  % Projection of the rectangular interval to the angle axis
         Area;   % Area of the rectangular interval
@@ -173,11 +175,37 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         %% Dependent properties
         
+        % Points
+        function value = get.Points(obj)
+            [M,N] = size(obj);
+            value = zeros(M,N,4);
+            value(:,:,1) = complex([obj.Real.Infimum] , [obj.Imag.Infimum]);
+            value(:,:,2) = complex([obj.Real.Infimum] , [obj.Imag.Supremum]);
+            value(:,:,3) = complex([obj.Real.Supremum] , [obj.Imag.Supremum]);
+            value(:,:,4) = complex([obj.Real.Supremum] , [obj.Imag.Infimum]);
+            value = num2cell(value,3);
+            value = cellfun(@(x) x(:),value,'UniformOutput',false);
+        end
+
+        % % Edges
+        function value = get.Edges(obj)
+            value = cellfun(@(x) ciat.Edge(x,circshift(x,-1)),...
+                            obj.Points,'UniformOutput',false);
+        end
+
         % Abs
         function value = get.Abs(obj)
-            value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
-                          abs(obj.Imag) * abs(obj.Imag) );
-            value.Infimum(obj.ininterval(0)) = 0;
+            value = cellfun(@(x) ciat.RealInterval(min(x.Abs.Infimum), ...
+                                                   max(x.Abs.Supremum)), ...
+                            obj.Edges,'UniformOutput',false);
+            [M,N] = size(obj);
+            value = reshape([value{:}],M,N); 
+
+            % Check for intervals that contain the zero
+            pointIn = obj.isin(0);
+            if any(pointIn,'all')
+                value(pointIn).Infimum = 0;
+            end
         end
         function value = abs(obj)
         % Absolute value of rectangular intervals

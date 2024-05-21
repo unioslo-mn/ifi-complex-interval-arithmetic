@@ -1,4 +1,4 @@
-function arcOut = trimSegments(arcIn,edgeIn)
+function arcOut = trimSegments(arcIn,edgeIn,recurCount)
 
 mustBeA(arcIn,'ciat.Arc')
 mustBeA(edgeIn,'ciat.Edge')
@@ -23,6 +23,7 @@ startIdx = idx;
 % Follow the boundary
 k = 1;
 edgeFlag = false;
+prevIdx = [];
 while k==1 || (k<=K && idx~=startIdx)
 
     % Select segment of the given index and store defining arc if available
@@ -39,17 +40,30 @@ while k==1 || (k<=K && idx~=startIdx)
     end
 
     % Find next segment
-    prevIdx = idx;
+    prevIdx = [prevIdx;idx];
     idx = find( abs(seg.Endpoint - startPoints) < 10*eps );
     if isempty(idx)
-        error('Boundary incontinuity')
+        if recurCount < 5
+            % Remove element and try trimming again (recursive hell)
+            if prevIdx(end) <= length(arcIn)
+                arcIn = arcIn((setdiff(1:end,prevIdx(end))));
+            else
+                edgeIn = edgeIn((setdiff(1:end,prevIdx(end)-length(arcIn))));
+            end
+            warning('Boundary incontinuity, removing last segment and trying again')
+            arcOut = ciat.PolyarcularInterval.trimSegments(arcIn,edgeIn,...
+                                                           recurCount+1);
+            return
+        else
+            error('Boundary incontinuity after 5 attempts, exiting')
+        end
     end
     if length(idx) > 1
         if any(idx == startIdx)
             idx = startIdx;
         else
             % Select the segment with the smaller initial Gauss angle
-            diffGauss = wrapToPi(startGauss(idx)-endGauss(prevIdx));
+            diffGauss = wrapToPi(startGauss(idx)-endGauss(prevIdx(end)));
             idx = idx(diffGauss == min(diffGauss));
         end
         if length(idx) > 1
@@ -58,7 +72,6 @@ while k==1 || (k<=K && idx~=startIdx)
             minIdx = find(diffGauss == min(diffGauss),1);
             idx = idx(minIdx);
         end
-        % [~,minIdx] = min(wrapToPi(startGauss(idx)-endGauss(prevIdx)));
     end
 
     % Increment counter

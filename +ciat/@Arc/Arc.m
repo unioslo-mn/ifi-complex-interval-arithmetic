@@ -209,20 +209,23 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                        obj.ArcAngle.isin(angOffset+(isConcave+1)*pi);
             crossSup = obj.ArcAngle.isin(angOffset+(isConcave-2)*pi) | ...
                        obj.ArcAngle.isin(angOffset+(isConcave+0)*pi);
+            originIn = abs(obj.Radius) > abs(obj.Center);
             
             % Calculate real bounds of the endpoints
             pntInf = min(abs(obj.Startpoint),abs(obj.Endpoint));
             pntSup = max(abs(obj.Startpoint),abs(obj.Endpoint));
 
             % Calculate abs bounds of the envelope
-            envInf = abs(obj.Center) - abs(obj.Radius);
-            envSup = abs(obj.Center) + abs(obj.Radius);
+            envInf = abs( abs(obj.Center) - abs(obj.Radius) );
+            envSup = abs( abs(obj.Center) + abs(obj.Radius) );
 
             % Pick the correct value according to the masks
-            absInf = (pntInf .* (~crossInf | ~isConcave) ) + ...
-                     (envInf .* (crossInf & isConcave) );
-            absSup = (pntSup .* (~crossSup | isConcave) ) + ...
-                     (envSup .* (crossSup & ~isConcave) );
+            % absInf = (pntInf .* (~crossInf | ~originIn) ) + ...
+            %          (envInf .* (crossInf & originIn) );
+            % absSup = (pntSup .* (~crossSup | ~originIn) ) + ...
+            %          (envSup .* (crossSup & originIn) );
+            absInf = (pntInf .* ~crossInf + envInf .* crossInf );
+            absSup = (pntSup .* ~crossSup + envSup .* crossSup );
 
             value = ciat.RealInterval(absInf,absSup);
         end
@@ -234,12 +237,21 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = get.Angle(obj)
 
             % Calculate real bounds of the endpoints
-            pntInf = min(angle(obj.Startpoint),angle(obj.Endpoint));
-            pntSup = max(angle(obj.Startpoint),angle(obj.Endpoint));
+            isConcave = obj.Radius < 0;
+            originIn = abs(obj.Radius) > abs(obj.Center);
+            % pntInf = min(angle(obj.Startpoint),angle(obj.Endpoint));
+            % pntSup = max(angle(obj.Startpoint),angle(obj.Endpoint));
+            angStart = angle(obj.Startpoint);
+            angEnd = angle(obj.Endpoint);
+            pntInf = (angStart * ~isConcave + angEnd * isConcave) * originIn + ...
+                     min(angle(obj.Startpoint),angle(obj.Endpoint)) * ~originIn;
+            pntSup = (angStart * isConcave + angEnd * ~isConcave) * originIn + ...
+                     max(angle(obj.Startpoint),angle(obj.Endpoint)) * ~originIn;
+            pntSup = pntSup + originIn*(pntSup < pntInf)*2*pi;
 
             % Calculate angle bounds of the envelope
             if obj.Radius <= abs(obj.Center)
-                envAngle = asin(obj.Radius ./ abs(obj.Center));
+                envAngle = asin(abs(obj.Radius ./ obj.Center));
                 envInf = angle(obj.Center) - envAngle;
                 envSup = angle(obj.Center) + envAngle;
             else
@@ -248,7 +260,6 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             end
             
             % Create boolean masks
-            isConcave = obj.Radius < 0;
             crossInf = obj.ArcAngle.isin(envInf+(isConcave-2.5)*pi) | ...
                        obj.ArcAngle.isin(envInf+(isConcave-0.5)*pi) | ...
                        obj.ArcAngle.isin(envInf+(isConcave+1.5)*pi);
@@ -256,10 +267,20 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                        obj.ArcAngle.isin(envSup+(isConcave-1.5)*pi) | ...
                        obj.ArcAngle.isin(envSup+(isConcave+0.5)*pi) | ...
                        obj.ArcAngle.isin(envSup+(isConcave+2.5)*pi);
+            
+            % angOrder = wrapToPi(obj.ArcAngle.Infimum + isConcave*pi) > ...
+            %            wrapToPi(obj.ArcAngle.Supremum + isConcave*pi);
 
             % Pick the correct value according to the masks
-            angleInf = (pntInf .* ~crossInf) + (envInf .* crossInf);
-            angleSup = (pntSup .* ~crossSup) + (envSup .* crossSup);
+            % angleInf = (pntInf .* ~crossInf) + (envInf .* crossInf);
+            % angleSup = (pntSup .* ~crossSup) + (envSup .* crossSup);
+            angleInf = (pntInf .* (~crossInf | originIn) ) + ...
+                       (envInf .* (crossInf & ~originIn) );
+            angleSup = (pntSup .* (~crossSup | originIn) ) + ...
+                       (envSup .* (crossSup & ~originIn) );
+
+            % % Correct angles for cases when the origin is inside
+            % angleInf = angleInf + originIn*angOrder*2*pi;
 
             value = ciat.RealInterval(angleInf,angleSup);
         end
