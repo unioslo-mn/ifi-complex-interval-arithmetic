@@ -84,6 +84,18 @@ function outObj = cast(inObj)
                     outRadius(m,n) = R;
                 end
             end
+        case 'ciat.PolyarxInterval' % Temporary solution
+            outCenter = zeros(M,N);
+            outRadius = zeros(M,N);
+            points = inObj.sample(10);
+            for m = 1:M
+                for n = 1:N
+                    [c,R] = minboundcircle(real(points{m,n}), ...
+                                             imag(points{m,n}));
+                    outCenter(m,n) = c(1) + 1i*c(2);
+                    outRadius(m,n) = R;
+                end
+            end
         otherwise
             error('Invalid input type')
     end

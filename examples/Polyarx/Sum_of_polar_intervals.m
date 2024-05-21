@@ -34,7 +34,7 @@ recTime = toc;
 
 % Sum polygonal intervals and measure time
 tic
-pgIsum = sum(pgI);
+pgIsum = sum(pgI); 
 gonTime = toc;
 
 % Sum polyarcular intervals and measure time

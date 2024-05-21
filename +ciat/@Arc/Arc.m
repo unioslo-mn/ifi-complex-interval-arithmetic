@@ -219,8 +219,10 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             envSup = abs(obj.Center) + abs(obj.Radius);
 
             % Pick the correct value according to the masks
-            absInf = (pntInf .* ~crossInf) + (envInf .* crossInf);
-            absSup = (pntSup .* ~crossSup) + (envSup .* crossSup);
+            absInf = (pntInf .* (~crossInf | ~isConcave) ) + ...
+                     (envInf .* (crossInf & isConcave) );
+            absSup = (pntSup .* (~crossSup | isConcave) ) + ...
+                     (envSup .* (crossSup & ~isConcave) );
 
             value = ciat.RealInterval(absInf,absSup);
         end
@@ -236,9 +238,15 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             pntSup = max(angle(obj.Startpoint),angle(obj.Endpoint));
 
             % Calculate angle bounds of the envelope
-            envInf = angle(obj.Center) - asin(abs(obj.Radius./obj.Center));
-            envSup = angle(obj.Center) + asin(abs(obj.Radius./obj.Center));
-
+            if obj.Radius <= abs(obj.Center)
+                envAngle = asin(obj.Radius ./ abs(obj.Center));
+                envInf = angle(obj.Center) - envAngle;
+                envSup = angle(obj.Center) + envAngle;
+            else
+                envInf = -pi;
+                envSup = pi;
+            end
+            
             % Create boolean masks
             isConcave = obj.Radius < 0;
             crossInf = obj.ArcAngle.isin(envInf+(isConcave-2.5)*pi) | ...

@@ -148,15 +148,20 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     arx = obj(m,n).Arx{:};
-                    arxPrev = circshift(arx,1);
-                    mask = arx(:,3)~=0;
-                    if any(mask)
-                        center = arx(mask,1) + 1j*arx(mask,2);
-                        radius = arx(mask,3);
-                        angInf = arxPrev(mask,4);
-                        angSup = arx(mask,4);
-                        value{m,n} = ciat.Arc(center,radius,...
-                                           ciat.RealInterval(angInf,angSup));
+                    if size(arx,1)>1
+                        arxPrev = circshift(arx,1,1);
+                        mask = arx(:,3)~=0;
+                        if any(mask)
+                            center = complex(arx(mask,1) , arx(mask,2));
+                            radius = arx(mask,3);
+                            angInf = arxPrev(mask,4);
+                            angSup = arx(mask,4);
+                            value{m,n} = ciat.Arc(center,radius,...
+                                       ciat.RealInterval(angInf,angSup));
+                        end
+                    else
+                        value{m,n} = ciat.Arc(complex(arx(1),arx(2)),arx(3),...
+                                            ciat.RealInterval(-pi,pi));
                     end
                 end
             end
@@ -169,7 +174,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     arx = obj(m,n).Arx{:};
-                    arxPrev = circshift(arx,1);
+                    arxPrev = circshift(arx,1,1);
                     mask = arx(:,3) == 0 & arxPrev(:,3) == 0;
                     startpoint = complex(arxPrev(mask,1),arxPrev(mask,2));
                     endpoint = complex(arx(mask,1),arx(mask,2));
@@ -185,7 +190,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     arx = obj(m,n).Arx{:};
-                    arxPrev = circshift(arx,1);
+                    arxPrev = circshift(arx,1,1);
                     mask = arx(:,3) == 0;
                     center = complex(arx(mask,1),arx(mask,2));
                     angInf = arxPrev(mask,4);
@@ -201,6 +206,93 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % Get point count
         function value = get.ArxCount(obj)
             value = cellfun(@length,obj.Arx);
+        end
+
+
+        % Real
+        function value = get.Real(obj)
+            [M,N] = size(obj);
+            minReal = zeros(M,N);
+            maxReal = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    minReal(m,n) = min(inf(real(arcs)));
+                    maxReal(m,n) = max(sup(real(arcs)));
+                end
+            end
+            value = ciat.RealInterval( minReal,maxReal );
+        end
+        function value = real(obj)
+            value = obj.Real;
+        end
+        
+        % Imag
+        function value = get.Imag(obj)
+            [M,N] = size(obj);
+            minImag = zeros(M,N);
+            maxImag = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    minImag(m,n) = min(inf(imag(arcs)));
+                    maxImag(m,n) = max(sup(imag(arcs)));
+                end
+            end
+            value = ciat.RealInterval( minImag,maxImag );
+        end
+        function value = imag(obj)
+            value = obj.Imag;
+        end
+        
+        % Abs
+        function value = get.Abs(obj)
+            [M,N] = size(obj);
+            minAbs = zeros(M,N);
+            maxAbs = zeros(M,N);
+            pointIn = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    edges = obj(m,n).Edges{:};
+                    if ~isempty(edges)
+                        minAbs(m,n) = min(min(inf(abs(arcs))),...
+                                      min(inf(abs(edges))) );   
+                    else
+                        minAbs(m,n) = min(inf(abs(arcs)));
+                    end
+                    maxAbs(m,n) = max(sup(abs(arcs)));
+                    
+                end
+            end
+            value = ciat.RealInterval( minAbs,maxAbs );
+
+            % Check for intervals that contain the zero
+            pointIn = obj.isin(0);
+            if any(pointIn,'all')
+                value(pointIn).Infimum = 0;
+            end
+        end
+        function value = abs(obj)
+            value = obj.Abs;
+        end
+        
+        % Angle
+        function value = get.Angle(obj)
+            [M,N] = size(obj);
+            minImag = zeros(M,N);
+            maxImag = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    minImag(m,n) = min(inf(angle(arcs)));
+                    maxImag(m,n) = max(sup(angle(arcs)));
+                end
+            end
+            value = ciat.RealInterval( minImag,maxImag );
+        end
+        function value = angle(obj)
+            value = obj.Angle;
         end
         
         
@@ -247,140 +339,22 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         
         %% Other functions
 
-        % In interval
-        function r = ininterval(obj,points)
-        % Check if points are in polygonal intervals
-        %
-        % This function checks if a set of points are in a set of
-        % polygonal intervals
-        % _________________________________________________________________________
-        % USAGE
-        %   r = ininterval(obj,points)
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENTS
-        %   obj       : array of objects from the ciat.PolyarxInterval class
-        %   points    : array of points to be checked
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = ciat.PolyarxInterval([0,1,1i]);
-        %   r = ininterval(polyInt,[0.5,0.5i])
-        % _________________________________________________________________________
-            r = inpolygon(real(points),imag(points),...
-                          real(obj.Arx),imag(obj.Arx));
-        end
-        
-               
-        % Subtraction (minus)
-        function r = minus(obj1,obj2)
-        % Subtraction of polygonal intervals (- operator)
-        %
-        % This function creates the polygonal interval representing the 
-        % difference of two sets of polygonal intervals (see MATLAB minus
-        % function)
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = obj1 - obj2
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.PolyarxInterval class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = ciat.PolyarxInterval([0,1,1i]) - ...
-        %             ciat.PolyarxInterval([0,-1,-1i]);
-        % _________________________________________________________________________
-             r = obj1 + (-obj2);
-        end
-        
-        % Union
-        function r = union(obj)
-        % Union of polygonal intervals
-        %
-        % This function creates the polygonal interval representing the 
-        % union of a set of polygonal intervals
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = union(obj)
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.PolyarxInterval class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = union([ciat.PolyarxInterval([0,1,1i]), ...
-        %                    ciat.PolyarxInterval([0,-1,-1i])]);
-        % _________________________________________________________________________
-            r = ciat.PolyarxInterval(cat(1,obj.Arx));
-        end
-        
-        % Intersection
-        function r = intersection(obj)
-        % Intersection of polygonal intervals
-        %
-        % This function creates the polygonal interval representing the 
-        % intersection of a set of polygonal intervals
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = intersection(obj)
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.PolyarxInterval class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = intersection([ciat.PolyarxInterval([0,1,1i]), ...
-        %                    ciat.PolyarxInterval([0,-1,-1i])]);
-        % _________________________________________________________________________
-            r = obj(1);
-            for n = 2:length(obj(:))
-                poly1 = polyshape(real(r.Arx),imag(r.Arx));
-                poly2 = polyshape(real(obj(n).Arx),imag(obj(n).Arx));
-                poly3 = intersect(poly1,poly2);
-                r.Arx = complex(poly3.Vertices(:,1),poly3.Vertices(:,2));
-            end
-        end
-        
-        % Negative (uminus)
-        function r = uminus(obj)
-        % Negative of polygonal intervals (- operator)
-        %
-        % This function creates the polygonal interval representing the 
-        % negative of a set of polygonal intervals (see MATLAB uminus
-        % function)
-        % _________________________________________________________________________
-        % USAGE        
-        %   r = -obj
-        % _________________________________________________________________________
-        % NECESSARY ARGUMENT
-        %   obj       : array of objects from the ciat.PolyarxInterval class
-        % _________________________________________________________________________
-        % OPTIONS
-        % _________________________________________________________________________
-        % EXAMPLES
-        %   polyInt = -ciat.PolyarxInterval([0,1,1i]);
-        % _________________________________________________________________________
-            r = obj;
-            for n = 1:length(r(:))
-                r(n).Arx = -r(n).Arx;
-            end
-        end 
-
-        % Inside
-        function r = isin(obj,x)
+        % Sample
+        function value = sample(obj, nPoints)
             [M,N] = size(obj);
-            r(M,N) = false;
+            value = cell(M,N);
             for m = 1:M
                 for n = 1:N
-                    if obj.ArxCount(m,n) >= 2
-                        r(m,n) = inpolygon(real(x),imag(x),...
-                                           real(obj.Arx{m,n}), ...
-                                           imag(obj.Arx{m,n})); 
-                    end
+                    % Sample arcs and edges
+                    arcs = [obj.Arcs{m,n}; obj.Vertices{m,n}]; 
+                    edges = obj.Edges{m,n};
+                    arcPoints = sample(arcs,nPoints);
+                    edgePoints = sample(edges,nPoints);
+
+                    % Interleave arc and edge samples
+                    allPoints = [arcPoints.';edgePoints.'];
+                    allPoints = allPoints(:);
+                    value{m,n} = [allPoints{:}];
                 end
             end
         end
@@ -438,6 +412,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         r = sum(obj,varargin)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
+        r = isin(obj,x)
         points = backtrack(obj,trackAngle)
                 
     end
