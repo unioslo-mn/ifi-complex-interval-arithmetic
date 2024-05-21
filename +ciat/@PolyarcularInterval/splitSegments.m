@@ -26,13 +26,14 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 splitPoint = [splitPoint ; cap(arcIn(k),seg)];
             end
             splitPoint = splitPoint(~isnan(splitPoint));
+            splitPoint = splitPoint(splitPoint ~= arcIn(k).Startpoint & ...
+                                    splitPoint ~= arcIn(k).Endpoint );
             if ~isempty(splitPoint)
                 arcCenter = arcIn(k).Center;
                 arcRadius = arcIn(k).Radius;
                 arcAngInf = arcIn(k).ArcAngle.Infimum;
                 arcAngSup = arcIn(k).ArcAngle.Supremum;
                 splitAngle = angle(splitPoint-arcCenter) + pi*(arcRadius<0);
-                % splitAngle = sort(wrapToPi(splitAngle));
                 splitAngle = wrapTo2Pi(splitAngle)-2*pi;
                 splitAngle = splitAngle + 2*pi*(splitAngle<arcAngInf);
                 splitAngle = sort(splitAngle);
@@ -67,7 +68,7 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
             for l = 1:length(boxIdx)
                 if boxIdx(l) <= length(arcIn)
                     seg = arcIn(boxIdx(l));
-                elseif boxIdx(l) > k
+                elseif boxIdx(l) - length(arcIn) > k
                     seg = edgeIn(boxIdx(l)-length(arcIn)+1);
                 else
                     seg = edgeIn(boxIdx(l)-length(arcIn));
@@ -75,6 +76,8 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 splitPoint = [splitPoint ; cap(edgeIn(k),seg)];
             end
             splitPoint = splitPoint(~isnan(splitPoint));
+            splitPoint = splitPoint(splitPoint ~= edgeIn(k).Startpoint & ...
+                                    splitPoint ~= edgeIn(k).Endpoint );
             if ~isempty(splitPoint)
                 p1 = edgeIn(k).Startpoint;
                 p2 = edgeIn(k).Endpoint;

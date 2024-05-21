@@ -153,8 +153,12 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             maxAbs = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    minAbs(m,n) = min(min(inf(abs(obj.ArcStorage{m,n}))),...
-                                      min(inf(abs(obj.Edges{m,n}))) );
+                    if ~isempty(obj.Edges{m,n})
+                        minAbs(m,n) = min(min(inf(abs(obj.ArcStorage{m,n}))),...
+                                          min(inf(abs(obj.Edges{m,n}))) );
+                    else
+                        minAbs(m,n) = min(inf(abs(obj.ArcStorage{m,n})));
+                    end
                     maxAbs(m,n) = max(sup(abs(obj.ArcStorage{m,n})));
                     
                 end

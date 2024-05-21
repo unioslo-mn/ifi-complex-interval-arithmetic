@@ -384,7 +384,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                     newArgs{ix} = varargin{ix};
                 end
             end
-            out = ciat.Edge(cat(dim,newArgs{:}), cat(dim,newArgs2{:}));
+            out = ciat.Edge(vertcat(dim,newArgs{:}), ...
+                              vertcat(dim,newArgs2{:}));
         end
 
         function varargout = size(obj,varargin)

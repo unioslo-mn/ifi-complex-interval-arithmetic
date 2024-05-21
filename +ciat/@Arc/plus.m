@@ -62,11 +62,13 @@ function r = plus(obj1,obj2)
             angles = capGaussMap(obj1.GaussMap,obj2.GaussMap);
 
             if size(angles,3) > 1
-                priMask = ~isnan(angles(:,:,1));
-                secMask = ~isnan(angles(:,:,2));
+                priAng = angles(:,:,1);
+                secAng = angles(:,:,2);
+                priMask = ~isnan(priAng);
+                secMask = ~isnan(secAng);
                 center = [ center(priMask) ; center(secMask) ];
                 radius = [ radius(priMask) ; radius(secMask) ];
-                angles = [ angles(priMask) ; angles(secMask) ];
+                angles = [ priAng(priMask) ; secAng(secMask) ];
             end
 
         case 'double'

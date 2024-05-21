@@ -14,10 +14,10 @@ endGauss = [arcIn.GaussMap.Supremum .* (arcIn.Radius > 0) + ...
               arcIn.GaussMap.Infimum .* (arcIn.Radius < 0) ; ... 
               edgeIn.GaussMap.Midpoint];
 segLength = [arcIn.Length ; edgeIn.Length];
-segMidReal = real([arcIn.Midpoint; edgeIn.Midpoint]);
+segRealInf = [inf(real(arcIn)) ; inf(real(edgeIn))];
 
 % Find starting object
-idx = find(segMidReal == min(segMidReal),1);
+idx = find(segRealInf == min(segRealInf),1);
 startIdx = idx;
 
 % Follow the boundary
