@@ -165,7 +165,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     minReal(m,n) = min(real(obj.Points{m,n}));
-                    maxReal(m,n) = min(real(obj.Points{m,n}));
+                    maxReal(m,n) = max(real(obj.Points{m,n}));
                 end
             end
 
@@ -199,7 +199,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     minImag(m,n) = min(imag(obj.Points{m,n}));
-                    maxImag(m,n) = min(imag(obj.Points{m,n}));
+                    maxImag(m,n) = max(imag(obj.Points{m,n}));
                 end
             end
 
@@ -274,19 +274,32 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             pointIn = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    minAng(m,n) = min(angle(obj.Points{m,n}));
-                    maxAng(m,n) = min(angle(obj.Points{m,n}));
-                    pointIn(m,n) = obj.PointCount >= 3 && ...
-                                  inpolygon(0,0,real(obj.Points{m,n}), ...
-                                                imag(obj.Points{m,n}));
+                    % minAng(m,n) = min(angle(obj.Points{m,n}));
+                    % maxAng(m,n) = min(angle(obj.Points{m,n}));
+                    % pointIn(m,n) = obj.PointCount >= 3 && ...
+                    %               inpolygon(0,0,real(obj.Points{m,n}), ...
+                    %                             imag(obj.Points{m,n}));
+
+                    points = obj.Points{m,n};
+                    if obj(m,n).isin(0)
+                        minAng(m,n) = -pi;
+                        maxAng(m,n) = pi;
+                    elseif obj(m,n).Imag.isin(0) && ...
+                           obj(m,n).Real.Supremum < 0
+                        minAng(m,n) = min(wrapToPi(angle(points)+pi))+pi;
+                        maxAng(m,n) = max(wrapToPi(angle(points)+pi))+pi;
+                    else
+                        minAng(m,n) = min(angle(points));
+                        maxAng(m,n) = max(angle(points));
+                    end
                 end
             end
 
             value = ciat.RealInterval( minAng,maxAng );
-            if any(pointIn,'all')
-                value(pointIn).Infimum = 0;
-                value(pointIn).Supremum = 2*pi;
-            end
+            % if any(pointIn,'all')
+            %     value(pointIn).Infimum = 0;
+            %     value(pointIn).Supremum = 2*pi;
+            % end
         end
         function value = angle(obj)
         % Angle of polygonal intervals

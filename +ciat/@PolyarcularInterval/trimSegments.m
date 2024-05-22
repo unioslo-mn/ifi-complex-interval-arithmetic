@@ -55,7 +55,9 @@ while k==1 || (k<=K && idx~=startIdx)
                                                            recurCount+1);
             return
         else
-            error('Boundary incontinuity after 5 attempts, exiting')
+            warning('Boundary incontinuity after 5 attempts, returning NaN')
+            arcOut(1,1) = ciat.Arc;
+            return
         end
     end
     if length(idx) > 1

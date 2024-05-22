@@ -1,6 +1,7 @@
 classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 	properties (Dependent)
-        Arcs;           % Defining arcs of the polygonal interval boundary
+        DefArcs         % Defining arcs of the polygonal interval boundary
+        Arcs;           % Implicit arcs 
         Edges;          % Implicit edges
         Vertices;       % Implicit vertices 
         Real;           % Projection of the polygonal interval to the real axis
@@ -68,7 +69,14 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             end
         end 
     
-        % Get points (retrieve from hidden property ArcStorage)
+         % Get arcs (retrieve from hidden property ArcStorage)
+        function value = get.DefArcs(obj)
+            value = obj.ArcStorage;
+        end
+
+        %% Dependent properties
+
+        % Get implicit arcs
         function value = get.Arcs(obj)
             [M,N] = size(obj);
             % value = cell(M,N);
@@ -80,11 +88,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     value{m,n} = value{m,n}(value{m,n}.Length~=0);
                 end
             end
-        end
+        end               
 
-        %% Dependent properties
-
-                       
         % Get implicit edges
         function value = get.Edges(obj)
             [M,N] = size(obj);
@@ -270,7 +275,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     arcs = inObj.ArcStorage{m,n};
 
                     % Create convex hull
-                    vertexPoly = [arcs.Startpoint , arcs.Endpoint].';
+                    arcSmp = arcs(arcs.Radius>0).sample(10);
+                    arcSmp = [arcSmp{:}];
+                    vertexPoly = [arcs.Startpoint ; arcs.Endpoint ; arcSmp(:)];
                     idx = convhull(real(vertexPoly),imag(vertexPoly));
                     edges = ciat.Edge(vertexPoly(idx),...
                                       circshift(vertexPoly(idx),-1));
@@ -282,10 +289,37 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
                     % Generate output object
                     outObj(m,n) = ciat.PolyarcularInterval(arcs);
+
+                    % Join segments
+                    % outObj(m,n) = outObj(m,n).joinSegments;
                 end
             end
-            
+        end
 
+        % Joining segments
+        function r = joinSegments(obj)
+            arcs = obj.ArcStorage{:};
+            K = length(arcs);
+            k = 1;
+            while k < K
+                if arcs(k).Radius == arcs(k+1).Radius && ...
+                   arcs(k).Center == arcs(k+1).Center
+                    angCup = cup(arcs(k).ArcAngle , arcs(k+1).ArcAngle);
+                    if ~isnan(angCup)
+                        arcs(k).ArcAngle = angCup;
+                        arcs = arcs(setdiff(1:end,k+1));
+                        K = K-1;
+                    else
+                        k = k+1;
+                    end
+                elseif arcs(k).ArcAngle.Width < 10*eps
+                    arcs = arcs(setdiff(1:end,k));
+                    K = K-1;
+                else
+                     k = k+1;
+                end
+            end
+            r = ciat.PolyarcularInterval(arcs);
         end
 
         % IsNaN

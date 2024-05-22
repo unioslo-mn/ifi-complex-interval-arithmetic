@@ -41,7 +41,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
     methods
         
         %% Constructor
-        function obj = PolyarxInterval(inObj,inObj2)
+        function obj = PolyarxInterval(inObj)
         %POLYGONALINTERVAL Construct an instance of this class
         %
         % This function generates one or more polygonal intervals
@@ -83,7 +83,6 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             arguments
                 inObj                (:,:)   = []
-                inObj2               (:,:)   = []
             end    
           
             switch class(inObj)
@@ -107,19 +106,8 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     % Input object will be casted
                     [M,N] = size(inObj);
                     obj(M,N) = ciat.PolyarxInterval;
-                    if isempty(inObj2)
-                        for n = 1:M*N
-                            obj(n) = ciat.PolyarxInterval.cast(inObj(n));
-                        end
-                    else
-                        % Give the option to give only one second object or
-                        % the same number than the first object
-                        [N2] = length(inObj2(:));
-                        assert(N2 == M*N || N2==1)
-                        for n = 1:M*N
-                            obj(n) = ciat.PolyarxInterval.cast(inObj(n),...
-                                                     inObj2(min(n,N2)));
-                        end
+                    for n = 1:M*N
+                        obj(n) = ciat.PolyarxInterval.cast(inObj(n));
                     end
             end
         end
@@ -312,13 +300,19 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             % Calculate the polygon area for each polyarcular interval
             for m = 1:M
                 for n = 1:N
-                    if isempty(obj.Arcs{m,n})
+                    arcs = obj.Arcs{m,n}; 
+                    vertices = obj.Vertices{m,n}; 
+                    if isempty(arcs)
                         value(m,n) = nan;
                     else
-                        points = obj.Vertices{m,n}.Center;
+                        points = [vertices.Center ; ...
+                                  arcs.Startpoint ; ...
+                                  arcs.Endpoint];
+                        idx = convhull(real(points),imag(points));
+                        points = points(idx);
                         polygonArea = polyarea(real(points(:)), ...
                                                imag(points(:)));
-                        arcArea = sum(obj.Arcs{m,n}.Area);
+                        arcArea = sum(arcs.Area);
                         value(m,n) = polygonArea + arcArea;
                     end
                 end
@@ -361,9 +355,11 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     edgePoints = sample(edges,nPoints);
 
                     % Interleave arc and edge samples
-                    allPoints = [arcPoints.';edgePoints.'];
-                    allPoints = allPoints(:);
-                    value{m,n} = [allPoints{:}];
+                    allPoints = [[arcPoints{:}].';[edgePoints{:}].'];
+                    % allPoints = allPoints(:);
+                    % value{m,n} = [allPoints{:}];
+                    idx = convhull(real(allPoints),imag(allPoints));
+                    value{m,n} = allPoints(idx);
                 end
             end
         end

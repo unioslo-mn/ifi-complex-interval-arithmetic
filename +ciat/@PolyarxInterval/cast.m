@@ -1,17 +1,7 @@
-function outObj = cast(inObj,inObj2,options)
+function outObj = cast(inObj)
 
 % Cast complex intervals of other types to polyarx interval type
-
-
-    arguments
-       inObj
-       inObj2               (:,:)   = []
-       options.tolerance    (1,1)   {mustBeNumeric}     = 1e-6
-    end
-    
-    [M,N] = size(inObj);
-    dR = options.tolerance;
-    
+   
     switch class(inObj)
         case 'double'
             arx = [real(inObj),imag(inObj),0,pi];
@@ -33,40 +23,59 @@ function outObj = cast(inObj,inObj2,options)
             arx = [real(inObj.Center),imag(inObj.Center),inObj.Radius,pi];
             
         case 'ciat.PolarInterval'
-            if isempty(inObj2)
-                % Extract parameters
-                absInf = inObj.Abs.Infimum;
-                absSup = inObj.Abs.Supremum;
-                angInf = ciat.wrapToPi(inObj.Angle.Infimum);
-                angSup = ciat.wrapToPi(inObj.Angle.Supremum);
-                angSup = angSup + (angSup<angInf)*2*pi;
-                
-                % Calculate vertex locations
-                v1 = absSup * exp(1j*angSup);
-                v2 = absInf * exp(1j*angSup);
-                v3 = absInf * exp(1j*angInf);
-                v4 = absSup * exp(1j*angInf);
+            % Extract parameters
+            absInf = inObj.Abs.Infimum;
+            absSup = inObj.Abs.Supremum;
+            angInf = ciat.wrapToPi(inObj.Angle.Infimum);
+            angSup = ciat.wrapToPi(inObj.Angle.Supremum);
+            angSup = angSup + (angSup<angInf)*2*pi;
+            
+            % Calculate vertex locations
+            v1 = absSup * exp(1j*angSup);
+            v2 = absInf * exp(1j*angSup);
+            v3 = absInf * exp(1j*angInf);
+            v4 = absSup * exp(1j*angInf);
 
-                % Calculate normal angles vertices
-                a1 = ciat.wrapToPi(angSup+pi/2);
-                a2 = wrapToPi(angle(v2+v3)+pi);
-                a3 = ciat.wrapToPi(angInf-pi/2);
-                a4 = angInf;
+            % Calculate normal angles vertices
+            a1 = ciat.wrapToPi(angSup+pi/2);
+            a2 = wrapToPi(angle(v2+v3)+pi);
+            a3 = ciat.wrapToPi(angInf-pi/2);
+            a4 = angInf;
 
-                % Generate arx
-                arx = zeros(5,4);
-                arx(1,:) = [ 0 , 0 , absSup , angSup ];
-                arx(2,:) = [ real(v1) , imag(v1) , 0 , a1 ];
-                arx(3,:) = [ real(v2) , imag(v2) , 0 , a2 ];
-                arx(4,:) = [ real(v3) , imag(v3) , 0 , a3 ];
-                arx(5,:) = [ real(v4) , imag(v4) , 0 , a4 ];
-            else
-                if isa(inObj2,'ciat.CircularInterval')
-                    arx = timesPolarCircular(inObj,inObj2,dR);
-                else
-                    error('Invalid input type at position 2')
-                end
-            end
+            % Generate arx
+            arx = zeros(5,4);
+            arx(1,:) = [ 0 , 0 , absSup , angSup ];
+            arx(2,:) = [ real(v1) , imag(v1) , 0 , a1 ];
+            arx(3,:) = [ real(v2) , imag(v2) , 0 , a2 ];
+            arx(4,:) = [ real(v3) , imag(v3) , 0 , a3 ];
+            arx(5,:) = [ real(v4) , imag(v4) , 0 , a4 ];
+        case 'ciat.PolyarcularInterval'
+            cxObj = inObj.convexify;
+            arcs = [cxObj.Arcs{:} ; cxObj.Vertices{:}];
+
+            % % This is a temporary solution
+            % [~,idx] = sort(arcs.ArcAngle.Infimum);
+            % arcs = arcs(idx);
+            % K = length(arcs);
+            % angSupMax = arcs.ArcAngle(1).Supremum;
+            % k = 2; 
+            % while k <= K
+            %     if arcs.Radius(k) == 0 && arcs.ArcAngle(k).Infimum < angSupMax
+            %         arcs = arcs(setdiff(1:end,k));
+            %         K = K-1;
+            %     else
+            %         angSupMax = arcs.ArcAngle(k).Supremum;
+            %         k = k+1;
+            %     end
+            % end
+            % cxObj = ciat.PolyarcularInterval(arcs);
+            % arcs = [cxObj.Arcs{:} ; cxObj.Vertices{:}];
+
+            % Set polyarx
+            arx = [real(arcs.Center) , imag(arcs.Center), ...
+                   arcs.Radius , arcs.ArcAngle.Supremum];
+            [~,idx] = sort(arx(:,4));
+            arx = arx(idx,:);
         otherwise
             error('Invalid input type at position 1')
     end  

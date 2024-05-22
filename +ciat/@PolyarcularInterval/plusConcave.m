@@ -32,5 +32,9 @@ function r = plusConcave(obj1,obj2)
     
     % Generate polyarc
     r = ciat.PolyarcularInterval(arc3);
+    r = joinSegments(r);
 
 end
+
+
+
