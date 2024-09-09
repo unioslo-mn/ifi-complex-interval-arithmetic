@@ -67,7 +67,9 @@ function outObj = cast(inObj,inObj2,options)
             cntPoints = ceil(2*pi/angRes); 
             angles = linspace( 0, 2*pi, cntPoints+1 )';
             
-            outPoints = (inRadius + dR) .* exp(1j*angles(2:end)) + inCenter;
+            %outPoints = (inRadius + dR) .* exp(1j*angles(2:end)) + inCenter;
+            outPoints = (inRadius/cos(2*pi/(2*cntPoints))) .* ...
+                            exp(1j*angles(2:end)) + inCenter;
             
         case 'ciat.PolarInterval'
             if isempty(inObj2)
@@ -85,7 +87,9 @@ function outObj = cast(inObj,inObj2,options)
                 % Put together outer arc and inner points: COUNTER-CLOCKWISE ORDER
                 angs = linspace(minAngle, maxAngle, cntPoints);
                 pL = minAbs * exp( 1j * angs(1) ); % inner corner 1
-                rH = (maxAbs + dR) * exp(1j * angs); % outer arc
+                %rH = (maxAbs + dR) * exp(1j * angs); % outer arc
+                rH = (maxAbs/cos((maxAngle-minAngle)/(2*(cntPoints-1)))) * ...
+                            exp(1j * angs); % outer arc
                 pH = minAbs * exp( 1j * angs(end));  % inner corner 2
 
                 % Checks and corrections in case a half or full circle is made 
