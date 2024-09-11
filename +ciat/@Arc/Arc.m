@@ -122,6 +122,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = get.LogGaussMap(obj)
             value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
                                                      angle(obj.Endpoint));
+            value.Infimum = ciat.wrapToPi(value.Infimum);
+            value.Supremum= ciat.wrapToPi(value.Supremum);
         end
 
         % Normalization factor
@@ -307,6 +309,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
 		%% Other methods
 
+        % Unary negative operator
+        function r = uminus(obj)
+            r = ciat.Arc(-obj.Center,obj.Radius,obj.ArcAngle+pi);
+        end
+
         % Intersection
         function r = intersection(obj1,obj2)
 
@@ -315,7 +322,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             assert(M1 == M2 && N1 == N2)
             
             if isa(obj2,'ciat.Arc')
-                % Find the intersection point of two lines
+                % Find the intersection point of two arcs
+                % Source: https://mathworld.wolfram.com/Circle-CircleIntersection.html
                 x1 = real(obj1.Center);
                 y1 = imag(obj1.Center);
                 r1 = obj1.Radius;
@@ -332,7 +340,12 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 yCoord1 = 0.5*(y1+y2) + coeff1*(y2-y1) - coeff2*(x1-x2);
                 yCoord2 = 0.5*(y1+y2) + coeff1*(y2-y1) + coeff2*(x1-x2);
 
+                % Check if the intersections exist
+                mask0 = (abs(r1)+abs(r2)) >= R; 
+
             elseif isa(obj2,'ciat.Edge')
+                % Find the intersection point of an arc and an edge
+                % Source: https://mathworld.wolfram.com/Circle-LineIntersection.html
                 xc = real(obj1.Center);
                 yc = imag(obj1.Center);
                 r = obj1.Radius;
@@ -341,16 +354,19 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 x2 = real(obj2.Endpoint) - xc;
                 y2 = imag(obj2.Endpoint) - yc;
                 
-                dx = x2 - x1;
-                dy = y2 - y1;
-                dr = sqrt(dx.^2 + dy.^2);
+                dx = x2 - x1;               % Edge vector real
+                dy = y2 - y1;               % Edge vector imag
+                dr = sqrt(dx.^2 + dy.^2);   % Edge length
                 D = x1.*y2 - x2.*y1;
-                coeff = sqrt(r.^2 .* dr.^2 - D.^2);
+                discr = r.^2 .* dr.^2 - D.^2;
 
-                xCoord1 = (D.*dy - sign(dy).*dx * coeff) ./ dr.^2 + xc;
-                xCoord2 = (D.*dy + sign(dy).*dx * coeff) ./ dr.^2 + xc;
-                yCoord1 = (-D.*dx - abs(dy) * coeff) ./ dr.^2 + yc;
-                yCoord2 = (-D.*dx + abs(dy) * coeff) ./ dr.^2 + yc;
+                xCoord1 = (D.*dy - sign(dy).*dx * sqrt(discr)) ./ dr.^2 + xc;
+                xCoord2 = (D.*dy + sign(dy).*dx * sqrt(discr)) ./ dr.^2 + xc;
+                yCoord1 = (-D.*dx - abs(dy) * sqrt(discr)) ./ dr.^2 + yc;
+                yCoord2 = (-D.*dx + abs(dy) * sqrt(discr)) ./ dr.^2 + yc;
+
+                % Check if the intersections exist
+                mask0 = discr >= 0; 
 
             else
                 error('Invalid input type')
@@ -359,9 +375,9 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             % Assign values
             r = nan(M1,N1);
             mask1 = obj1.Real.isin(xCoord1) & obj1.Imag.isin(yCoord1) & ...
-                    obj2.Real.isin(xCoord1) & obj2.Imag.isin(yCoord1);
+                    obj2.Real.isin(xCoord1) & obj2.Imag.isin(yCoord1) & mask0;
             mask2 = obj1.Real.isin(xCoord2) & obj1.Imag.isin(yCoord2) & ...
-                    obj2.Real.isin(xCoord2) & obj2.Imag.isin(yCoord2);
+                    obj2.Real.isin(xCoord2) & obj2.Imag.isin(yCoord2) & mask0;
             if any(mask1 & mask2,'all')
                 if M1*N1 ==1
                     r = [xCoord1 + 1i*yCoord1 ; xCoord2 + 1i*yCoord2];
@@ -514,6 +530,8 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         
         %% Function headers
         r = plus(obj1,obj2)
+        r = times(obj1,obj2)
+        r = mtimes(obj1,obj2)
         h = plotMap(obj, logMap, arrowSize, varargin)
 
     end

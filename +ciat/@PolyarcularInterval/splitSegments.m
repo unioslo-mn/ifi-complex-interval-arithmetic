@@ -99,4 +99,8 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         end
     end
 
+    % This should not be necessary
+    arcOut = arcOut(abs(arcOut.Length)>10*eps); 
+    edgeOut = edgeOut(abs(edgeOut.Length)>10*eps);
+
 end

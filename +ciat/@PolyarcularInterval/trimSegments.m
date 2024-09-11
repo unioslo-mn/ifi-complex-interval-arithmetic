@@ -41,7 +41,7 @@ while k==1 || (k<=K && idx~=startIdx)
 
     % Find next segment
     prevIdx = [prevIdx;idx];
-    idx = find( abs(seg.Endpoint - startPoints) < 10*eps );
+    idx = find( abs(seg.Endpoint - startPoints) < 100*eps );
     if isempty(idx)
         if recurCount < 5
             % Remove element and try trimming again (recursive hell)

@@ -90,9 +90,6 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     if isempty(inObj)
                         % This is for initializing an array of objects
                     else
-                        % This is the default way of defining polygonal
-                        % intervals the points are assumed to belong to a
-                        % single interval no matter how many dimensions
                         obj(1) = ciat.PolyarxInterval;
                         obj.Arx = {inObj};
                     end
@@ -163,10 +160,15 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                 for n = 1:N
                     arx = obj(m,n).Arx{:};
                     arxPrev = circshift(arx,1,1);
-                    mask = arx(:,3) == 0 & arxPrev(:,3) == 0;
-                    startpoint = complex(arxPrev(mask,1),arxPrev(mask,2));
-                    endpoint = complex(arx(mask,1),arx(mask,2));
+                    %mask = arx(:,3) == 0 & arxPrev(:,3) == 0;
+                    %startpoint = complex(arxPrev(mask,1),arxPrev(mask,2));
+                    %endpoint = complex(arx(mask,1),arx(mask,2));
+                    startpoint = complex(arxPrev(:,1),arxPrev(:,2)) + ...
+                                 arxPrev(:,3) .* exp(1j*arxPrev(:,4));
+                    endpoint =  complex(arx(:,1),arx(:,2)) + ...
+                                 arx(:,3) .* exp(1j*arxPrev(:,4));
                     value{m,n} = ciat.Edge(startpoint,endpoint);
+                    value{m,n} = value{m,n}(value{m,n}.Length > 10*eps);
                 end
             end
         end
@@ -179,6 +181,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                 for n = 1:N
                     arx = obj(m,n).Arx{:};
                     arxPrev = circshift(arx,1,1);
+                    arxPrev(1,4) = -pi;
                     mask = arx(:,3) == 0;
                     center = complex(arx(mask,1),arx(mask,2));
                     angInf = arxPrev(mask,4);
@@ -414,9 +417,12 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         
         %% Function headers
         r = plus(obj1,obj2)
+        r = quickPlus(arx1,arx2)
         r = sum(obj,varargin)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
+        r = timesDouble(xObj,d)
+        r = timesPolar(xObj,pObj)
         r = isin(obj,x)
         points = backtrack(obj,trackAngle)
                 

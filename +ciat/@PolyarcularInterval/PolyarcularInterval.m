@@ -230,6 +230,17 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
         %% Other functions
 
+        % Unary negative operator
+        function r = uminus(obj)
+            [M,N] = size(obj);
+            r(M,N) = ciat.PolyarcularInterval;
+            for m = 1:M
+                for n = 1:N
+                    r(m,n) = ciat.PolyarcularInterval(-obj(m,n).DefArcs{:});
+                end
+            end
+        end
+
         % Sample
         function value = sample(obj, nPoints)
             [M,N] = size(obj);
@@ -246,7 +257,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Interleave arc and edge samples
                     allPoints = [arcPoints.';edgePoints.'];
                     allPoints = allPoints(:);
-                    value{m,n} = [allPoints{:}];
+                    value{m,n} = [allPoints{:}].';
                 end
             end
         end
@@ -320,6 +331,16 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                 end
             end
             r = ciat.PolyarcularInterval(arcs);
+        end
+
+        % Union
+        function r = union(obj) %Needs debugging
+            arcs = [obj.Arcs{:}];
+            edges = [obj.Edges{:}];
+            [arcs,edges] = ciat.PolyarcularInterval.splitSegments(arcs(:),edges(:));
+            arcDef = ciat.PolyarcularInterval.trimSegments(arcs,edges,1);
+            r = ciat.PolyarcularInterval(arcDef);
+            r = joinSegments(r);
         end
 
         % IsNaN

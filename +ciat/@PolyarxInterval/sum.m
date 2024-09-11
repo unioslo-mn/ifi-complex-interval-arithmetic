@@ -41,6 +41,7 @@ function r = quickPlus(arx1,arx2)
     n3 = 0;
     eps10 = eps*10;
     while (n1 <= N1) && (n2 <= N2) % continue finding more points
+        
         n3 = n3 + 1;
     
         % Sum arcs
@@ -57,6 +58,10 @@ function r = quickPlus(arx1,arx2)
             n1 = n1 + 1;
             n2 = n2 + 1;
         end            
+
+        if n3 > 1 && ang3(n3) <= ang3(n3-1) + eps10
+            n3 = n3 - 1;
+        end
     end
     cen3 = cen3(1:n3,:);
     rad3 = rad3(1:n3,:);

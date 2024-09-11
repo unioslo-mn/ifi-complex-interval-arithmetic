@@ -22,12 +22,8 @@ function r = plusConcave(obj1,obj2)
     arc3 = arc3(abs(arc3.Length)>10*eps);
     edge3 = edge3(abs(edge3.Length)>10*eps);
 
-    % Split segments
+    % Split and trim segments
     [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
-    arc3 = arc3(abs(arc3.Length)>10*eps); % This should be unnecessary
-    edge3 = edge3(abs(edge3.Length)>10*eps);
-    
-    % Trim segments
     arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,1);
     
     % Generate polyarc

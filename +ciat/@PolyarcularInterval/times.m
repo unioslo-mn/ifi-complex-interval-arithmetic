@@ -56,6 +56,7 @@ function r = times(obj1,obj2)
     end
 end
 
+%%
 function r = multiply(obj1,obj2)
     % Ensure counter-clockwise order and that v1 and w1
     % being the vertices with smallest y-coordinate 
