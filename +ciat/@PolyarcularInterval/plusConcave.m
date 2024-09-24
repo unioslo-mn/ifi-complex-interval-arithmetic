@@ -19,8 +19,8 @@ function r = plusConcave(obj1,obj2)
               edgePlusArc(~isnan(edgePlusArc)) ];
 
     % Extract non-vertex segments
-    arc3 = arc3(abs(arc3.Length)>10*eps);
-    edge3 = edge3(abs(edge3.Length)>10*eps);
+    arc3 = arc3(abs(arc3.Length)>100*eps);
+    edge3 = edge3(abs(edge3.Length)>100*eps);
 
     % Split and trim segments
     [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);

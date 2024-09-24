@@ -120,10 +120,16 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Log-Gauss map angle interval
         function value = get.LogGaussMap(obj)
-            value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
-                                                     angle(obj.Endpoint));
-            value.Infimum = ciat.wrapToPi(value.Infimum);
-            value.Supremum= ciat.wrapToPi(value.Supremum);
+            % value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
+                                                     % angle(obj.Endpoint));
+            isConvex = obj.Radius >= 0;
+            startGauss = obj.ArcAngle.Bounds(2-isConvex);
+            endGauss = obj.ArcAngle.Bounds(1+isConvex);
+            value = ciat.RealInterval( startGauss - angle(obj.Startpoint),...
+                                       endGauss - angle(obj.Endpoint) );
+
+            % value.Infimum = ciat.wrapToPi(value.Infimum);
+            % value.Supremum= ciat.wrapToPi(value.Supremum);
         end
 
         % Normalization factor
@@ -410,12 +416,71 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
             % Check if the point is outside the chord connecting the end
             % points
-            rotateCoeff = exp(-1j*obj.ArcAngle.Midpoint);
+            rotateCoeff = exp(-1j*(obj.ArcAngle.Midpoint + ...
+                                   (obj.Radius < 0) * pi) );
             outChord = real(x.* rotateCoeff) >= ...
                        real(obj.Startpoint .* rotateCoeff);
 
             % Combine conditions
             r = inCircle & inSector & outChord;
+        end
+
+        % Is point on the arc
+        function r = ison(obj,x)
+            % Check if the point is in the circle of the arc
+            onCircle = abs(abs(x - obj.Center) - abs(obj.Radius)) < 10*eps;
+
+            % Check if the point is in the sector
+            inSector = abs(wrapToPi( angle(x - obj.Center) - ...
+                                     obj.ArcAngle.Infimum  + ...
+                                    (obj.Radius<0)*pi ) ) ...
+                            <= obj.ArcAngle.Width;
+
+            % Combine conditions
+            r = onCircle & inSector;
+        end
+
+        % Split
+        function arcOut = split(arcIn,splitPoint)
+
+            % It only works for a single arc with multiple split points
+            assert( numel(arcIn)==1 )
+
+            % Exclude invalid split points 
+            splitPoint = splitPoint(~isnan(splitPoint));
+            splitPoint = splitPoint(arcIn.ison(splitPoint));
+            splitPoint = splitPoint(splitPoint ~= arcIn.Startpoint & ...
+                                    splitPoint ~= arcIn.Endpoint );
+
+            % Split arc
+            if ~isempty(splitPoint)
+                % Get arc parameters
+                arcCenter = arcIn.Center;
+                arcRadius = arcIn.Radius;
+                arcAngInf = arcIn.ArcAngle.Infimum;
+                arcAngSup = arcIn.ArcAngle.Supremum;
+
+                % Calculate split angles
+                splitAngle = angle(splitPoint-arcCenter) + pi*(arcRadius<0);
+                splitAngle = wrapTo2Pi(splitAngle)-2*pi;
+                splitAngle = splitAngle( abs(splitAngle-arcAngInf)>10*eps & ...
+                                         abs(splitAngle-arcAngSup)>10*eps);
+                splitAngle = splitAngle + 2*pi*(splitAngle<arcAngInf);
+                splitAngle = sort(splitAngle);
+                splitAngle = [arcAngInf ; splitAngle ; arcAngSup ];
+                splitAngle = uniquetol(splitAngle,10*eps);
+
+                % Add arc segments
+                L = length(splitAngle)-1;
+                arcOut(L,1) = ciat.Arc;
+                for l = 1:L
+                    arcOut(l) = ciat.Arc(arcCenter,arcRadius,...
+                                         ciat.RealInterval(splitAngle(l), ...
+                                                           splitAngle(l+1)));
+                end
+            else
+                arcOut = arcIn;
+            end
         end
 
         % IsNaN

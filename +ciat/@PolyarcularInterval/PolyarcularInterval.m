@@ -17,9 +17,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
 	methods
 		%% Constructor
-        function obj = PolyarcularInterval(inObj,optional)
+        function obj = PolyarcularInterval(inObj,inObj2,optional)
             arguments
                 inObj                (:,:)   = []
+                inObj2               (:,:)   = []
                 optional.convex      (1,1)   {mustBeNumericOrLogical} = false
             end    
 
@@ -45,10 +46,23 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     obj.Arcs = inObj;
                 otherwise
                     % Input object will be casted
-                    [M,N] = size(inObj);
-                    obj(M,N) = obj;
-                    for n = 1:M*N
-                        obj(n) = ciat.PolyarcularInterval.cast(inObj(n));
+                    if isempty(inObj2)
+                        [M,N] = size(inObj);
+                        obj(M,N) = obj;
+                        for n = 1:M*N
+                            obj(n) = ciat.PolyarcularInterval.cast(inObj(n));
+                        end
+                    else
+                        % Give the option to give only one second object or
+                        % the same number than the first object
+                        [M,N] = size(inObj);
+                        [N2] = length(inObj2(:));
+                        assert(N2 == M*N || N2==1)
+                        obj(M,N) = obj;
+                        for n = 1:M*N
+                            obj(n) = ciat.PolyarcularInterval.cast(inObj(n),...
+                                                     inObj2(min(n,N2)));
+                        end
                     end
             end % switch
             if optional.convex
@@ -442,6 +456,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
+        points = castPolarTimesCircular(pInt, cInt)
         [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         [arcOut,edgeOut] = trimSegments(arcIn,edgeIn,recurCount)
         seg = orderSegments(obj)

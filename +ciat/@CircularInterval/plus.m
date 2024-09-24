@@ -39,10 +39,10 @@ function r = plus(obj1,obj2)
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'double')
-        obj1 = ciat.CircularInterval(obj1, 0);
+        obj1 = ciat.CircularInterval(obj1, zeros(M1,N1));
     end
     if isa(obj2, 'double')
-        obj2 = ciat.CircularInterval(obj2, 0);
+        obj2 = ciat.CircularInterval(obj2, zeros(M2,N2));
     end 
             
     r = ciat.CircularInterval(obj1.Center + obj2.Center, obj1.Radius + obj2.Radius);

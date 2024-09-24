@@ -744,9 +744,14 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             r = intersection(obj,varargin{:});
         end
 
-        % Inside
+        % Inside including the boundaries
         function r = isin(obj,x)
             r = obj.Infimum <= x & x <= obj.Supremum; 
+        end
+
+        % Inside excluding the boundaries
+        function r = isinside(obj,x)
+            r = obj.Infimum < x & x < obj.Supremum; 
         end
 
         % IsNaN

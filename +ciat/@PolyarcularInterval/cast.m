@@ -1,4 +1,4 @@
-function outObj = cast(inObj)
+function outObj = cast(inObj,inObj2)
 
 % Cast complex intervals of other types to polyarcular interval type
 %
@@ -32,6 +32,11 @@ function outObj = cast(inObj)
 
     % [M,N] = size(inObj);
     
+    arguments
+        inObj
+        inObj2               (:,:)   = []
+    end
+
     switch class(inObj)
         case 'double'
             outArcs = ciat.Arc(inObj,0,ciat.RealInterval(-pi,pi));
@@ -60,18 +65,27 @@ function outObj = cast(inObj)
             outArcs = ciat.Arc(inCenter,inRadius,ciat.RealInterval(-pi,pi));
             
         case 'ciat.PolarInterval'
-            inAbs = [inObj.Abs];
-            inAngle = [inObj.Angle];
-            maxAbs = [inAbs.Supremum];
-            minAbs = [inAbs.Infimum];
-            outArcs(2,1) = ciat.Arc;
-            outArcs(1) = ciat.Arc(0,-minAbs,inAngle+pi);
-            outArcs(2) = ciat.Arc(0,maxAbs,inAngle);
+            if isempty(inObj2)
+                inAbs = [inObj.Abs];
+                inAngle = [inObj.Angle];
+                maxAbs = [inAbs.Supremum];
+                minAbs = [inAbs.Infimum];
+                outArcs(2,1) = ciat.Arc;
+                outArcs(1) = ciat.Arc(0,-minAbs,inAngle+pi);
+                outArcs(2) = ciat.Arc(0,maxAbs,inAngle);
+            else
+                if isa(inObj2,'ciat.CircularInterval')
+                    outArcs = ciat.PolyarcularInterval.castPolarTimesCircular(...
+                                                        inObj,inObj2);
+                else
+                    error('Invalid input type at position 2')
+                end
+            end
         case 'ciat.PolygonalInterval'
             N = inObj.PointCount;
             outArcs(N,1) = ciat.Arc;
             for n = 1:N
-                outArcs(n) = ciat.Arc(inObj.Points(n),0,0);
+                outArcs(n) = ciat.Arc(inObj.Points{:}(n),0,0);
             end
         otherwise
             error('Invalid input type at position 1')

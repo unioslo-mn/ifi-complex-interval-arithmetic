@@ -198,6 +198,54 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             r = isnan(obj.Length);
         end 
 
+        % Is point on edge
+        function r = ison(obj,x)
+            % Check if the point is on the line of the edge
+            onLine = abs(real(x) * obj.Slope + obj.Offset - imag(x)) < 10*eps;
+
+            % Check if the point is on the edge real interval
+            inReal = obj.Real.isin(real(x));
+
+            % Combine conditions
+            r = onLine & inReal;
+        end
+
+        % Split
+        function edgeOut = split(edgeIn,splitPoint)
+
+            % It only works for a single arc with multiple split points
+            assert( numel(edgeIn)==1 )
+
+            % Exclude invalid points
+            splitPoint = splitPoint(~isnan(splitPoint));
+            splitPoint = splitPoint(edgeIn.ison(splitPoint));
+            splitPoint = splitPoint(splitPoint ~= edgeIn.Startpoint & ...
+                                    splitPoint ~= edgeIn.Endpoint );
+
+            % Split edge
+            if ~isempty(splitPoint)
+                % Extract edge parameters
+                p1 = edgeIn.Startpoint;
+                p2 = edgeIn.Endpoint;
+
+                % Sort split points
+                [~,sortIdx] = sort(abs(splitPoint-p1));
+                splitPoint = [p1 ; splitPoint(sortIdx); p2];
+                [~,uniqueIdx,~] = uniquetol(abs(splitPoint-p1),10*eps);
+                splitPoint = splitPoint(uniqueIdx);
+
+                % Calculate edge segments
+                L = length(splitPoint)-1;
+                edgeOut(L,1) = ciat.Edge;
+                for l = 1:L
+                    edgeOut(l) = ciat.Edge(splitPoint(l),splitPoint(l+1));
+                end
+            else
+                edgeOut = edgeIn;
+            end
+        end
+
+
         % Sample
         function points = sample(obj, nPoints)
             [M,N] = size(obj);

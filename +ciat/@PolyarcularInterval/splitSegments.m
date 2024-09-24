@@ -25,31 +25,7 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 end
                 splitPoint = [splitPoint ; cap(arcIn(k),seg)];
             end
-            splitPoint = splitPoint(~isnan(splitPoint));
-            splitPoint = splitPoint(splitPoint ~= arcIn(k).Startpoint & ...
-                                    splitPoint ~= arcIn(k).Endpoint );
-            if ~isempty(splitPoint)
-                arcCenter = arcIn(k).Center;
-                arcRadius = arcIn(k).Radius;
-                arcAngInf = arcIn(k).ArcAngle.Infimum;
-                arcAngSup = arcIn(k).ArcAngle.Supremum;
-                splitAngle = angle(splitPoint-arcCenter) + pi*(arcRadius<0);
-                splitAngle = wrapTo2Pi(splitAngle)-2*pi;
-                splitAngle = splitAngle( abs(splitAngle-arcAngInf)>10*eps & ...
-                                         abs(splitAngle-arcAngSup)>10*eps);
-                splitAngle = splitAngle + 2*pi*(splitAngle<arcAngInf);
-                splitAngle = sort(splitAngle);
-                splitAngle = [arcAngInf ; splitAngle ; arcAngSup ];
-                splitAngle = uniquetol(splitAngle,10*eps);
-                for l = 1:length(splitAngle)-1
-                    arcOut = [arcOut ; ...
-                                ciat.Arc(arcCenter,arcRadius,...
-                                         ciat.RealInterval(splitAngle(l), ...
-                                                           splitAngle(l+1)))];
-                end
-            else
-                arcOut = [arcOut;arcIn(k)];
-            end
+            arcOut = [arcOut ; arcIn(k).split(splitPoint)];
         else
             arcOut = [arcOut;arcIn(k)];
         end
@@ -77,23 +53,8 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
                 end
                 splitPoint = [splitPoint ; cap(edgeIn(k),seg)];
             end
-            splitPoint = splitPoint(~isnan(splitPoint));
-            splitPoint = splitPoint(splitPoint ~= edgeIn(k).Startpoint & ...
-                                    splitPoint ~= edgeIn(k).Endpoint );
-            if ~isempty(splitPoint)
-                p1 = edgeIn(k).Startpoint;
-                p2 = edgeIn(k).Endpoint;
-                [~,sortIdx] = sort(abs(splitPoint-p1));
-                splitPoint = [p1 ; splitPoint(sortIdx); p2];
-                [~,uniqueIdx,~] = uniquetol(abs(splitPoint-p1),10*eps);
-                splitPoint = splitPoint(uniqueIdx);
-                for l = 1:length(splitPoint)-1
-                    edgeOut = [edgeOut ; ...
-                                ciat.Edge(splitPoint(l),splitPoint(l+1))];
-                end
-            else
-                edgeOut = [edgeOut;edgeIn(k)];
-            end
+
+            edgeOut = [edgeOut ; edgeIn(k).split(splitPoint)];
         else
             edgeOut = [edgeOut;edgeIn(k)];
         end

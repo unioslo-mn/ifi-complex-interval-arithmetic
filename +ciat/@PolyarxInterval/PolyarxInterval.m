@@ -41,7 +41,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
     methods
         
         %% Constructor
-        function obj = PolyarxInterval(inObj)
+        function obj = PolyarxInterval(inObj,inObj2)
         %POLYGONALINTERVAL Construct an instance of this class
         %
         % This function generates one or more polygonal intervals
@@ -83,6 +83,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             arguments
                 inObj                (:,:)   = []
+                inObj2               (:,:)   = []
             end    
           
             switch class(inObj)
@@ -101,10 +102,23 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     obj.Arx = inObj;
                 otherwise
                     % Input object will be casted
-                    [M,N] = size(inObj);
-                    obj(M,N) = ciat.PolyarxInterval;
-                    for n = 1:M*N
-                        obj(n) = ciat.PolyarxInterval.cast(inObj(n));
+                    if isempty(inObj2)
+                        [M,N] = size(inObj);
+                        obj(M,N) = ciat.PolyarxInterval;
+                        for n = 1:M*N
+                            obj(n) = ciat.PolyarxInterval.cast(inObj(n));
+                        end
+                    else
+                        % Give the option to give only one second object or
+                        % the same number than the first object
+                        [M,N] = size(inObj);
+                        [N2] = length(inObj2(:));
+                        assert(N2 == M*N || N2==1)
+                        obj(M,N) = ciat.PolyarxInterval;
+                        for n = 1:M*N
+                            obj(n) = ciat.PolyarxInterval.cast(inObj(n),...
+                                                     inObj2(min(n,N2)));
+                        end
                     end
             end
         end
@@ -135,6 +149,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     arx = obj(m,n).Arx{:};
                     if size(arx,1)>1
                         arxPrev = circshift(arx,1,1);
+                        arxPrev(1,4) = -pi;
                         mask = arx(:,3)~=0;
                         if any(mask)
                             center = complex(arx(mask,1) , arx(mask,2));
@@ -432,6 +447,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
     methods (Static)
         % Function headers
         outObj = cast(inObj,options)
+        points = castPolarTimesCircular(pInt, cInt)
         arx = sortArx(arx)
     end
 
