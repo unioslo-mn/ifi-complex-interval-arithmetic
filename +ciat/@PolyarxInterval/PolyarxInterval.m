@@ -447,7 +447,6 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
     methods (Static)
         % Function headers
         outObj = cast(inObj,options)
-        points = castPolarTimesCircular(pInt, cInt)
         arx = sortArx(arx)
     end
 

@@ -25,7 +25,16 @@ function outObj = cast(inObj,inObj2)
             arx(4,:) = [inReal.Infimum,inImag.Supremum,0,pi];
             
         case 'ciat.CircularInterval'
-            arx = [real(inObj.Center),imag(inObj.Center),inObj.Radius,pi];
+            if isempty(inObj2)
+                arx = [real(inObj.Center),imag(inObj.Center),inObj.Radius,pi];
+            else
+                if isa(inObj2,'ciat.PolarInterval')
+                    arx = ciat.PolyarxInterval.castPolarTimesCircular(...
+                                                        inObj2,inObj);
+                else
+                    error('Invalid input type at position 2')
+                end
+            end
             
         case 'ciat.PolarInterval'
             if isempty(inObj2)
@@ -57,8 +66,7 @@ function outObj = cast(inObj,inObj2)
                 arx(5,:) = [ real(v4) , imag(v4) , 0 , a4 ];
             else
                 if isa(inObj2,'ciat.CircularInterval')
-                    arx = ciat.PolyarxInterval.castPolarTimesCircular(...
-                                                        inObj,inObj2);
+                    arx = castPolarTimesCircular(inObj,inObj2);
                 else
                     error('Invalid input type at position 2')
                 end
@@ -66,24 +74,6 @@ function outObj = cast(inObj,inObj2)
         case 'ciat.PolyarcularInterval'
             cxObj = inObj.convexify;
             arcs = [cxObj.Arcs{:} ; cxObj.Vertices{:}];
-
-            % % This is a temporary solution
-            % [~,idx] = sort(arcs.ArcAngle.Infimum);
-            % arcs = arcs(idx);
-            % K = length(arcs);
-            % angSupMax = arcs.ArcAngle(1).Supremum;
-            % k = 2; 
-            % while k <= K
-            %     if arcs.Radius(k) == 0 && arcs.ArcAngle(k).Infimum < angSupMax
-            %         arcs = arcs(setdiff(1:end,k));
-            %         K = K-1;
-            %     else
-            %         angSupMax = arcs.ArcAngle(k).Supremum;
-            %         k = k+1;
-            %     end
-            % end
-            % cxObj = ciat.PolyarcularInterval(arcs);
-            % arcs = [cxObj.Arcs{:} ; cxObj.Vertices{:}];
 
             % Set polyarx
             arx = [real(arcs.Center) , imag(arcs.Center), ...
@@ -96,122 +86,90 @@ function outObj = cast(inObj,inObj2)
     outObj = ciat.PolyarxInterval(arx);       
 end
 
-%% Utility function
+%% Utility function for casting the product of a polar and circular interval
 
-function points = timesPolarCircular(pInt, cInt, dR)
+function outArx = castPolarTimesCircular(pInt, cInt)
 
-    %% SETUP AND CHECKS
+    % SETUP AND CHECKS
     arguments
         pInt   ciat.PolarInterval
         cInt   ciat.CircularInterval
-        dR  double = 1e-6 
     end
          
-    pAngleSup = pInt.Angle.Supremum;
-    pAngleInf = pInt.Angle.Infimum;
-    pAbsSup   = pInt.Abs.Supremum;
-    pAbsInf   = pInt.Abs.Infimum;
-    cAngle   = angle(cInt.Center);
-    cRadius     = cInt.Radius;
+    pAng = pInt.Angle;
+    pAbs = pInt.Abs;
+    cCen = cInt.Center;
+    cAng = angle(cCen);
+    cRad = cInt.Radius;
     
-    %% Handle exceptions
+    % Handle exceptions
     
     % If the polar interval is just a point
-    if pAngleInf == pAngleSup && pAbsInf == pAbsSup
-        % Multiply the circle by it and then turn the circle into a polygon
-        temp_polar = pAbsSup * exp(1i*pAngleInf);
-        temp_circle = ciat.CircularInterval(cInt.Center * temp_polar, ...
-                                            cInt.radius * abs(temp_polar));
-        polygon = ciat.PolyarxInterval(temp_circle,'tolerance',dR);
+    if pInt.Area == 0
+        outArx = [real(cCen),imag(cCen),cRad,pi];
         return
     end
     
     % If the circle is just a point
-    if (cRadius == 0)
+    if cInt.Area == 0
         % If the circle center is at zero creat a zero polygon
-        if cInt.Center == 0
-            polygon = ciat.PolyarxInterval(0);
+        if cCen == 0
+            outArx = [0,0,0,pi];
             return 
         end
+
+        xInt = ciat.PolyarxInterval( pInt * cCen );
+        outArx = xInt.Arx;
         
-        % Otherwise multiply the polar by the center and cast to polygon
-        temp_polar = pInt;
-        temp_polar.Abs = temp_polar.Abs * abs(cInt.Center);
-        temp_polar.Angle = temp_polar.Angle + angle(cInt.Center);
-        polygon = ciat.PolyarxInterval(temp_polar,'tolerance', dR);
         return
     end
 
+    if cInt.isin(0) 
+        error('This algorithm does not work correctly for circles including the origin.')
+    end
+
     % If the product is expected to be concave give a warning
-    if (width(angle(pInt) + angle(cInt)) > pi) || (abs(cInt.Center) <= cRadius)
-        warning('Circle times polar may not be convex, although assumed to be (angle interval larger than pi)! Consider taking convex hull.');
+    if (width(angle(pInt) + angle(cInt)) > pi) || ...
+       (abs(cCen) <= cRad)
+        warning('Circle times polar may not be convex.');
         % This must be fixed for apodization windows where weights can be
         % 0, e.g., hann window.
-        % Also a case if: if ( abs(cInt.Center) <= cRadius)
+        % Also a case if: if ( abs(cCen) <= cRad)
     end
-    %% Generate product shape from sampled arcs
-    
-    % Corners (C = centers, R = radius)
-    C_u   = cInt.Center * pAbsSup; % unrotated center of outer corners
-    C_l   = cInt.Center * pAbsInf; % unrotated center of inner corners
-    R_max = cRadius * pAbsSup;      % radius of outer corners
-    R_min = cRadius * pAbsInf;      % radius of inner corners
-    shift_ang = asin((R_max-R_min)/(abs(C_u)-abs(C_l))); % shift angle from slope over two circles
-    
-    % Outer curve
-    max_ang = cAngle + pAngleSup;
-    min_ang = cAngle + pAngleInf;
-    R_outer = (cRadius + abs(cInt.Center))*pAbsSup; % radius, centered on (0+i0)
-    
-    % Outer curve (between two outer corner circles)
-    angularResolution = 2*acos(R_outer/(R_outer+dR));
-    n_points = ceil((max_ang - min_ang)/angularResolution) + 1; % at least two points
-    
-    angs = linspace(min_ang, max_ang, n_points);
-    angs = angs(2:end-1); % don't need overlapping points w/ corners
-    outer_curve_points = (R_outer + dR) * (cos(angs) + 1j*sin(angs));
-    
-    %% Corner 1 & 2: max R
-    
-    % Corner 1: min phase
-    start_ang = -pi/2 - shift_ang;
-    stop_ang = 0;
-    
-    angularResolution = 2*acos(R_max/(R_max+dR));
-    n_points = ceil((stop_ang - start_ang)/angularResolution) + 1; % at least two points
-    
-    angs = linspace(start_ang, stop_ang, n_points); 
-    Corner1_points = (R_max + dR) * (cos(angs) + 1j*sin(angs)) * exp(1j*min_ang) + C_u*exp(1j*pAngleInf);
-    
-    % Corner 2: max phase
-    start_ang = 0;
-    stop_ang = pi/2 + shift_ang;
-    
-    angs = linspace(start_ang, stop_ang, n_points); 
-    Corner2_points = (R_max + dR) * (cos(angs) + 1j*sin(angs)) * exp(1j*(max_ang)) + C_u*exp(1j*pAngleSup);
-        
-    %% Corner 3 & 4: min R
-    G = (pAngleSup - pAngleInf)/2; % Mid angle
-    
-    % Corner 3: max phase
-    start_ang = pi/2 + shift_ang;
-    stop_ang = pi - G;
 
-    angularResolution = 2*acos(R_min/(R_min+dR));
-    n_points = ceil((stop_ang - start_ang)/angularResolution) + 1; % at least two points
+    % Generate product shape from sampled arcs
+
+    % Initialize output
+    outArx = zeros(5,4);
+
+    % Calculate parameters for corner elements (c: center, r:radius, a: angle)
+    rotAng = asin( cRad / abs(cCen) ); % shift angle from slope over two circles
+
+    % Segment 1: Outer curve (top center)
+    outArx(1,:) = [0,0,(abs(cCen)+cRad)* pAbs.sup,...
+                        cAng + pAng.sup];
+
+    % Segment 2: max amplitude, max phase (top left) corner
+    cArx = cCen * pAbs.sup * exp(1j*pAng.sup);
+    outArx(2,:) = [ real(cArx) , imag(cArx) , cRad * pAbs.sup , ...
+                                cAng + pAng.sup + rotAng + pi/2 ];
     
-    angs = linspace(start_ang, stop_ang, n_points);     
-    Corner3_points = (R_min + dR) * (cos(angs) + 1j*sin(angs)) * exp(1j*(max_ang)) + C_l*exp(1j*pAngleSup);
-    
-    % Corner 4: min phase
-    start_ang = pi + G ;
-    stop_ang = 3*pi/2 - shift_ang;
-    
-    angs = linspace(start_ang, stop_ang, n_points);     
-    Corner4_points = (R_min + dR) * (cos(angs) + 1j*sin(angs)) * exp(1j*(min_ang)) + C_l*exp(1j*pAngleInf);
-        
-    %% Return as collumn vector and make a polygon
-    points = [Corner1_points, outer_curve_points Corner2_points, Corner3_points, Corner4_points].';
+    % Segment 3: min amplitude, max phase (bottom left) corner
+    cArx = cCen * pAbs.inf * exp(1j*pAng.sup);
+    outArx(3,:) = [ real(cArx) , imag(cArx) , cRad * pAbs.inf , ...
+                                cAng + pAng.sup - pAng.width/2 + pi ];
+
+    % Segment 4: min amplitude, min phase (bottom right) corner
+    cArx = cCen * pAbs.inf *exp(1j*pAng.inf);
+    outArx(4,:) = [ real(cArx) , imag(cArx) , cRad * pAbs.inf , ...
+                                cAng + pAng.inf - rotAng - pi/2 ];
+
+    % Segment 5: max amplitude, min phase (top right) corner
+    cArx = cCen * pAbs.sup * exp(1j*pAng.inf);
+    outArx(5,:) = [ real(cArx) , imag(cArx) , cRad * pAbs.sup , ...
+                                cAng + pAng.inf ];
+
+    % Wrap supremum angles to Pi
+    outArx(:,4) = ciat.wrapToPi(outArx(:,4));
+
 end
-
-

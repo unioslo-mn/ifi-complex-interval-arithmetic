@@ -308,8 +308,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                                       circshift(vertexPoly(idx),-1));
                     arcs = arcs(arcs.Radius>0);
                     [arcs,edges] = ciat.PolyarcularInterval.splitSegments(arcs,edges);
-                    arcs = arcs(arcs.Length > 10*eps);
-                    edges = edges(edges.Length > 10*eps);
+                    arcs = arcs(arcs.Length > 100*eps);
+                    edges = edges(edges.Length > 100*eps);
                     arcs = ciat.PolyarcularInterval.trimSegments(arcs,edges,1);
 
                     % Generate output object
@@ -456,7 +456,6 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         outObj = segmentInverse(obj)
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
-        points = castPolarTimesCircular(pInt, cInt)
         [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
         [arcOut,edgeOut] = trimSegments(arcIn,edgeIn,recurCount)
         seg = orderSegments(obj)

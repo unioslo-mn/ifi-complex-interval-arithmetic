@@ -487,6 +487,7 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         r = mtimes(obj1,obj2)
         r = times(obj1,obj2)
         r = union(obj)        
+        points = sample(obj, nPoints)
     end
     
     methods (Static)

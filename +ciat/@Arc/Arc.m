@@ -48,6 +48,22 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                         angles = ciat.RealInterval(angles);
                     end
                     obj.ArcAngle = ciat.Arc.wrapArcAngle(angles);
+                case 4
+                    center = varargin{1};
+                    radius = varargin{2};
+                    angInf = varargin{3};
+                    angSup = varargin{4};
+                    mustBeA(center,'double')
+                    mustBeA(radius,'double')
+                    mustBeA(angInf,'double')
+                    mustBeA(angSup,'double')
+                    assert(all([size(center) == size(radius),...
+                                size(center) == size(angInf),...
+                                size(center) == size(angSup)]))
+                    obj.Center = center;
+                    obj.Radius = radius;
+                    angles = ciat.RealInterval(angInf,angSup);
+                    obj.ArcAngle = ciat.Arc.wrapArcAngle(angles);
                 otherwise
                     error('incorrect number of input')
             end
@@ -122,9 +138,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function value = get.LogGaussMap(obj)
             % value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
                                                      % angle(obj.Endpoint));
+            N = length(obj);
             isConvex = obj.Radius >= 0;
-            startGauss = obj.ArcAngle.Bounds(2-isConvex);
-            endGauss = obj.ArcAngle.Bounds(1+isConvex);
+            angleBounds = [obj.ArcAngle.inf obj.ArcAngle.sup];
+            startGauss = angleBounds(sub2ind([N 2] , (1:N)' , 2-isConvex));
+            endGauss = angleBounds(sub2ind([N 2] , (1:N)' , 1+isConvex));
             value = ciat.RealInterval( startGauss - angle(obj.Startpoint),...
                                        endGauss - angle(obj.Endpoint) );
 
@@ -504,6 +522,44 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     points{m,n} = flip(points{m,n});
                 end
             end
+            end
+
+            % Return vector instead of cell array of only one input given
+            if M*N == 1
+                points = points{:};
+            end
+        end
+
+        % Wrap in inclusive polygon
+        function points = polyWrap(obj,tolerance)
+            [M,N] = size(obj);
+            points = cell(M,N);
+            for m = 1:M
+            for n = 1:N
+                center = obj(m,n).Center;
+                radius = obj(m,n).Radius;
+                angInf = obj(m,n).ArcAngle.Infimum;
+                angSup = obj(m,n).ArcAngle.Supremum;
+                if radius > 0
+                    
+                    % Extract parameters
+                    angRes = 2 * acos( radius ./ (radius + tolerance) );
+                    pCnt = ceil((angSup - angInf) ./ angRes) + 1;
+                    angs = linspace(angInf, angSup, pCnt)';
+                    radCoeff = cos( (angSup-angInf) / (2*(pCnt-1)) );
+                    points{m,n} = center + radius/radCoeff * exp(1j*angs);
+
+                elseif radius < 0
+                    points{m,n} = [obj(m,n).Startpoint ; obj(m,n).Endpoint];
+                else
+                    points{m,n} = obj(m,n).Startpoint;
+                end
+            end
+            end
+
+            % Return vector instead of cell array of only one input given
+            if M*N == 1
+                points = points{:};
             end
         end
 

@@ -558,7 +558,6 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
     methods (Static)
         % Function headers
         outObj = cast(inObj,options)
-        points = castPolarTimesCircular(pInt, cInt, dR)
         points = sortPoints(points,tolerance)
     end
 
