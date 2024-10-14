@@ -256,6 +256,10 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                                        obj(m,n).Endpoint,nPoints);
             end
             end
+
+            if M*N == 1
+                points = points{:};
+            end
         end
 
         % Transpose

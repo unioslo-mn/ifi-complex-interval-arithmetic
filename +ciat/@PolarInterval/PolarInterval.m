@@ -423,12 +423,20 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         % Inside
         function r = isin(obj,x)
             % Check if the point is in between the circles
-            inCircle = obj.Abs.isin( abs(x - obj.Center) );
+            inCircle = obj.Abs.isin( abs(x) );
 
             % Check if the point is in the sector
-            inSector = abs(wrapToPi( angle(x - obj.Center) - ...
-                                     obj.Angle.Infimum ) ) ...
-                                    <= obj.Angle.Width;
+            % inSector = abs(wrapToPi( angle(x) - obj.Angle.Infimum ) ) ...
+                                    % <= obj.Angle.Width;
+            xAng = angle(x);
+            if any(obj.Angle.isin([-pi,pi]))
+                inSector = (xAng>=0 & xAng >= wrapToPi(obj.Angle.Infimum))| ...
+                           (xAng <0 & xAng <= wrapToPi(obj.Angle.Supremum));
+            else
+                inSector = xAng >= obj.Angle.Infimum & ...
+                           xAng <= obj.Angle.Supremum;
+            end
+            
 
             % Check if the point is in the rectangle around the circle
             arcBox = ciat.RectangularInterval(obj);

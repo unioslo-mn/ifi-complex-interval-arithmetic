@@ -32,17 +32,24 @@ function r = cos(obj)
     % Get input size
     [M,N] = size(obj);
     
-    % Calculate sum
+    % Initialize value
     r(M,N) = ciat.RealInterval;
 
-    bot1 = ceil((obj.Infimum + pi)/(2*pi));
-    bot2 = ceil((obj.Supremum + pi)/(2*pi));
+    % Conditions of including the envelope
+    btm1 = ceil((obj.Infimum + pi)/(2*pi));
+    btm2 = ceil((obj.Supremum + pi)/(2*pi));
+    btmEnv = btm2-btm1>=1;
     top1 = ceil((obj.Infimum)/(2*pi));
     top2 = ceil((obj.Supremum)/(2*pi));
+    topEnv = top2-top1>=1;
+    
 
-    r.Infimum(bot2-bot1>=1) = -1;
-    r.Infimum(bot2-bot1<1) = min(cos(obj.Infimum(bot2-bot1<1)),cos(obj.Supremum(bot2-bot1<1)));
-    r.Supremum(top2-top1>=1) = 1;
-    r.Supremum(top2-top1<1) = max(cos(obj.Infimum(top2-top1<1)),cos(obj.Supremum(top2-top1<1)));
+
+    r.Infimum(btmEnv) = -1;
+    r.Infimum(~btmEnv) = min(cos(wrapToPi(obj.Infimum(~btmEnv))),...
+                             cos(wrapToPi(obj.Supremum(~btmEnv))));
+    r.Supremum(topEnv) = 1;
+    r.Supremum(~topEnv) = max(cos(wrapToPi(obj.Infimum(~topEnv))),...
+                              cos(wrapToPi(obj.Supremum(~topEnv))));
 
 end  

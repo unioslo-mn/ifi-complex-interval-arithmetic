@@ -53,7 +53,7 @@ function r = times(obj1,obj2)
     for m = 1:M
         for n = 1:N
             % Calculate product
-            r(m,n).Points = {reshape(obj1.Points{:} * obj2.Points{:}.' ,[],1)};
+            r(m,n).Points = {reshape(obj1.Points * obj2.Points.' ,[],1)};
             r(m,n).Points = r(m,n).Boundary;
         end
     end

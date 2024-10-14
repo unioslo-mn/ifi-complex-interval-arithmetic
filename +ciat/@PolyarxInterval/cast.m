@@ -29,8 +29,7 @@ function outObj = cast(inObj,inObj2)
                 arx = [real(inObj.Center),imag(inObj.Center),inObj.Radius,pi];
             else
                 if isa(inObj2,'ciat.PolarInterval')
-                    arx = ciat.PolyarxInterval.castPolarTimesCircular(...
-                                                        inObj2,inObj);
+                    arx = castPolarTimesCircular(inObj2,inObj);
                 else
                     error('Invalid input type at position 2')
                 end

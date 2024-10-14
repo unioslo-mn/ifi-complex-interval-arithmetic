@@ -72,8 +72,7 @@ function outObj = cast(inObj,inObj2,options)
                                 exp(1j*angles(2:end)) + inCenter;
             else
                 if isa(inObj2,'ciat.PolarInterval')
-                    outPoints = ciat.PolygonalInterval.castPolarTimesCircular(...
-                                                        inObj2,inObj,dR);
+                    outPoints = castPolarTimesCircular(inObj2,inObj,dR);
                 else
                     error('Invalid input type at position 2')
                 end

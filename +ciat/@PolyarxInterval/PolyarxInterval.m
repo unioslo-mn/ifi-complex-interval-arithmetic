@@ -361,9 +361,9 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         %% Other functions
 
         % Sample
-        function value = sample(obj, nPoints)
+        function points = sample(obj, nPoints)
             [M,N] = size(obj);
-            value = cell(M,N);
+            points = cell(M,N);
             for m = 1:M
                 for n = 1:N
                     % Sample arcs and edges
@@ -377,8 +377,12 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     % allPoints = allPoints(:);
                     % value{m,n} = [allPoints{:}];
                     idx = convhull(real(allPoints),imag(allPoints));
-                    value{m,n} = allPoints(idx);
+                    points{m,n} = allPoints(idx);
                 end
+            end
+
+            if M*N == 1
+                points = points{:};
             end
         end
 

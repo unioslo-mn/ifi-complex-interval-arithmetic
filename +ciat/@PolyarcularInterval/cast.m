@@ -66,8 +66,7 @@ function outObj = cast(inObj,inObj2)
                 outArcs = ciat.Arc(inCenter,inRadius,ciat.RealInterval(-pi,pi));
             else
                 if isa(inObj2,'ciat.PolarInterval')
-                    outArcs = ciat.PolyarcularInterval.castPolarTimesCircular(...
-                                                        inObj2,inObj);
+                    outArcs = castPolarTimesCircular(inObj2,inObj);
                 else
                     error('Invalid input type at position 2')
                 end

@@ -43,4 +43,7 @@ function points = sample(obj, nPoints)
         end
     end
 
+    if M*N == 1
+        points = points{:};
+    end
 end        

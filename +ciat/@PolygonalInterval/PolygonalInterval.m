@@ -148,13 +148,21 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         % Get points (retrieve from hidden property Boundary)
         function value = get.Points(obj)
             value = obj.Boundary;
+            if length(value) == 1
+                value = value{:};
+            end
         end
         
         %% Dependent properties
                         
         % Get point count
         function value = get.PointCount(obj)
-            value = cellfun(@length,obj.Points);
+            points = obj.Points;
+            if isa(points,'cell')
+                value = cellfun(@length,points);
+            else
+                value = length(points);
+            end
         end
         
         % Real
@@ -164,8 +172,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             maxReal = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    minReal(m,n) = min(real(obj.Points{m,n}));
-                    maxReal(m,n) = max(real(obj.Points{m,n}));
+                    minReal(m,n) = min(real(obj(m,n).Points));
+                    maxReal(m,n) = max(real(obj(m,n).Points));
                 end
             end
 
@@ -198,8 +206,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             maxImag = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    minImag(m,n) = min(imag(obj.Points{m,n}));
-                    maxImag(m,n) = max(imag(obj.Points{m,n}));
+                    minImag(m,n) = min(imag(obj(m,n).Points));
+                    maxImag(m,n) = max(imag(obj(m,n).Points));
                 end
             end
 
@@ -232,8 +240,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             maxAbs = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    edges = ciat.Edge(obj.Points{m,n} , ...
-                                         circshift(obj.Points{m,n},-1));
+                    edges = ciat.Edge(obj(m,n).Points , ...
+                                         circshift(obj(m,n).Points,-1));
                     minAbs(m,n) = min(edges.Abs.Infimum);
                     maxAbs(m,n) = max(edges.Abs.Supremum);
                 end
@@ -271,26 +279,23 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             [M,N] = size(obj);
             minAng = zeros(M,N);
             maxAng = zeros(M,N);
-            pointIn = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    % minAng(m,n) = min(angle(obj.Points{m,n}));
-                    % maxAng(m,n) = min(angle(obj.Points{m,n}));
-                    % pointIn(m,n) = obj.PointCount >= 3 && ...
-                    %               inpolygon(0,0,real(obj.Points{m,n}), ...
-                    %                             imag(obj.Points{m,n}));
-
-                    points = obj.Points{m,n};
+                    points = obj(m,n).Points;
                     if obj(m,n).isin(0)
                         minAng(m,n) = -pi;
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
                            obj(m,n).Real.Supremum < 0
-                        minAng(m,n) = min(wrapToPi(angle(points)+pi))+pi;
-                        maxAng(m,n) = max(wrapToPi(angle(points)+pi))+pi;
+                        % minAng(m,n) = min(wrapToPi(angle(points)+pi))+pi;
+                        % maxAng(m,n) = max(wrapToPi(angle(points)+pi))+pi;
+                        pAng = angle(points);
+                        minAng(m,n) = min(pAng(pAng>=0)) - 2*pi;
+                        maxAng(m,n) = max(pAng(pAng<0));
                     else
-                        minAng(m,n) = min(angle(points));
-                        maxAng(m,n) = max(angle(points));
+                        pAng = angle(points);
+                        minAng(m,n) = min(pAng);
+                        maxAng(m,n) = max(pAng);
                     end
                 end
             end
@@ -362,6 +367,42 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         
         
         %% Other functions
+
+        % Equal
+        function r = eq(obj1,obj2)
+            % Equality of circular intervals
+            %
+            % This function checks if two polygonal intervals are equal
+            % _________________________________________________________________________
+            % USAGE
+            %   r = eq(obj1,obj2)
+            % _________________________________________________________________________
+            % NECESSARY ARGUMENTS
+            %   obj1      : array of objects from the ciat.PolygonalInterval class
+            %   obj2      : array of objects from the ciat.PolygonalInterval class
+            % _________________________________________________________________________
+            % OPTIONS
+            % _________________________________________________________________________
+            % EXAMPLES
+            %
+            % _________________________________________________________________________
+            [M1,N1] = size(obj1);
+            [M2,N2] = size(obj2);
+            assert(M1 == M2 && N1 == N2, "Arrays have incompatible sizes for this operation.")
+            r = false(M1,N1);
+            for m = 1:M1
+            for n = 1:N1
+                if obj1(m,n).PointCount == obj2(m,n).PointCount
+                    r(m,n) = all(obj1(m,n).Points == obj2(m,n).Points);
+                end
+            end
+            end
+        end
+
+        % Not equal
+        function r = ne(obj1,obj2)
+            r = ~(obj1 == obj2);
+        end
 
         % In interval
         function r = ininterval(obj,points)
@@ -494,8 +535,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                 for n = 1:N
                     if obj.PointCount(m,n) >= 2
                         r(m,n) = inpolygon(real(x),imag(x),...
-                                           real(obj.Points{m,n}), ...
-                                           imag(obj.Points{m,n})); 
+                                           real(obj(m,n).Points), ...
+                                           imag(obj(m,n).Points)); 
                     end
                 end
             end
@@ -537,7 +578,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                points = cat(1,obj(n).Points{:}, obj(n).Points{1});
+                points = cat(1,obj(n).Points, obj(n).Points(1));
                 h = [h;plot(real(points), imag(points), varargin{:})];    
             end
             if tf == false 

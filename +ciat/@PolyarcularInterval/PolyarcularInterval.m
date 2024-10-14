@@ -256,9 +256,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         % Sample
-        function value = sample(obj, nPoints)
+        function points = sample(obj, nPoints)
             [M,N] = size(obj);
-            value = cell(M,N);
+            points = cell(M,N);
             for m = 1:M
                 for n = 1:N
                     % Sample arcs and edges
@@ -271,8 +271,12 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Interleave arc and edge samples
                     allPoints = [arcPoints.';edgePoints.'];
                     allPoints = allPoints(:);
-                    value{m,n} = [allPoints{:}].';
+                    points{m,n} = [allPoints{:}].';
                 end
+            end
+
+            if M*N == 1
+                points = points{:};
             end
         end
 
