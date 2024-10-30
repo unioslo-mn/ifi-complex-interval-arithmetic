@@ -336,8 +336,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                     if obj.PointCount(m,n) == 0
                         value(m,n) = nan;
                     else
-                        value(m,n) = polyarea(real(obj(m,n).Points{:}), ...
-                                              imag(obj(m,n).Points{:}));
+                        value(m,n) = polyarea(real(obj(m,n).Points), ...
+                                              imag(obj(m,n).Points));
                     end
                 end
             end

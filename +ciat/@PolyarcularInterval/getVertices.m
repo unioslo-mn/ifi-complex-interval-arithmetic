@@ -2,8 +2,8 @@
 function [vertices,varargout] = getVertices(obj)
 
     % Extract elements
-    arcs = obj.Arcs{:};
-    edges = obj.Edges{:};
+    arcs = obj.Arcs;
+    edges = obj.Edges;
     arcStart = arcs.Startpoint;
     arcEnd = arcs.Endpoint;
     arcRadius = arcs.Radius;

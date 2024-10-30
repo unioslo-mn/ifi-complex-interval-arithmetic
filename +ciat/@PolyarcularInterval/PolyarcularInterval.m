@@ -102,6 +102,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     value{m,n} = value{m,n}(value{m,n}.Length~=0);
                 end
             end
+
+            if M*N==1
+                value = value{:};
+            end
         end               
 
         % Get implicit edges
@@ -116,6 +120,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     value{m,n} = edges(edges.Length>10*eps);
                 end
             end
+
+            if M*N==1
+                value = value{:};
+            end
         end
 
         % Get implicit vertices
@@ -128,6 +136,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                 for n = 1:N
                     [value{m,n},~] = obj(m,n).getVertices;
                 end
+            end
+
+            if M*N==1
+                value = value{:};
             end
         end
 
@@ -235,7 +247,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                                   obj.ArcStorage{m,n}.Endpoint].';
                         polygonArea = polyarea(real(points(:)), ...
                                                imag(points(:)));
-                        arcArea = sum(obj.Arcs{m,n}.Area);
+                        arcArea = sum(obj(m,n).Arcs.Area);
                         value(m,n) = polygonArea + arcArea;
                     end
                 end
@@ -397,8 +409,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                h = [h;obj.Arcs{n}.plot(varargin{:})];    
-                h = [h;obj.Edges{n}.plot(varargin{:})];    
+                h = [h;obj(n).Arcs.plot(varargin{:})];    
+                h = [h;obj(n).Edges.plot(varargin{:})];    
             end
             if tf == false 
                 hold off

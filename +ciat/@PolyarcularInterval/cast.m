@@ -92,7 +92,7 @@ function outObj = cast(inObj,inObj2)
             N = inObj.PointCount;
             outArcs(N,1) = ciat.Arc;
             for n = 1:N
-                outArcs(n) = ciat.Arc(inObj.Points{:}(n),0,0);
+                outArcs(n) = ciat.Arc(inObj.Points(n),0,0);
             end
         otherwise
             error('Invalid input type at position 1')

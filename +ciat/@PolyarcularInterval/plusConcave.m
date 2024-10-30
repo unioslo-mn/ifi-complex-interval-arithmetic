@@ -2,11 +2,11 @@ function r = plusConcave(obj1,obj2)
     
     % Extract curve segments by type
     %   - extract arcs including vertices
-    arc1 = [obj1.Arcs{:} ; obj1.Vertices{:}];
-    arc2 = [obj2.Arcs{:} ; obj2.Vertices{:}];
+    arc1 = [obj1.Arcs ; obj1.Vertices];
+    arc2 = [obj2.Arcs ; obj2.Vertices];
     %   - extract edges with non-zero length
-    edge1 = obj1.Edges{:};
-    edge2 = obj2.Edges{:};    
+    edge1 = obj1.Edges;
+    edge2 = obj2.Edges;    
     
     % Add arcs and vertices
     arcPlusArc = arc1 + arc2.';
