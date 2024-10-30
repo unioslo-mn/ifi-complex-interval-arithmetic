@@ -29,7 +29,14 @@ function r = times(obj1,obj2)
 
     % Check input class
     mustBeA(obj1,["ciat.PolarInterval","double"]);
-    mustBeA(obj2,["ciat.PolarInterval","double"]);
+    mustBeA(obj2,["ciat.PolarInterval","ciat.PolyarxInterval","double"]);
+
+    % Reroute if second is a polyarx interval
+    if isa(obj2,"ciat.PolyarxInterval")
+        r = obj2 .* obj1;
+        return
+    end
+
     
     % Get input sizes and check if they can be added
     [M1,N1] = size(obj1);

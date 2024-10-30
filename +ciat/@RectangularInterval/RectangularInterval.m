@@ -26,6 +26,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
     end
     
      properties (Dependent)
+        Points; % Corner points of the rectangle in complex values
+        Edges;  % Edges of the rectangle in ciat.Edge type
         Abs;    % Projection of the rectangular interval to the absolute value axis
         Angle;  % Projection of the rectangular interval to the angle axis
         Area;   % Area of the rectangular interval
@@ -173,11 +175,37 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         %% Dependent properties
         
+        % Points
+        function value = get.Points(obj)
+            [M,N] = size(obj);
+            value = zeros(M,N,4);
+            value(:,:,1) = complex([obj.Real.Infimum] , [obj.Imag.Infimum]);
+            value(:,:,2) = complex([obj.Real.Infimum] , [obj.Imag.Supremum]);
+            value(:,:,3) = complex([obj.Real.Supremum] , [obj.Imag.Supremum]);
+            value(:,:,4) = complex([obj.Real.Supremum] , [obj.Imag.Infimum]);
+            value = num2cell(value,3);
+            value = cellfun(@(x) x(:),value,'UniformOutput',false);
+        end
+
+        % % Edges
+        function value = get.Edges(obj)
+            value = cellfun(@(x) ciat.Edge(x,circshift(x,-1)),...
+                            obj.Points,'UniformOutput',false);
+        end
+
         % Abs
         function value = get.Abs(obj)
-            value = sqrt( abs(obj.Real) * abs(obj.Real) +... 
-                          abs(obj.Imag) * abs(obj.Imag) );
-            value.Infimum(obj.ininterval(0)) = 0;
+            value = cellfun(@(x) ciat.RealInterval(min(x.Abs.Infimum), ...
+                                                   max(x.Abs.Supremum)), ...
+                            obj.Edges,'UniformOutput',false);
+            [M,N] = size(obj);
+            value = reshape([value{:}],M,N); 
+
+            % Check for intervals that contain the zero
+            pointIn = obj.isin(0);
+            if any(pointIn,'all')
+                value(pointIn).Infimum = 0;
+            end
         end
         function value = abs(obj)
         % Absolute value of rectangular intervals
@@ -201,19 +229,26 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            alt = zeros(1,4);
-            alt(1) = obj.Real.Infimum  + 1j*obj.Imag.Infimum;
-            alt(2) = obj.Real.Infimum  + 1j*obj.Imag.Supremum;
-            alt(3) = obj.Real.Supremum + 1j*obj.Imag.Infimum;
-            alt(4) = obj.Real.Supremum + 1j*obj.Imag.Supremum;
-            value = ciat.RealInterval(min(angle(alt)) , max(angle(alt)));
-            
-            value.Infimum(obj.Real.Infimum <= 0 & ...
-                          obj.Imag.Infimum <= 0 & ...
-                          obj.Imag.Supremum >= 0) = 0;
-            value.Supremum(obj.Real.Infimum <= 0 & ...
-                           obj.Imag.Infimum <= 0 & ...
-                           obj.Imag.Supremum >= 0) = 2*pi;
+            [M,N] = size(obj);
+            minAng = zeros(M,N);
+            maxAng = zeros(M,N);
+            for m = 1:M
+                for n = 1:N
+                    edges = obj.Edges{m,n};
+                    if obj(m,n).isin(0)
+                        minAng(m,n) = -pi;
+                        maxAng(m,n) = pi;
+                    elseif obj(m,n).Imag.isin(0) && ...
+                           obj(m,n).Real.Supremum < 0
+                        minAng(m,n) = min(wrapToPi(inf(angle(edges)+pi)))+pi;
+                        maxAng(m,n) = max(wrapToPi(sup(angle(edges)+pi)))+pi;
+                    else
+                        minAng(m,n) = min(inf(angle(edges)));
+                        maxAng(m,n) = max(sup(angle(edges)));
+                    end
+                end
+            end
+            value = ciat.RealInterval( minAng,maxAng );
         end
         function value = angle(obj)
         % Angle of rectangular intervals
@@ -562,7 +597,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         end
         
         % Union
-        function r = union(obj)
+        function r = union(obj,varargin)
         % Union of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -582,12 +617,15 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             N = length(obj(:));
             assert(N>1)
-            r = ciat.RectangularInterval(union([obj.Real]) , ...
-                                         union([obj.Imag]));
+            r = ciat.RectangularInterval(union(obj.Real,varargin{:}) , ...
+                                         union(obj.Imag,varargin{:}));
+        end
+        function r = cup(obj,varargin)
+            r = union(obj,varargin{:});
         end
         
         % Intersection
-        function r = intersection(obj)
+        function r = intersection(obj,varargin)
         % Intersection of rectangular intervals
         %
         % This function creates the rectangular interval representing the 
@@ -605,10 +643,22 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   rectInt = intersection([ciat.RectangularInterval(0,1,2,3), ...
         %                    ciat.RectangularInterval(2,3,4,5)]);
         % _________________________________________________________________________
-            N = length(obj(:));
-            assert(N>1)
-            r = ciat.RectangularInterval(intersection([obj.Real]) , ...
-                                         intersection([obj.Imag]));
+            if isempty(varargin) || isa(varargin{1},'double')
+                r = ciat.RectangularInterval( ...
+                                intersection(obj.Real,varargin{:}) , ...
+                                intersection(obj.Imag,varargin{:}));
+            elseif isa(varargin{1},'ciat.RectangularInterval')
+                obj2 = varargin{1};
+                r = ciat.RectangularInterval( ...
+                                intersection(obj.Real,obj2.Real) , ...
+                                intersection(obj.Imag,obj2.Imag));
+            else
+                error('Incorrect input type')
+            end
+        end
+
+        function r = cap(obj,varargin)
+            r = intersection(obj,varargin{:});
         end
         
         % Negative (uminus)
@@ -634,6 +684,16 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             r.Real = -r.Real;
             r.Imag = -r.Imag;
         end  
+
+        % Inside
+        function r = isin(obj,x)
+            r = obj.Real.isin(real(x)) & obj.Imag.isin(imag(x));
+        end
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end
         
         % Plot
         function h = plot(obj, varargin)
@@ -654,6 +714,9 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.RectangularInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];
@@ -709,8 +772,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
 
                 % Instanciate object with zero values of correct size.
                 obj = ciat.RectangularInterval;
-                obj.Real = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-                obj.Imag = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Real = ciat.RealInterval(nan([indexOp.Indices{:}]), nan([indexOp.Indices{:}]));
+                obj.Imag = ciat.RealInterval(nan([indexOp.Indices{:}]), nan([indexOp.Indices{:}]));
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);

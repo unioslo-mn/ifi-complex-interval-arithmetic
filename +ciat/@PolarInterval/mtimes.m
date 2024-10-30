@@ -32,10 +32,26 @@ function r = mtimes(obj1,obj2)
 
     % Check input class
     mustBeA(obj1,["ciat.PolarInterval","double"]);
-    mustBeA(obj2,["ciat.PolarInterval","double"]);
+    mustBeA(obj2,["ciat.PolarInterval","ciat.PolyarxInterval","double"]);
    
-    % Calculate product using the times function
-    warning(['No plus method implemented for polar intervals, ',...
-             'using times function instead (.*)'])
-    r = obj1 .* obj2;
+        % Reroute if second is a polyarx interval
+    if isa(obj2,"ciat.PolyarxInterval")
+        r = obj2 * obj1;
+        return
+    end
+    
+    % Get input sizes and check if they can be added
+    [M1,N1] = size(obj1);
+    [M2,N2] = size(obj2);
+    assert(N1 == M2 || (M1 == 1 && N1 == 1) || (M2 == 1 && N2 == 1) )
+    
+    % Turn scalars to degenerate intervals
+    if isa(obj1, 'double')
+        obj1 = ciat.PolarInterval(abs(obj1), angle(obj1));
+    end
+    if isa(obj2, 'double')
+        obj2 = ciat.PolarInterval(abs(obj2), angle(obj2));
+    end 
+
+    r = ciat.PolarInterval(obj1.Abs * obj2.Abs, obj1.Angle + obj2.Angle);
 end 

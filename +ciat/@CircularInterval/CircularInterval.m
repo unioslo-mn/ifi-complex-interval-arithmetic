@@ -435,7 +435,17 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             r = obj1 + (-obj2);
         end
-                
+
+        % Inside
+        function r = isin(obj,x)
+            r = abs(x - obj.Center) <= obj.Radius;
+        end
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end
+        
         % Plot
         function h = plot(obj, varargin)
         % Plot circular intervals 
@@ -455,6 +465,9 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.CircularInterval(0,1));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];
@@ -474,12 +487,14 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
         r = mtimes(obj1,obj2)
         r = times(obj1,obj2)
         r = union(obj)        
+        points = sample(obj, nPoints)
     end
     
     methods (Static)
        outObj = cast(inObj)
     end
 
+    %% Vectorization
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')
@@ -501,8 +516,8 @@ classdef CircularInterval < matlab.mixin.indexing.RedefinesParen
 
                 % Instanciate object with zero values of correct size.
                 obj = ciat.CircularInterval;
-                obj.Center = zeros([indexOp.Indices{:}]);
-                obj.Radius = zeros([indexOp.Indices{:}]);
+                obj.Center = nan([indexOp.Indices{:}]);
+                obj.Radius = nan([indexOp.Indices{:}]);
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);

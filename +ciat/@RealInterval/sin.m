@@ -36,13 +36,18 @@ function r = sin(obj)
     r(M,N) = ciat.RealInterval;
 
     % With vectorized operations
-    bot1 = ceil((obj.Infimum + pi/2)/(2*pi));
-    bot2 = ceil((obj.Supremum + pi/2)/(2*pi));
+    btm1 = ceil((obj.Infimum + pi/2)/(2*pi));
+    btm2 = ceil((obj.Supremum + pi/2)/(2*pi));
+    btmEnv = btm2-btm1>=1;
     top1 = ceil((obj.Infimum - pi/2)/(2*pi));
     top2 = ceil((obj.Supremum - pi/2)/(2*pi));
+    topEnv = top2-top1>=1;
 
-    r.Infimum(bot2-bot1>=1) = -1;
-    r.Infimum(bot2-bot1<1) = min(sin(obj.Infimum(bot2-bot1<1)),sin(obj.Supremum(bot2-bot1<1)));
-    r.Supremum(top2-top1>=1) = 1;
-    r.Supremum(top2-top1<1) = max(sin(obj.Infimum(top2-top1<1)),sin(obj.Supremum(top2-top1<1)));
+    r.Infimum(btmEnv) = -1;
+    r.Infimum(~btmEnv) = min(sin(wrapToPi(obj.Infimum(~btmEnv))), ...
+                             sin(wrapToPi(obj.Supremum(~btmEnv))));
+    r.Supremum(topEnv) = 1;
+    r.Supremum(~topEnv) = max(wrapToPi(sin(obj.Infimum(~topEnv))), ...
+                              wrapToPi(sin(obj.Supremum(~topEnv))));
+    
 end 

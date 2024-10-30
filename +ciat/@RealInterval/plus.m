@@ -34,10 +34,9 @@ function r = plus(obj1,obj2)
     % Get input sizes and check if they can be added
     [M1,N1] = size(obj1);
     [M2,N2] = size(obj2);
-    assert(M1 == M2 || M1 == 1 || M2 == 1)
-    assert(N1 == N2 || N1 == 1 || N2 == 1)
-    % M = max([M1,M2]);
-    % N = max([N1,N2]);
+    assert( (M1 == M2 || M1 == 1 || M2 == 1) && ...
+            (N1 == N2 || N1 == 1 || N2 == 1 ) || ...
+            (N1 == M2 || (M1 == 1 && N1 == 1) || (M2 == 1 && N2 == 1)))
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'ciat.RealInterval') == 0

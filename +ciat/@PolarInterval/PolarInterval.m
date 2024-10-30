@@ -55,7 +55,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         % double type input this results in degenerate intervals.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.PolarInterval(center,radius)
+        %   ciat.PolarInterval(absMin,absMax,angleMin,angleMax)
         %   ciat.PolarInterval(obj)
         %   ciat.PolarInterval
         % _________________________________________________________________________
@@ -86,8 +86,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
                     [M,N] = size(varargin{1});
                     obj(M,N) = obj;
                     for n = 1:M*N
-                        obj(n) = ciat.PolarInterval.cast(...
-                                                        varargin{1}(n));
+                        obj(n) = ciat.PolarInterval.cast(varargin{1}(n));
                     end
                 case 2
                     % Two input arguments of real intervals is the default
@@ -230,8 +229,8 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         
         % Area
         function value = get.Area(obj)
-            value = 0.5 * width(obj.Angle) * ( obj.Abs.Supremum^2 - ...
-                                               obj.Abs.Infimum^2 );
+            value = 0.5 * width(obj.Angle) .* ( obj.Abs.Supremum.^2 - ...
+                                                obj.Abs.Infimum.^2 );
         end 
         function value = area(obj)
         % Area of polar intervals
@@ -414,7 +413,38 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
             for n = 1:length(r(:))
                 r(n).Angle = r(n).Angle + pi;
             end
-        end   
+        end    
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end 
+
+        % Inside
+        function r = isin(obj,x)
+            % Check if the point is in between the circles
+            inCircle = obj.Abs.isin( abs(x) );
+
+            % Check if the point is in the sector
+            % inSector = abs(wrapToPi( angle(x) - obj.Angle.Infimum ) ) ...
+                                    % <= obj.Angle.Width;
+            xAng = angle(x);
+            if any(obj.Angle.isin([-pi,pi]))
+                inSector = (xAng>=0 & xAng >= wrapToPi(obj.Angle.Infimum))| ...
+                           (xAng <0 & xAng <= wrapToPi(obj.Angle.Supremum));
+            else
+                inSector = xAng >= obj.Angle.Infimum & ...
+                           xAng <= obj.Angle.Supremum;
+            end
+            
+
+            % Check if the point is in the rectangle around the circle
+            arcBox = ciat.RectangularInterval(obj);
+            inBox = arcBox.isin(x);
+
+            % Combine conditions
+            r = inCircle & inSector & inBox;
+        end
         
         % Plot
         function h = plot(obj, varargin)
@@ -435,6 +465,9 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
         %   h = plot(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];
@@ -465,6 +498,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
        outObj = cast(inObj)
     end
 
+    %% Vectorization
     methods (Access=protected)
         function varargout = parenReference(obj, indexOp)
             % disp('parenReference')
@@ -487,8 +521,10 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
 
                 % Instanciate object with zero values of correct size.
                 obj = ciat.PolarInterval;
-                obj.Abs = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
-                obj.Angle = ciat.RealInterval(zeros([indexOp.Indices{:}]), zeros([indexOp.Indices{:}]));
+                obj.Abs = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                            nan([indexOp.Indices{:}]));
+                obj.Angle = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                              nan([indexOp.Indices{:}]));
 
                 % obj = varargin{1};
                 varargin{1} = obj.(indexOp);

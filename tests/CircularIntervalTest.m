@@ -24,12 +24,17 @@ classdef CircularIntervalTest < matlab.unittest.TestCase
     
     methods(Test)
         
-        % function real(testCase)
-        %     testCase.verifyEqual(real(testCase.circInt1), ciat.RealInterval(0, 1));
-        %     testCase.verifyEqual(real(testCase.circInt4), ciat.RealInterval([0, 2], [1, 3]));
-        %     testCase.verifyEqual(real(testCase.circInt6), ciat.RealInterval([0; 2], [1; 3]));
-        %     testCase.verifyEqual(real(testCase.circInt8), ciat.RealInterval([0, 2; 1, 3], [1, 3; 2, 4]));
-        % end
+        function real(testCase)
+            testCase.verifyEqual(real(testCase.circInt1), ciat.RealInterval(-1, 1));
+            testCase.verifyEqual(real(testCase.circInt2), ciat.RealInterval(-1, 3));
+            testCase.verifyEqual(real(testCase.circInt3), ciat.RealInterval(-1, 5));
+            testCase.verifyEqual(real(testCase.circInt4), ciat.RealInterval([-1, -1], [1, 5]));
+            testCase.verifyEqual(real(testCase.circInt5), ciat.RealInterval([-1, -1], [3, 7]));
+            testCase.verifyEqual(real(testCase.circInt6), ciat.RealInterval([-1; -1], [1; 5]));
+            testCase.verifyEqual(real(testCase.circInt7), ciat.RealInterval([-1; -1], [3; 7]));
+            testCase.verifyEqual(real(testCase.circInt8), ciat.RealInterval([-1, -1; -1, -1], [1, 5; 3, 7]));
+            testCase.verifyEqual(real(testCase.circInt9), ciat.RealInterval([-1, -1; -1, -1], [3, 7; 5, 9]));
+        end
         
         % function imag(testCase)
         %     testCase.verifyEqual(imag(testCase.circInt1), ciat.RealInterval(-1, 1));
