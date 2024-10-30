@@ -36,30 +36,14 @@ function r = plus(obj1,obj2)
     [M2,N2] = size(obj2);
     assert(M1 == M2 || M1 == 1 || M2 == 1)
     assert(N1 == N2 || N1 == 1 || N2 == 1)
-    M = max([M1,M2]);
-    N = max([N1,N2]);
     
     % Turn scalars to degenerate intervals
     if isa(obj1, 'double')
-        obj1 = ciat.CircularInterval(obj1, 0);
+        obj1 = ciat.CircularInterval(obj1, zeros(M1,N1));
     end
     if isa(obj2, 'double')
-        obj2 = ciat.CircularInterval(obj2, 0);
+        obj2 = ciat.CircularInterval(obj2, zeros(M2,N2));
     end 
             
-    % Loop throught the arrays
-    r(M,N) = ciat.CircularInterval;
-    for m=1:M
-        for n=1:N
-            % Calculate indexes
-            m1 = min(m,M1);
-            n1 = min(n,N1);
-            m2 = min(m,M2);
-            n2 = min(n,N2);
-            
-            % Calculate sum
-            r(m,n).Center = obj1(m1,n1).Center + obj2(m2,n2).Center;
-            r(m,n).Radius = obj1(m1,n1).Radius + obj2(m2,n2).Radius;
-        end
-    end
+    r = ciat.CircularInterval(obj1.Center + obj2.Center, obj1.Radius + obj2.Radius);
 end

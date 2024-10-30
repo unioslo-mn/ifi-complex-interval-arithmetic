@@ -1,4 +1,4 @@
-classdef PolarInterval
+classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
 
 % Polar interval class for complex interval arithmetic calculations
 %
@@ -55,7 +55,7 @@ classdef PolarInterval
         % double type input this results in degenerate intervals.
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.PolarInterval(center,radius)
+        %   ciat.PolarInterval(absMin,absMax,angleMin,angleMax)
         %   ciat.PolarInterval(obj)
         %   ciat.PolarInterval
         % _________________________________________________________________________
@@ -86,8 +86,7 @@ classdef PolarInterval
                     [M,N] = size(varargin{1});
                     obj(M,N) = obj;
                     for n = 1:M*N
-                        obj(n) = ciat.PolarInterval.cast(...
-                                                        varargin{1}(n));
+                        obj(n) = ciat.PolarInterval.cast(varargin{1}(n));
                     end
                 case 2
                     % Two input arguments of real intervals is the default
@@ -111,17 +110,9 @@ classdef PolarInterval
                     N = N1;
                     
                     % Create object array
-                    if M * N > 0
-                        obj(M,N) = obj;
-                        for m = 1:M
-                            for n = 1:N
-                                obj(m,n).Abs = varargin{1}(m,n);
-                                obj(m,n).Angle = varargin{2}(m,n);
-                            end
-                        end
-                    else
-                        obj = ciat.PolarInterval.empty;
-                    end
+                    obj(M,N) = obj;
+                    obj.Abs = varargin{1};
+                    obj.Angle = varargin{2};
                 case 4
                     % Four input arguments of doubles is also a default way
                     % of defining polar intervals 
@@ -137,20 +128,8 @@ classdef PolarInterval
                     [M4,N4] = size(varargin{4});
                     assert(var([M1,M2,M3,M4]) == 0 && ...
                            var([N1,N2,N3,N4]) == 0)
-                    M = M1;
-                    N = N1;
-                    % Create object array
-                    obj(M,N) = obj;
-                    for m = 1:M
-                        for n = 1:N
-                            obj(m,n).Abs = ciat.RealInterval(...
-                                                        varargin{1}(m,n),...
-                                                        varargin{2}(m,n));
-                            obj(m,n).Angle = ciat.RealInterval(...
-                                                        varargin{3}(m,n),...
-                                                        varargin{4}(m,n));
-                        end
-                    end
+                    obj.Abs = ciat.RealInterval(varargin{1},varargin{2});
+                    obj.Angle = ciat.RealInterval(varargin{3},varargin{4});
             end
         end
         
@@ -174,8 +153,7 @@ classdef PolarInterval
         % EXAMPLES
         %   polarInt = abs(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Abs],M,N);
+            value = obj.Abs;
         end
         
         % Angle
@@ -196,15 +174,14 @@ classdef PolarInterval
         % EXAMPLES
         %   polarInt = abs(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
-           [M,N] = size(obj);
-            value = reshape([obj.Angle],M,N);
+            value = obj.Angle;
         end
         
         %% Dependent properties
         
         % Real
         function value = get.Real(obj)
-            value = obj.Abs * cos( obj.Angle );
+            value = obj.Abs .* cos( obj.Angle );
         end
         function value = real(obj)
         % Real value of polar intervals
@@ -223,8 +200,7 @@ classdef PolarInterval
         % EXAMPLES
         %   polarInt = real(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
-           [M,N] = size(obj);
-            value = reshape([obj.Real],M,N);
+            value = obj.Real;
         end
         
         % Imag
@@ -248,14 +224,13 @@ classdef PolarInterval
         % EXAMPLES
         %   polarInt = imag(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Imag],M,N);
+            value = obj.Imag;
         end
         
         % Area
         function value = get.Area(obj)
-            value = 0.5 * width(obj.Angle) * ( obj.Abs.Supremum^2 - ...
-                                               obj.Abs.Infimum^2 );
+            value = 0.5 * width(obj.Angle) .* ( obj.Abs.Supremum.^2 - ...
+                                                obj.Abs.Infimum.^2 );
         end 
         function value = area(obj)
         % Area of polar intervals
@@ -274,8 +249,7 @@ classdef PolarInterval
         % EXAMPLES
         %   polarInt = abs(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
-            [M,N] = size(obj);
-            value = reshape([obj.Area],M,N);
+            value = obj.Area;
         end
        
         %% Other methods
@@ -300,7 +274,8 @@ classdef PolarInterval
                     [M1,N1] = size(obj1);
                     [M2,N2] = size(obj2);
                     assert(M1 == M2 && N1 == N2)
-                    r = all([obj1.Abs] == [obj2.Abs]) && all([obj1.Angle] == [obj2.Angle]);
+                    r = all(obj1.Abs == obj2.Abs, "all") && ...
+                        all(obj1.Angle == obj2.Angle, "all");
         end
 
         function r = ne(obj1,obj2)
@@ -323,7 +298,47 @@ classdef PolarInterval
             [M1,N1] = size(obj1);
             [M2,N2] = size(obj2);
             assert(M1 == M2 && N1 == N2)
-            r = any([obj1.Abs] ~= [obj2.Abs]) && any([obj1.Angle] ~= [obj2.Angle]);
+            r = any(obj1.Abs ~= obj2.Abs, "all") || ...
+                any(obj1.Angle ~= obj2.Angle, "all");
+        end
+
+        function r = transpose(obj)
+            r = obj;
+            r.Abs = r.Abs.';
+            r.Angle = r.Angle.';
+        end
+
+        function r = ctranspose(obj)
+            r = obj;
+            r.Abs = r.Abs.';
+            r.Angle = -r.Angle.';
+        end
+
+        % In interval
+        function r = ininterval(obj, points)
+        % Check if points are in polar intervals
+        %
+        % This function checks if a set of points are in a set of
+        % polar intervals
+        % _________________________________________________________________________
+        % USAGE
+        %   r = ininterval(obj, points)
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENTS
+        %   obj       : array of objects from the ciat.PolarInterval class
+        %   points    : array of complex numbers
+        % _________________________________________________________________________
+        % OPTIONS
+        % _________________________________________________________________________
+        % EXAMPLES
+        %   r = ininterval(ciat.PolarInterval(0,1,2,3),[1,2,3,4,5]);
+        % _________________________________________________________________________
+            % r = obj.Abs.ininterval(abs(points)) & ...
+            %     obj.Angle.ininterval(angle(points));
+            % wrap angle interval to [-pi,pi]
+            r = obj.Abs.ininterval(abs(points)) & ...
+                sin(obj.Angle).ininterval(sin(angle(points))) & ...
+                cos(obj.Angle).ininterval(cos(angle(points)));
         end
 
         % Union
@@ -398,7 +413,38 @@ classdef PolarInterval
             for n = 1:length(r(:))
                 r(n).Angle = r(n).Angle + pi;
             end
-        end   
+        end    
+
+        % IsNaN
+        function r = isnan(obj)
+            r = isnan(obj.Area);
+        end 
+
+        % Inside
+        function r = isin(obj,x)
+            % Check if the point is in between the circles
+            inCircle = obj.Abs.isin( abs(x) );
+
+            % Check if the point is in the sector
+            % inSector = abs(wrapToPi( angle(x) - obj.Angle.Infimum ) ) ...
+                                    % <= obj.Angle.Width;
+            xAng = angle(x);
+            if any(obj.Angle.isin([-pi,pi]))
+                inSector = (xAng>=0 & xAng >= wrapToPi(obj.Angle.Infimum))| ...
+                           (xAng <0 & xAng <= wrapToPi(obj.Angle.Supremum));
+            else
+                inSector = xAng >= obj.Angle.Infimum & ...
+                           xAng <= obj.Angle.Supremum;
+            end
+            
+
+            % Check if the point is in the rectangle around the circle
+            arcBox = ciat.RectangularInterval(obj);
+            inBox = arcBox.isin(x);
+
+            % Combine conditions
+            r = inCircle & inSector & inBox;
+        end
         
         % Plot
         function h = plot(obj, varargin)
@@ -419,6 +465,9 @@ classdef PolarInterval
         %   h = plot(ciat.PolarInterval(0,1,2,3));
         % _________________________________________________________________________
             tf = ishold; 
+            if tf == false 
+                clf
+            end
             hold on
             [M,N] = size(obj); 
             h = [];
@@ -442,10 +491,106 @@ classdef PolarInterval
         points = sample(obj, n_points)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
+        r = exp(obj)
     end
     
     methods (Static)
        outObj = cast(inObj)
+    end
+
+    %% Vectorization
+    methods (Access=protected)
+        function varargout = parenReference(obj, indexOp)
+            % disp('parenReference')
+            obj.Abs = obj.Abs.(indexOp(1));
+            obj.Angle = obj.Angle.(indexOp(1));
+            if isscalar(indexOp)
+                varargout{1} = obj;
+                return;
+            end
+            [varargout{1:nargout}] = obj.(indexOp(2:end));
+        end
+
+        function obj = parenAssign(obj,indexOp,varargin)
+            % disp('parenAssign')
+            % Ensure object instance is the first argument of call.
+            if isempty(obj)
+                % This part is for initializing an array of objects
+                % such as doing obj(5,2) = ciat.PolarInterval
+                % Might not be the place or the way to do it
+
+                % Instanciate object with zero values of correct size.
+                obj = ciat.PolarInterval;
+                obj.Abs = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                            nan([indexOp.Indices{:}]));
+                obj.Angle = ciat.RealInterval(nan([indexOp.Indices{:}]), ...
+                                              nan([indexOp.Indices{:}]));
+
+                % obj = varargin{1};
+                varargin{1} = obj.(indexOp);
+            end
+            if isscalar(indexOp)
+                assert(nargin==3);
+                rhs = varargin{1};
+                obj.Abs.(indexOp) = rhs.Abs;
+                obj.Angle.(indexOp) = rhs.Angle;
+                return;
+            end
+            [obj.(indexOp(2:end))] = varargin{:};
+        end
+
+        function n = parenListLength(obj,indexOp,ctx)
+            % disp('parenListLength')
+            if numel(indexOp) <= 2
+                n = 1;
+                return;
+            end
+            containedObj = obj.(indexOp(1:2));
+            n = listLength(containedObj,indexOp(3:end),ctx);
+        end
+
+        function obj = parenDelete(obj,indexOp)
+            % disp('parenDelete')
+            obj.Abs.(indexOp) = [];
+            obj.Angle.(indexOp) = [];
+        end
+    end
+
+    methods (Access=public)
+        function out = cat(dim,varargin)
+            numCatArrays = nargin-1;
+            newArgs = cell(numCatArrays,1);
+            newArgs2 = cell(numCatArrays,1);
+            for ix = 1:numCatArrays
+                if isa(varargin{ix},'ciat.PolarInterval')
+                    newArgs{ix} = varargin{ix}.Abs;
+                    newArgs2{ix} = varargin{ix}.Angle;
+                else
+                    newArgs{ix} = varargin{ix};
+                end
+            end
+            out = ciat.PolarInterval(cat(dim,newArgs{:}), ...
+                                     cat(dim,newArgs2{:}));
+        end
+
+        function varargout = size(obj,varargin)
+            % disp('size')
+            [varargout{1:nargout}] = size(obj.Abs,varargin{:});
+        end
+    end
+
+    methods (Static, Access=public)
+        function obj = empty()
+            disp('empty')
+            obj = ciat.RectangularInterval;
+        end
+    end
+
+    methods
+        function obj = reshape(obj,varargin)
+            obj.Abs = reshape(obj.Abs,varargin{:});
+            obj.Angle = reshape(obj.Angle,varargin{:});
+        end
     end
 end
 

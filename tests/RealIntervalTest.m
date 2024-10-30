@@ -8,7 +8,7 @@ classdef RealIntervalTest < matlab.unittest.TestCase
         realInt1 = ciat.RealInterval(1,2);
         realInt2 = ciat.RealInterval(3,4);
         realInt3 = ciat.RealInterval(-1, 1);
-        realInt4 = ciat.RealInterval(-2, -1)
+        realInt4 = ciat.RealInterval(-2, -1);
 
         % 1x2 intervals
         realInt5 = ciat.RealInterval([1,3], [2,4]);
@@ -38,6 +38,64 @@ classdef RealIntervalTest < matlab.unittest.TestCase
 
             testCase.verifyEqual([testCase.realInt5.Infimum], [1,3]);
             
+        end
+
+        function assign(testCase)
+            % Test different ways to assign to a real interval
+
+            % One cell
+            testCase.realInt10(1,1).Infimum = 44;
+            testCase.verifyEqual(testCase.realInt10(1,1).Infimum, 44);
+            testCase.verifyEqual(testCase.realInt10(1,1).Supremum, 10);
+
+            testCase.realInt10.Infimum(1,2) = 55;
+            testCase.verifyEqual(testCase.realInt10(1,2).Infimum, 55);
+            testCase.verifyEqual(testCase.realInt10(1,2).Supremum, 12);
+
+            testCase.realInt10(2,2) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+
+            % By row, and multiple assignation
+            testCase.realInt10(1,:) = testCase.realInt5;
+            testCase.verifyEqual(testCase.realInt10(1,:), testCase.realInt5);
+
+            testCase.realInt10(2,:) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+            testCase.realInt10(2,:).Infimum = 66;
+            testCase.verifyEqual(testCase.realInt10(2,1).Infimum, 66);
+            testCase.verifyEqual(testCase.realInt10(2,2).Infimum, 66);
+
+            testCase.realInt10.Supremum(2,:) = 77;
+            testCase.verifyEqual(testCase.realInt10(2,1).Supremum, 77);
+            testCase.verifyEqual(testCase.realInt10(2,2).Supremum, 77);
+
+            % Whole matrix
+            testCase.realInt10(:,:) = testCase.realInt1;
+            testCase.verifyEqual(testCase.realInt10(1,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(1,2), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt1);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt1);
+
+            testCase.realInt10(:) = testCase.realInt2;
+            testCase.verifyEqual(testCase.realInt10(1,1), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(1,2), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(2,1), testCase.realInt2);
+            testCase.verifyEqual(testCase.realInt10(2,2), testCase.realInt2);
+
+            testCase.realInt10(:).Infimum = 88;
+            testCase.verifyEqual(testCase.realInt10(1,1).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(1,2).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(2,1).Infimum, 88);
+            testCase.verifyEqual(testCase.realInt10(2,2).Infimum, 88);
+
+            testCase.realInt10.Supremum(:,:) = 99;
+            testCase.verifyEqual(testCase.realInt10(1,1).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(1,2).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(2,1).Supremum, 99);
+            testCase.verifyEqual(testCase.realInt10(2,2).Supremum, 99);
         end
         
         function inf(testCase)
@@ -214,11 +272,54 @@ classdef RealIntervalTest < matlab.unittest.TestCase
         % function sqrt(testCase)
         % end
 
-        % function sin(testCase)
-        % end
+        function sin(testCase)
+            testCase.verifyEqual(sin(testCase.realInt1), ciat.RealInterval(sin(1), 1));
+            testCase.verifyEqual(sin(testCase.realInt2), ciat.RealInterval(sin(4), sin(3)));
+            testCase.verifyEqual(sin(testCase.realInt3), ciat.RealInterval(sin(-1), sin(1)));
+            testCase.verifyEqual(sin(testCase.realInt4), ciat.RealInterval(-1, sin(-1)));
 
-        % function cos(testCase)
-        % end
+            testCase.verifyEqual(sin(testCase.realInt5), ciat.RealInterval([sin(1), sin(4)], [1, sin(3)]));
+        end
+
+        function cos(testCase)
+            testCase.verifyEqual(cos(testCase.realInt1), ciat.RealInterval(cos(2), cos(1)));
+            testCase.verifyEqual(cos(testCase.realInt2), ciat.RealInterval(-1, cos(4)));
+            testCase.verifyEqual(cos(testCase.realInt3), ciat.RealInterval(cos(1), 1));
+            testCase.verifyEqual(cos(testCase.realInt4), ciat.RealInterval(cos(-2), cos(-1)));
+
+            testCase.verifyEqual(cos(testCase.realInt5), ciat.RealInterval([cos(2), -1], [cos(1), cos(4)]));
+        end
+
+        function sinh(testCase)
+            testCase.verifyEqual(sinh(testCase.realInt1), ciat.RealInterval(sinh(1), sinh(2)));
+            testCase.verifyEqual(sinh(testCase.realInt2), ciat.RealInterval(sinh(3), sinh(4)));
+            testCase.verifyEqual(sinh(testCase.realInt3), ciat.RealInterval(sinh(-1), sinh(1)));
+            testCase.verifyEqual(sinh(testCase.realInt4), ciat.RealInterval(sinh(-2), sinh(-1)));
+
+            testCase.verifyEqual(sinh(testCase.realInt5), ciat.RealInterval([sinh(1), sinh(3)], [sinh(2), sinh(4)]));
+            testCase.verifyEqual(sinh(testCase.realInt6), ciat.RealInterval([sinh(3), sinh(4)], [sinh(5), sinh(6)]));
+
+            testCase.verifyEqual(sinh(testCase.realInt7), ciat.RealInterval([sinh(1); sinh(2)], [sinh(3); sinh(4)]));
+            testCase.verifyEqual(sinh(testCase.realInt8), ciat.RealInterval([sinh(2); sinh(3)], [sinh(4); sinh(5)]));
+
+            testCase.verifyEqual(sinh(testCase.realInt9), ciat.RealInterval([sinh(1), sinh(2); sinh(3), sinh(4)], [sinh(5), sinh(6); sinh(7), sinh(8)]));
+            testCase.verifyEqual(sinh(testCase.realInt10), ciat.RealInterval([sinh(2), sinh(4); sinh(6), sinh(8)], [sinh(10), sinh(12); sinh(14), sinh(16)]));
+        end
+        function cosh(testCase)
+            testCase.verifyEqual(cosh(testCase.realInt1), ciat.RealInterval(cosh(1), cosh(2)));
+            testCase.verifyEqual(cosh(testCase.realInt2), ciat.RealInterval(cosh(3), cosh(4)));
+            testCase.verifyEqual(cosh(testCase.realInt3), ciat.RealInterval(1, cosh(1)));
+            testCase.verifyEqual(cosh(testCase.realInt4), ciat.RealInterval(cosh(-1), cosh(-2)));
+
+            testCase.verifyEqual(cosh(testCase.realInt5), ciat.RealInterval([cosh(1), cosh(3)], [cosh(2), cosh(4)]));
+            testCase.verifyEqual(cosh(testCase.realInt6), ciat.RealInterval([cosh(3), cosh(4)], [cosh(5), cosh(6)]));
+
+            testCase.verifyEqual(cosh(testCase.realInt7), ciat.RealInterval([cosh(1); cosh(2)], [cosh(3); cosh(4)]));
+            testCase.verifyEqual(cosh(testCase.realInt8), ciat.RealInterval([cosh(2); cosh(3)], [cosh(4); cosh(5)]));
+
+            testCase.verifyEqual(cosh(testCase.realInt9), ciat.RealInterval([cosh(1), cosh(2); cosh(3), cosh(4)], [cosh(5), cosh(6); cosh(7), cosh(8)]));
+            testCase.verifyEqual(cosh(testCase.realInt10), ciat.RealInterval([cosh(2), cosh(4); cosh(6), cosh(8)], [cosh(10), cosh(12); cosh(14), cosh(16)]));
+        end
 
         % function union(testCase)
         % end

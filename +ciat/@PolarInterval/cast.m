@@ -29,21 +29,21 @@ function outObj = cast(inObj)
 % (More information in README.md and LICENSE.md.)
 % _________________________________________________________________________
 
-    [M,N] = size(inObj);
-
     switch class(inObj)
         case 'double'
             outAbs = ciat.RealInterval(abs(inObj));
             outAngle = ciat.RealInterval(angle(inObj));
         case {'ciat.RectangularInterval',...
               'ciat.CircularInterval',...
-              'ciat.PolygonalInterval'}
+              'ciat.PolygonalInterval',...
+              'ciat.Arc',...
+              'ciat.PolyarcularInterval',...
+              'ciat.PolyarxInterval'}
             outAbs = abs(inObj);
             outAngle = angle(inObj);   
         otherwise
             error('Invalid input type')
     end
 	outObj = ciat.PolarInterval(outAbs,outAngle);       
-    outObj = reshape(outObj,M,N);
 end
 

@@ -58,7 +58,7 @@ function r = mtimes(obj1,obj2)
         for m = 1:M
             for n = 1:N
                 % Calculate product
-                r(m,n) = sum( obj1(m,:) .* obj2(:,n)' );
+                r(m,n) = sum( obj1(m,:) .* obj2(:,n).' );
             end
         end
     else

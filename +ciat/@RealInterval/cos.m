@@ -32,27 +32,24 @@ function r = cos(obj)
     % Get input size
     [M,N] = size(obj);
     
-    % Calculate sum
+    % Initialize value
     r(M,N) = ciat.RealInterval;
-    for m = 1:M
-        for n = 1:N
-            % Check if the envelope is part of the interval
-            bot1 = ceil((obj.Infimum + pi)/(2*pi));
-            bot2 = ceil((obj.Supremum + pi)/(2*pi));
-            top1 = ceil((obj.Infimum)/(2*pi));
-            top2 = ceil((obj.Supremum)/(2*pi));
-            
-            % Calculate the interval
-            if (bot2-bot1)>=1
-                r(m,n).Infimum = -1;
-            else
-                r(m,n).Infimum = min(cos(obj.Infimum),cos(obj.Supremum));
-            end
-            if (top2-top1)>=1
-                r(m,n).Supremum = 1;
-            else
-                r(m,n).Supremum = max(cos(obj.Infimum),cos(obj.Supremum));
-            end
-        end
-    end
+
+    % Conditions of including the envelope
+    btm1 = ceil((obj.Infimum + pi)/(2*pi));
+    btm2 = ceil((obj.Supremum + pi)/(2*pi));
+    btmEnv = btm2-btm1>=1;
+    top1 = ceil((obj.Infimum)/(2*pi));
+    top2 = ceil((obj.Supremum)/(2*pi));
+    topEnv = top2-top1>=1;
+    
+
+
+    r.Infimum(btmEnv) = -1;
+    r.Infimum(~btmEnv) = min(cos(wrapToPi(obj.Infimum(~btmEnv))),...
+                             cos(wrapToPi(obj.Supremum(~btmEnv))));
+    r.Supremum(topEnv) = 1;
+    r.Supremum(~topEnv) = max(cos(wrapToPi(obj.Infimum(~topEnv))),...
+                              cos(wrapToPi(obj.Supremum(~topEnv))));
+
 end  
