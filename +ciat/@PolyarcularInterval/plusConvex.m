@@ -1,8 +1,8 @@
 function r = plusConvex(obj1,obj2)
 
     % Extract arcs including vertices
-    arc1 = [obj1.Arcs{:} ; obj1.Vertices{:}];
-    arc2 = [obj2.Arcs{:} ; obj2.Vertices{:}];
+    arc1 = [obj1.Arcs ; obj1.Vertices];
+    arc2 = [obj2.Arcs ; obj2.Vertices];
 
     % Split arcs with angle interval including pi
     arc1 = splitArc(arc1);
@@ -66,21 +66,27 @@ function arcOut = splitArc(arcIn)
            (arcIn.ArcAngle.isin(pi) & ...
             arcIn.ArcAngle.Infimum ~= pi & ...
             arcIn.ArcAngle.Supremum ~= pi);
+    % mask = (arcIn.ArcAngle.isin(-pi) & ...
+    %         abs(arcIn.ArcAngle.Infimum + pi) > 10*eps & ...
+    %         abs(arcIn.ArcAngle.Supremum + pi) > 10*eps) | ... 
+    %        (arcIn.ArcAngle.isin(pi) & ...
+    %         abs(arcIn.ArcAngle.Infimum - pi) > 10*eps & ...
+    %         abs(arcIn.ArcAngle.Supremum - pi) > 10*eps);
 
     if any(mask,'all')
         % Create new arcIn with angle from pi to the supremum 
         newArc = arcIn(mask);
         newArc.ArcAngle = ciat.RealInterval(-pi * ones(length(newArc),1),...
-                                        wrapToPi(newArc.ArcAngle.Supremum));
+                                        ciat.wrapToPi(newArc.ArcAngle.Supremum));
         
         % Modify the original arcIn to have angle from the infimum to pi
         arcIn(mask).ArcAngle = ciat.RealInterval(...
-                                    wrapToPi(arcIn(mask).ArcAngle.Infimum),...
+                                    ciat.wrapToPi(arcIn(mask).ArcAngle.Infimum),...
                                     pi * ones(sum(mask),1) );
         
         % Wrap the angles of all the other arcs
-        arcIn(~mask).ArcAngle.Infimum = wrapToPi(arcIn(~mask).ArcAngle.Infimum);
-        arcIn(~mask).ArcAngle.Supremum = wrapToPi(arcIn(~mask).ArcAngle.Supremum);
+        arcIn(~mask).ArcAngle.Infimum = ciat.wrapToPi(arcIn(~mask).ArcAngle.Infimum);
+        arcIn(~mask).ArcAngle.Supremum = ciat.wrapToPi(arcIn(~mask).ArcAngle.Supremum);
     
         % Add new arcIn to the array
         arcOut = [arcIn ; newArc];

@@ -44,10 +44,10 @@ function r = sin(obj)
     topEnv = top2-top1>=1;
 
     r.Infimum(btmEnv) = -1;
-    r.Infimum(~btmEnv) = min(sin(wrapToPi(obj.Infimum(~btmEnv))), ...
-                             sin(wrapToPi(obj.Supremum(~btmEnv))));
+    r.Infimum(~btmEnv) = min(sin(ciat.wrapToPi(obj.Infimum(~btmEnv))), ...
+                             sin(ciat.wrapToPi(obj.Supremum(~btmEnv))));
     r.Supremum(topEnv) = 1;
-    r.Supremum(~topEnv) = max(wrapToPi(sin(obj.Infimum(~topEnv))), ...
-                              wrapToPi(sin(obj.Supremum(~topEnv))));
+    r.Supremum(~topEnv) = max(ciat.wrapToPi(sin(obj.Infimum(~topEnv))), ...
+                              ciat.wrapToPi(sin(obj.Supremum(~topEnv))));
     
 end 

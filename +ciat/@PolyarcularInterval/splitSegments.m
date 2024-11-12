@@ -3,8 +3,9 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
     % Split segments at intersection points
     arcBox = ciat.RectangularInterval(arcIn);
     edgeBox = ciat.RectangularInterval(edgeIn);
+
         % Split arcs
-    arcOut = [];
+    arcOut = ciat.Arc;
     for k = 1:length(arcIn)
         if length(arcIn)>1
             capBox = cap([arcBox(setdiff(1:end,k));edgeBox],arcBox(k));
@@ -32,7 +33,7 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
     end
     
     % Split edges
-    edgeOut = [];
+    edgeOut = ciat.Edge;
     for k = 1:length(edgeIn)
         if length(edgeIn)>1
             capBox = cap([arcBox;edgeBox(setdiff(1:end,k))],edgeBox(k));
@@ -61,7 +62,11 @@ function [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
     end
 
     % This should not be necessary
-    arcOut = arcOut(abs(arcOut.Length)>10*eps); 
-    edgeOut = edgeOut(abs(edgeOut.Length)>10*eps);
+    if ~isempty(arcOut)
+        arcOut = arcOut(abs(arcOut.Length)>10*eps); 
+    end
+    if ~isempty(edgeOut)
+        edgeOut = edgeOut(abs(edgeOut.Length)>10*eps);
+    end
 
 end

@@ -40,7 +40,6 @@ function points = sortPoints(points,tolerance)
     
     % Sort points to form a counter-clockwise boundary and assign to object
     points = sortCounterClockwise(points);
-
 end
 
 %% Utility functions

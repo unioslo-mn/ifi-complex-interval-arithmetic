@@ -132,6 +132,7 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
                     obj.Angle = ciat.RealInterval(varargin{3},varargin{4});
             end
         end
+
         
         %% Defining properties
         
@@ -426,12 +427,12 @@ classdef PolarInterval < matlab.mixin.indexing.RedefinesParen
             inCircle = obj.Abs.isin( abs(x) );
 
             % Check if the point is in the sector
-            % inSector = abs(wrapToPi( angle(x) - obj.Angle.Infimum ) ) ...
+            % inSector = abs(ciat.wrapToPi( angle(x) - obj.Angle.Infimum ) ) ...
                                     % <= obj.Angle.Width;
             xAng = angle(x);
             if any(obj.Angle.isin([-pi,pi]))
-                inSector = (xAng>=0 & xAng >= wrapToPi(obj.Angle.Infimum))| ...
-                           (xAng <0 & xAng <= wrapToPi(obj.Angle.Supremum));
+                inSector = (xAng>=0 & xAng >= ciat.wrapToPi(obj.Angle.Infimum))| ...
+                           (xAng <0 & xAng <= ciat.wrapToPi(obj.Angle.Supremum));
             else
                 inSector = xAng >= obj.Angle.Infimum & ...
                            xAng <= obj.Angle.Supremum;

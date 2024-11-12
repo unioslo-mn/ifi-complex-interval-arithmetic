@@ -8,18 +8,24 @@ function r = plusConcave(obj1,obj2)
     edge1 = obj1.Edges;
     edge2 = obj2.Edges;    
     
-    % Add arcs and vertices
-    arcPlusArc = arc1 + arc2.';
-    arcPlusEdge = arc1 + edge2.';
-    edgePlusArc = edge1 + arc2.';
-    
-    % Extract valid segments
-    arc3 = arcPlusArc(~isnan(arcPlusArc));
-    edge3 = [ arcPlusEdge(~isnan(arcPlusEdge)) ; ...
-              edgePlusArc(~isnan(edgePlusArc)) ];
+    % Add arcs
+    arc3 = ciat.Arc;
+    if ~isempty(arc1) && ~isempty(arc2)
+        arc3 = arc1 + arc2.';
+        arc3 = arc3(~isnan(arc3));
+        arc3 = arc3(abs(arc3.Length)>100*eps);
+    end
 
-    % Extract non-vertex segments
-    arc3 = arc3(abs(arc3.Length)>100*eps);
+    % Add arcs and edges
+    edge3 = ciat.Edge;
+    if ~isempty(arc1) && ~isempty(edge2)
+        arcPlusEdge = arc1 + edge2.';
+        edge3 = [edge3 ; arcPlusEdge(~isnan(arcPlusEdge))];
+    end
+    if ~isempty(edge1) && ~isempty(arc2)
+        edgePlusArc =  edge1 + arc2.';
+        edge3 = [edge3 ; edgePlusArc(~isnan(edgePlusArc))];
+    end
     edge3 = edge3(abs(edge3.Length)>100*eps);
 
     % Split and trim segments

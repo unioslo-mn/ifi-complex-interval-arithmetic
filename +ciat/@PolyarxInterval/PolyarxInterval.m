@@ -128,9 +128,13 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % Set points (store in the hidden property Boundary after sorting)
         function obj = set.Arx(obj,arx)
             [M,N] = size(obj);
-            for m = 1:M
-                for n = 1:N
-                    obj.Boundary(m,n) = {ciat.PolyarxInterval.sortArx(arx{m,n})};
+            if M*N == 1
+                obj.Boundary = {ciat.PolyarxInterval.sortArx(arx)};
+            else
+                for m = 1:M
+                    for n = 1:N
+                        obj.Boundary(m,n) = {ciat.PolyarxInterval.sortArx(arx{m,n})};
+                    end
                 end
             end
         end 
@@ -138,6 +142,10 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % Get points (retrieve from hidden property Boundary)
         function value = get.Arx(obj)
             value = obj.Boundary;
+            [M,N] = size(obj);
+            if M*N == 1
+                value = value{:};
+            end
         end
 
         % Get arcs
@@ -146,7 +154,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             value = cell(M,N);
             for m = 1:M
                 for n = 1:N
-                    arx = obj(m,n).Arx{:};
+                    arx = obj(m,n).Arx;
                     if size(arx,1)>1
                         arxPrev = circshift(arx,1,1);
                         arxPrev(1,4) = -pi;
@@ -158,12 +166,17 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                             angSup = arx(mask,4);
                             value{m,n} = ciat.Arc(center,radius,...
                                        ciat.RealInterval(angInf,angSup));
+                        else
+                            value{m,n} = ciat.Arc;
                         end
                     else
                         value{m,n} = ciat.Arc(complex(arx(1),arx(2)),arx(3),...
                                             ciat.RealInterval(-pi,pi));
                     end
                 end
+            end
+            if M*N == 1
+                value = value{:};
             end
         end
 
@@ -173,11 +186,8 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             value = cell(M,N);
             for m = 1:M
                 for n = 1:N
-                    arx = obj(m,n).Arx{:};
+                    arx = obj(m,n).Arx;
                     arxPrev = circshift(arx,1,1);
-                    %mask = arx(:,3) == 0 & arxPrev(:,3) == 0;
-                    %startpoint = complex(arxPrev(mask,1),arxPrev(mask,2));
-                    %endpoint = complex(arx(mask,1),arx(mask,2));
                     startpoint = complex(arxPrev(:,1),arxPrev(:,2)) + ...
                                  arxPrev(:,3) .* exp(1j*arxPrev(:,4));
                     endpoint =  complex(arx(:,1),arx(:,2)) + ...
@@ -185,6 +195,9 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     value{m,n} = ciat.Edge(startpoint,endpoint);
                     value{m,n} = value{m,n}(value{m,n}.Length > 10*eps);
                 end
+            end
+            if M*N == 1
+                value = value{:};
             end
         end
 
@@ -194,7 +207,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             value = cell(M,N);
             for m = 1:M
                 for n = 1:N
-                    arx = obj(m,n).Arx{:};
+                    arx = obj(m,n).Arx;
                     arxPrev = circshift(arx,1,1);
                     arxPrev(1,4) = -pi;
                     mask = arx(:,3) == 0;
@@ -202,8 +215,11 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     angInf = arxPrev(mask,4);
                     angSup = arx(mask,4);
                     value{m,n} = ciat.Arc(center,zeros(size(center)),...
-                                       ciat.RealInterval(angInf,angSup));
+                                          angInf,angSup);
                 end
+            end
+            if M*N == 1
+                value = value{:};
             end
         end
         
@@ -222,7 +238,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             maxReal = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    arcs = [obj(m,n).Arcs;obj(m,n).Vertices];
                     minReal(m,n) = min(inf(real(arcs)));
                     maxReal(m,n) = max(sup(real(arcs)));
                 end
@@ -240,7 +256,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             maxImag = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    arcs = [obj(m,n).Arcs;obj(m,n).Vertices];
                     minImag(m,n) = min(inf(imag(arcs)));
                     maxImag(m,n) = max(sup(imag(arcs)));
                 end
@@ -254,23 +270,36 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         % Abs
         function value = get.Abs(obj)
             [M,N] = size(obj);
-            minAbs = zeros(M,N);
-            maxAbs = zeros(M,N);
-            pointIn = zeros(M,N);
-            for m = 1:M
-                for n = 1:N
-                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
-                    edges = obj(m,n).Edges{:};
-                    if ~isempty(edges)
-                        minAbs(m,n) = min(min(inf(abs(arcs))),...
-                                      min(inf(abs(edges))) );   
-                    else
-                        minAbs(m,n) = min(inf(abs(arcs)));
+
+            if M*N == 1
+                arcs = [obj.Arcs; obj.Vertices];
+                edges = obj.Edges;
+                if ~isempty(edges)
+                    minAbs = min([ arcs.Abs.Infimum; ...
+                                   edges.Abs.Infimum ] );   
+                else
+                    minAbs = min(inf(abs(arcs)));
+                end
+                maxAbs = max(sup(abs(arcs)));
+            else
+                vert = obj.Vertices;
+                arcs = obj.Arcs;
+                edges = obj.Edges;
+                minAbs = zeros(M,N);
+                maxAbs = zeros(M,N);
+                for m = 1:M
+                    for n = 1:N
+                        minAbs(m,n) = min([ vert{m,n}.Abs.Infimum;...
+                                            arcs{m,n}.Abs.Infimum; ...
+                                            edges{m,n}.Abs.Infimum ] );   
+                        maxAbs(m,n) = max([ vert{m,n}.Abs.Infimum;...
+                                            arcs{m,n}.Abs.Infimum] ); 
+                        
                     end
-                    maxAbs(m,n) = max(sup(abs(arcs)));
-                    
                 end
             end
+
+            % Generate interval
             value = ciat.RealInterval( minAbs,maxAbs );
 
             % Check for intervals that contain the zero
@@ -278,6 +307,7 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             if any(pointIn,'all')
                 value(pointIn).Infimum = 0;
             end
+            
         end
         function value = abs(obj)
             value = obj.Abs;
@@ -290,14 +320,14 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             maxAng = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    arcs = [obj(m,n).Arcs{:};obj(m,n).Vertices{:}];
+                    arcs = [obj(m,n).Arcs;obj(m,n).Vertices];
                     if obj(m,n).isin(0)
                         minAng(m,n) = -pi;
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
                            obj(m,n).Real.Supremum < 0
-                        minAng(m,n) = min(wrapToPi(inf(angle(arcs)+pi)))+pi;
-                        maxAng(m,n) = max(wrapToPi(sup(angle(arcs)+pi)))+pi;
+                        minAng(m,n) = min(ciat.wrapToPi(inf(angle(arcs)+pi)))+pi;
+                        maxAng(m,n) = max(ciat.wrapToPi(sup(angle(arcs)+pi)))+pi;
                     else
                         minAng(m,n) = min(inf(angle(arcs)));
                         maxAng(m,n) = max(sup(angle(arcs)));
@@ -321,7 +351,12 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                     arcs = obj.Arcs{m,n}; 
                     vertices = obj.Vertices{m,n}; 
                     if isempty(arcs)
-                        value(m,n) = nan;
+                        % value(m,n) = nan;
+                        points = vertices.Center;
+                        idx = convhull(real(points),imag(points));
+                        points = points(idx);
+                        value(m,n) = polyarea(real(points(:)), ...
+                                               imag(points(:)));
                     else
                         points = [vertices.Center ; ...
                                   arcs.Startpoint ; ...
@@ -422,11 +457,11 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             hold on
             h = [];
             for n = 1:length(obj(:))
-                if ~isempty(obj.Arcs{n})
-                    h = [h;obj.Arcs{n}.plot(varargin{:})];    
+                if ~isempty(obj(n).Arcs)
+                    h = [h;obj(n).Arcs.plot(varargin{:})];    
                 end
-                if ~isempty(obj.Edges{n})
-                    h = [h;obj.Edges{n}.plot(varargin{:})];    
+                if ~isempty(obj(n).Edges)
+                    h = [h;obj(n).Edges.plot(varargin{:})];    
                 end
             end
             if tf == false 
@@ -441,7 +476,6 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
         r = timesDouble(xObj,d)
-        r = timesPolar(xObj,pObj)
         r = isin(obj,x)
         points = backtrack(obj,trackAngle)
                 

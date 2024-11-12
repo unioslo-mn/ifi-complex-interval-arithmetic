@@ -184,9 +184,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             maxAbs = zeros(M,N);
             for m = 1:M
                 for n = 1:N
-                    if ~isempty(obj.Edges{m,n})
+                    if ~isempty(obj(m,n).Edges)
                         minAbs(m,n) = min(min(inf(abs(obj.ArcStorage{m,n}))),...
-                                          min(inf(abs(obj.Edges{m,n}))) );
+                                          min(inf(abs(obj(m,n).Edges))) );
                     else
                         minAbs(m,n) = min(inf(abs(obj.ArcStorage{m,n})));
                     end
@@ -219,8 +219,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
                            obj(m,n).Real.Supremum < 0
-                        minAng(m,n) = min(wrapToPi(inf(angle(arcs)+pi)))+pi;
-                        maxAng(m,n) = max(wrapToPi(sup(angle(arcs)+pi)))+pi;
+                        minAng(m,n) = min(ciat.wrapToPi(inf(angle(arcs)+pi)))+pi;
+                        maxAng(m,n) = max(ciat.wrapToPi(sup(angle(arcs)+pi)))+pi;
                     else
                         minAng(m,n) = min(inf(angle(arcs)));
                         maxAng(m,n) = max(sup(angle(arcs)));
@@ -301,8 +301,12 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                 for n = 1:N
                     % Check if all vertices are convex
                     [~,vertexConvexity] = obj(m,n).getVertices;
-                    r(m,n) = all(vertexConvexity,'all') && ...
-                             all(obj.Arcs{m,n}.Radius >= 0);
+                    if ~isempty(obj.Arcs)
+                        r(m,n) = all(vertexConvexity,'all') && ...
+                                 all(obj(m,n).Arcs.Radius >= 0);
+                    else
+                        r(m,n) = all(vertexConvexity,'all');
+                    end
                 end
             end
         end
@@ -317,7 +321,6 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
                     % Create convex hull
                     arcSmp = arcs(arcs.Radius>0).sample(10);
-                    arcSmp = [arcSmp{:}];
                     vertexPoly = [arcs.Startpoint ; arcs.Endpoint ; arcSmp(:)];
                     idx = convhull(real(vertexPoly),imag(vertexPoly));
                     edges = ciat.Edge(vertexPoly(idx),...
@@ -428,9 +431,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
             % Plot normal vectors
             for n = 1:length(obj(:))
-                h = [h; obj.Arcs{n}.plotGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Edges{n}.plotGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Vertices{n}.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Arcs.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Edges.plotGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Vertices.plotGaussMap(arrowSize,varargin{:})];
             end
 
             if tf == false 
@@ -447,9 +450,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 
             % Plot normal vectors
             for n = 1:length(obj(:))
-                h = [h; obj.Arcs{n}.plotLogGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Edges{n}.plotLogGaussMap(arrowSize,varargin{:})];
-                h = [h; obj.Vertices{n}.plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Arcs.plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Edges.plotLogGaussMap(arrowSize,varargin{:})];
+                h = [h; obj(n).Vertices.plotLogGaussMap(arrowSize,varargin{:})];
             end
 
             if tf == false 

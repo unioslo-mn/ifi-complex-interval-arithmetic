@@ -86,10 +86,12 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                 case 1
                     % Single input argument is casted
                     [M,N] = size(varargin{1});
-                    obj(M,N) = obj;
-                    for n = 1:M*N
-                        obj(n) = ciat.RectangularInterval.cast(...
-                                                        varargin{1}(n));
+                    if M*N > 0
+                        obj(M,N) = obj;
+                        for n = 1:M*N
+                            obj(n) = ciat.RectangularInterval.cast(...
+                                                            varargin{1}(n));
+                        end
                     end
                 case 2
                     % Two input arguments of real intervals is the default
@@ -129,6 +131,7 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
             end
             
         end
+        
         
         %% Defining properties
         % Real
@@ -240,8 +243,8 @@ classdef RectangularInterval < matlab.mixin.indexing.RedefinesParen
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
                            obj(m,n).Real.Supremum < 0
-                        minAng(m,n) = min(wrapToPi(inf(angle(edges)+pi)))+pi;
-                        maxAng(m,n) = max(wrapToPi(sup(angle(edges)+pi)))+pi;
+                        minAng(m,n) = min(ciat.wrapToPi(inf(angle(edges)+pi)))+pi;
+                        maxAng(m,n) = max(ciat.wrapToPi(sup(angle(edges)+pi)))+pi;
                     else
                         minAng(m,n) = min(inf(angle(edges)));
                         maxAng(m,n) = max(sup(angle(edges)));

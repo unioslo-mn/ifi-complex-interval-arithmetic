@@ -1,8 +1,8 @@
 function r = mtimes(obj1,obj2)
    
     % Check input class
-    mustBeA(obj1,["ciat.PolyarxInterval","ciat.PolarInterval","double"]);
-    mustBeA(obj2,["ciat.PolyarxInterval","ciat.PolarInterval","double"]);
+    mustBeA(obj1,["ciat.PolyarxInterval","double"]);
+    mustBeA(obj2,["ciat.PolyarxInterval","double"]);
     
     % Get input sizes and check if they can be combined
     [M1,N1] = size(obj1);
@@ -25,9 +25,6 @@ function r = mtimes(obj1,obj2)
                 r(M,N) = timesDouble(obj1(m,n) , obj2(m,n));
             elseif isa(obj1, 'double') && isa(obj2,'ciat.PolyarxInterval')
                 r(M,N) = timesDouble(obj2(m,n) , obj1(m,n));
-            elseif isa(obj1, 'ciat.PolyarxInterval') && ...
-                   isa(obj2,'ciat.PolarInterval')
-                r(M,N) = timesPolar(obj1(m,n) , obj2(m,n));
             end
         end
     end

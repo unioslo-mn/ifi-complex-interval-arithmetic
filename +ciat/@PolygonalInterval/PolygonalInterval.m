@@ -287,8 +287,8 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
                            obj(m,n).Real.Supremum < 0
-                        % minAng(m,n) = min(wrapToPi(angle(points)+pi))+pi;
-                        % maxAng(m,n) = max(wrapToPi(angle(points)+pi))+pi;
+                        % minAng(m,n) = min(ciat.wrapToPi(angle(points)+pi))+pi;
+                        % maxAng(m,n) = max(ciat.wrapToPi(angle(points)+pi))+pi;
                         pAng = angle(points);
                         minAng(m,n) = min(pAng(pAng>=0)) - 2*pi;
                         maxAng(m,n) = max(pAng(pAng<0));

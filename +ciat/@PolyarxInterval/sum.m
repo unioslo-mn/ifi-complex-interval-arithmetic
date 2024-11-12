@@ -1,72 +1,77 @@
-function r = sum(obj)
-    
-    % This function assumes that the input is a vertical array of convex 
-    % polyarcular intervals, other input results unexpected behaviour
 
-    arx = obj.Arx;
-    N = length(arx);
+function r = sum(obj,varargin)
+% Sum of convex polyarcular intervals
+%
+% This function creates the convex polyarcular interval representing the 
+% sum of a set of convex polyarcular intervals
+% _________________________________________________________________________
+% USAGE        
+%   r = sum(obj)
+% _________________________________________________________________________
+% NECESSARY ARGUMENT
+%   obj       : array of objects from the ciat.PolyarxInterval class
+% _________________________________________________________________________
+% OPTIONS
+% _________________________________________________________________________
+% EXAMPLES
+%   
+% _________________________________________________________________________
 
-    % Sum arcs
-    arxSum = arx{1};
-    for n = 2:N
-        arxSum = quickPlus(arxSum,arx{n});
-    end
-    
-    % Generate output interval
-    r = ciat.PolyarxInterval(arxSum);
-
+    [M,N] = size(obj);
+    if ( M == 1 && N == 1)
+        r = obj;
+    elseif ( M == 1 || N == 1 )
+        r = 0;
+        for n = 1:max(M,N)
+            r = r + obj(n);
+        end
+    else
+        if size(varargin) == 0
+            r = sum1(obj);
+        else
+            if varargin{1} == 1
+                r = sum1(obj);
+            elseif varargin{1} == 2
+                r = sum2(obj);
+            elseif strcmp(varargin{1},'all')
+                r = sumAll(obj);
+            else
+                error('Parameter two is invalid.')
+            end
+        end
+    end    
 end
 
-%% Function for quick convex addition
-
-function r = quickPlus(arx1,arx2)
-
-    % Extract parameters
-    cen1 = complex(arx1(:,1),arx1(:,2));
-    rad1 = arx1(:,3);
-    ang1 = arx1(:,4);
-    cen2 = complex(arx2(:,1),arx2(:,2));
-    rad2 = arx2(:,3);
-    ang2 = arx2(:,4);
-    
-    % Taken from the polygonal plus function
-    N1 = size(ang1,1);
-    N2 = size(ang2,1);
-    N3 = N1 + N2;
-    cen3 = zeros(N3,1);
-    rad3 = zeros(N3,1);
-    ang3 = zeros(N3,1);
-    n1 = 1;
-    n2 = 1;
-    n3 = 0;
-    eps10 = eps*10;
-    while (n1 <= N1) && (n2 <= N2) % continue finding more points
-        
-        n3 = n3 + 1;
-    
-        % Sum arcs
-        cen3(n3) = cen1(n1) + cen2(n2);
-        rad3(n3) = rad1(n1) + rad2(n2);
-        ang3(n3) = min(ang1(n1),ang2(n2));
-        
-        % Increment index
-        if  ang1(n1) < ang2(n2) + eps10 
-            n1 = n1 + 1;
-        elseif ang1(n1) > ang2(n2) + eps10
-            n2 = n2 + 1;
-        else
-            n1 = n1 + 1;
-            n2 = n2 + 1;
-        end            
-
-        if n3 > 1 && ang3(n3) <= ang3(n3-1) + eps10
-            n3 = n3 - 1;
+%% Function for summing along dimension 1
+function r = sum1(obj)
+    [M,N] = size(obj);
+    r = obj(1,:);
+    for n = 1:N
+        for m = 2:M
+            r(n) = r(n) + obj(m, n);
         end
     end
-    cen3 = cen3(1:n3,:);
-    rad3 = rad3(1:n3,:);
-    ang3 = ang3(1:n3,:);
-       
-    % Generate polyarc
-    r = [real(cen3),imag(cen3),rad3,ang3];
 end
+
+%% Function for summing along dimension 2
+function r = sum2(obj)
+    [M,N] = size(obj);
+    r = obj(:,1);
+    for m = 1:M
+        for n = 2:N
+            r(m) = r(m) + obj(m, n);
+        end
+    end
+end
+
+%% Function for summing along all dimension
+function r = sumAll(obj)
+    [M,N] = size(obj);
+    r = 0;
+    for m = 1:M
+        for n = 1:N
+            r = r + obj(m, n);
+        end
+    end
+end
+

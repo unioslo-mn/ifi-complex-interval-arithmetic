@@ -21,28 +21,37 @@ function [vertices,varargout] = getVertices(obj)
     angStart = [] ;
     angEnd = [];
         % at the intersection of arc pairs
-    [M,N] = find(abs(arcEnd - arcStart.')<10*eps);
-    center = [center ; arcEnd(M)];
-    angStart = [angStart ; arcEndAngle(M)];
-    angEnd = [angEnd ; arcStartAngle(N)];
+    if ~isempty(arcs)
+        [M,N] = find(abs(arcEnd - arcStart.')<10*eps);
+        center = [center ; arcEnd(M)];
+        angStart = [angStart ; arcEndAngle(M)];
+        angEnd = [angEnd ; arcStartAngle(N)];
+    end
         % at the intersection of edge pairs
-    [M,N] = find(abs(edgeEnd - edgeStart.')<10*eps);
-    center = [center ; edgeEnd(M)];
-    angStart =  [angStart ; edgeAngle(M)];
-    angEnd = [angEnd ; edgeAngle(N)];
+    if ~isempty(edges)
+        [M,N] = find(abs(edgeEnd - edgeStart.')<10*eps);
+        center = [center ; edgeEnd(M)];
+        angStart =  [angStart ; edgeAngle(M)];
+        angEnd = [angEnd ; edgeAngle(N)];
+    end
         % at the intersection of arc-edge pairs
-    [M,N] = find(abs(arcEnd - edgeStart.')<10*eps);
-    center = [center ; arcEnd(M)];
-    angStart = [angStart ; arcEndAngle(M)];
-    angEnd = [angEnd ; edgeAngle(N)];
+    if ~isempty(arcs) && ~isempty(edges)
+        [M,N] = find(abs(arcEnd - edgeStart.')<10*eps);
+        center = [center ; arcEnd(M)];
+        angStart = [angStart ; arcEndAngle(M)];
+        angEnd = [angEnd ; edgeAngle(N)];
+    end
         % at the intersection of edge-arc pairs
-    [M,N] = find(abs(edgeEnd - arcStart.')<10*eps);
-    angStart = [angStart ; edgeAngle(M)];
-    angEnd = [angEnd ;arcStartAngle(N)];
-    center = [center ; edgeEnd(M)];
+    if ~isempty(arcs) && ~isempty(edges)
+        [M,N] = find(abs(edgeEnd - arcStart.')<10*eps);
+        angStart = [angStart ; edgeAngle(M)];
+        angEnd = [angEnd ;arcStartAngle(N)];
+        center = [center ; edgeEnd(M)];
+    end
 
     % Set the angular interval of the vertices and check convexity
-    angDif = wrapToPi(angEnd - angStart);
+    angEnd = angEnd + 2*pi*(angStart>0 & angEnd<0);
+    angDif = ciat.wrapToPi(angEnd - angStart);
     angInf = (angDif>=0) .* angStart + (angDif<0) .* angEnd;
     angSup = angInf + sign(angDif) .* angDif;
     

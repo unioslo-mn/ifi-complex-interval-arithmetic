@@ -46,10 +46,10 @@ function r = cos(obj)
 
 
     r.Infimum(btmEnv) = -1;
-    r.Infimum(~btmEnv) = min(cos(wrapToPi(obj.Infimum(~btmEnv))),...
-                             cos(wrapToPi(obj.Supremum(~btmEnv))));
+    r.Infimum(~btmEnv) = min(cos(ciat.wrapToPi(obj.Infimum(~btmEnv))),...
+                             cos(ciat.wrapToPi(obj.Supremum(~btmEnv))));
     r.Supremum(topEnv) = 1;
-    r.Supremum(~topEnv) = max(cos(wrapToPi(obj.Infimum(~topEnv))),...
-                              cos(wrapToPi(obj.Supremum(~topEnv))));
+    r.Supremum(~topEnv) = max(cos(ciat.wrapToPi(obj.Infimum(~topEnv))),...
+                              cos(ciat.wrapToPi(obj.Supremum(~topEnv))));
 
 end  

@@ -28,8 +28,8 @@ function angles = wrapArcAngle(angles)
         angWid = angWid(maskWrap);
 
         % Extract properties
-        angInfPi = wrapToPi( angInf );
-        angSupPi = wrapToPi( angSup );
+        angInfPi = ciat.wrapToPi( angInf );
+        angSupPi = ciat.wrapToPi( angSup );
         angPiOrder = ( angInfPi <= angSupPi );
 
         % Create case masks
@@ -73,8 +73,8 @@ function angles = wrapArcAngle(angles)
     % widthPi = floor(input.Width / pi);
     % 
     % % Wrap bounds into the -pi pi range and check their order
-    % wrapInf = wrapToPi(input.Infimum);
-    % wrapSup = wrapToPi(input.Supremum);
+    % wrapInf = ciat.wrapToPi(input.Infimum);
+    % wrapSup = ciat.wrapToPi(input.Supremum);
     % wrapOrder = ( wrapInf <= wrapSup );
     % 
     % % Wrap interval into the -2pi +2pi range

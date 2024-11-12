@@ -37,32 +37,7 @@ function outObj = cast(inObj,inObj2)
             
         case 'ciat.PolarInterval'
             if isempty(inObj2)
-                % Extract parameters
-                absInf = inObj.Abs.Infimum;
-                absSup = inObj.Abs.Supremum;
-                angInf = ciat.wrapToPi(inObj.Angle.Infimum);
-                angSup = ciat.wrapToPi(inObj.Angle.Supremum);
-                % angSup = angSup + (angSup<angInf)*2*pi; %???
-                
-                % Calculate vertex locations
-                v1 = absSup * exp(1j*angSup);
-                v2 = absInf * exp(1j*angSup);
-                v3 = absInf * exp(1j*angInf);
-                v4 = absSup * exp(1j*angInf);
-    
-                % Calculate normal angles vertices
-                a1 = ciat.wrapToPi(angSup+pi/2);
-                a2 = ciat.wrapToPi(angle(v2+v3)+pi);
-                a3 = ciat.wrapToPi(angInf-pi/2);
-                a4 = angInf;
-    
-                % Generate arx
-                arx = zeros(5,4);
-                arx(1,:) = [ 0 , 0 , absSup , angSup ];
-                arx(2,:) = [ real(v1) , imag(v1) , 0 , a1 ];
-                arx(3,:) = [ real(v2) , imag(v2) , 0 , a2 ];
-                arx(4,:) = [ real(v3) , imag(v3) , 0 , a3 ];
-                arx(5,:) = [ real(v4) , imag(v4) , 0 , a4 ];
+                arx = castPolar(inObj);
             else
                 if isa(inObj2,'ciat.CircularInterval')
                     arx = castPolarTimesCircular(inObj,inObj2);
@@ -84,6 +59,70 @@ function outObj = cast(inObj,inObj2)
     end  
     outObj = ciat.PolyarxInterval(arx);       
 end
+
+%% Utility function for casting a polar interval
+function arx = castPolar(inObj)
+    % Extract parameters
+    absInf = inObj.Abs.Infimum;
+    absSup = inObj.Abs.Supremum;
+    angInf = ciat.wrapToPi(inObj.Angle.Infimum);
+    angSup = ciat.wrapToPi(inObj.Angle.Supremum);
+    
+    % Degenerate interval with zero absolute value width
+    if absInf == absSup
+        % Calculate vertex locations
+        v1 = absInf * exp(1j*angSup);
+        v2 = absInf * exp(1j*angInf);
+
+        % Calculate normal angles vertices
+        a1 = ciat.wrapToPi(angle(v1+v2)+pi);
+        a2 = angInf;
+
+        % Generate arx
+        arx = zeros(3,4);
+        arx(1,:) = [ 0 , 0 , absSup , angSup ];
+        arx(2,:) = [ real(v1) , imag(v1) , 0 , a1 ];
+        arx(3,:) = [ real(v2) , imag(v2) , 0 , a2 ];
+    
+    % Degenerate interval with zero angle width
+    elseif angInf == angSup
+        v1 = absSup * exp(1j*angSup);
+        v2 = absInf * exp(1j*angSup);
+
+        % Calculate normal angles vertices
+        a1 = ciat.wrapToPi(angSup+pi/2);
+        a2 = ciat.wrapToPi(angInf-pi/2);
+        
+        % Generate arx
+        arx = zeros(2,4);
+        arx(1,:) = [ real(v1) , imag(v1) , 0 , a1 ];
+        arx(2,:) = [ real(v2) , imag(v2) , 0 , a2 ];
+
+    % General case
+    else
+    
+        % Calculate vertex locations
+        v1 = absSup * exp(1j*angSup);
+        v2 = absInf * exp(1j*angSup);
+        v3 = absInf * exp(1j*angInf);
+        v4 = absSup * exp(1j*angInf);
+    
+        % Calculate normal angles vertices
+        a1 = ciat.wrapToPi(angSup+pi/2);
+        a2 = ciat.wrapToPi(angle(v2+v3)+pi);
+        a3 = ciat.wrapToPi(angInf-pi/2);
+        a4 = angInf;
+    
+        % Generate arx
+        arx = zeros(5,4);
+        arx(1,:) = [ 0 , 0 , absSup , angSup ];
+        arx(2,:) = [ real(v1) , imag(v1) , 0 , a1 ];
+        arx(3,:) = [ real(v2) , imag(v2) , 0 , a2 ];
+        arx(4,:) = [ real(v3) , imag(v3) , 0 , a3 ];
+        arx(5,:) = [ real(v4) , imag(v4) , 0 , a4 ];
+    end
+end
+
 
 %% Utility function for casting the product of a polar and circular interval
 

@@ -80,38 +80,8 @@ function outObj = cast(inObj,inObj2,options)
             
         case 'ciat.PolarInterval'
             if isempty(inObj2)
-
-                % Extract parameters
-                inAbs = inObj.Abs;
-                inAngle = inObj.Angle;
-                maxAbs = inAbs.Supremum;
-                minAbs = inAbs.Infimum;
-                maxAng = inAngle.Supremum;
-                minAng = inAngle.Infimum;
-
-                % Put together outer arc and inner points: COUNTER-CLOCKWISE ORDER
-                pL = minAbs * exp( 1j * minAng ); % inner corner 1
-                rH = ciat.Arc(0,maxAbs,minAng,maxAng).polyWrap(dR);
-                pH = minAbs * exp( 1j * maxAng);  % inner corner 2
-
-                % Checks and corrections in case a half or full circle is made 
-                halfCircle = [inAngle.Width] >= pi;
-                fullCircle = [inAngle.Width] >= 2*pi;
-                maxAng(fullCircle) = 2*pi;
-                minAng(fullCircle) = 0;
-                pL(halfCircle) = [];
-                pH(halfCircle) = [];
-
-                % Compile points
-                if inAbs.width == 0
-                    outPoints = rH.';
-                elseif inAngle.width == 0
-                    outPoints = [pL,maxAbs * exp(1j*maxAng)].';
-                else
-                    outPoints = [pL ; rH ; pH]; 
-                end
-
-
+                outPoints = castPolar(inObj,dR);
+                
             else
                 if isa(inObj2,'ciat.CircularInterval')
                     outPoints = castPolarTimesCircular(inObj,inObj2,dR);
@@ -124,6 +94,38 @@ function outObj = cast(inObj,inObj2,options)
     end  
     outObj = ciat.PolygonalInterval(outPoints);       
     % outObj = reshape(outObj,M,N);  
+end
+
+%%
+
+function points = castPolar(inObj,dR)
+
+    % Extract parameters
+    inAbs = inObj.Abs;
+    inAngle = inObj.Angle;
+    maxAbs = inAbs.Supremum;
+    minAbs = inAbs.Infimum;
+    maxAng = inAngle.Supremum;
+    minAng = inAngle.Infimum;
+
+    if minAng == maxAng % Degenerate interval with zero angle width
+
+        % Put together outer arc and inner points: COUNTER-CLOCKWISE ORDER
+        points = [minAbs * exp(1j*minAng) , maxAbs * exp(1j*minAng)];
+    else
+        % Put together outer arc and inner points: COUNTER-CLOCKWISE ORDER
+        pL = minAbs * exp( 1j * minAng ); % inner corner 1
+        rH = ciat.Arc(0,maxAbs,minAng,maxAng).polyWrap(dR);
+        pH = minAbs * exp( 1j * maxAng);  % inner corner 2
+    
+        % Compile points
+        if inAngle.Width >= pi
+            points = rH;
+        else
+            points = [pL ; rH ; pH]; 
+        end
+
+    end
 end
 
 

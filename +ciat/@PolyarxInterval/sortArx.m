@@ -1,4 +1,7 @@
 function arx = sortArx(arx)
+    if isa(arx,'cell')
+        arx = arx{:};
+    end
     if arx(end,4) ~= pi
         % [~,idx] = sort(arx(:,4));
         % arx = arx(idx,:);

@@ -1,7 +1,7 @@
 function arcOut = trimSegments(arcIn,edgeIn,recurCount)
 
-mustBeA(arcIn,'ciat.Arc')
-mustBeA(edgeIn,'ciat.Edge')
+mustBeA(arcIn,{'ciat.Arc','double'})
+mustBeA(edgeIn,{'ciat.Edge','double'})
 
 % Initialize
 K = length(arcIn) + length(edgeIn);
@@ -19,10 +19,14 @@ segRealInf = [inf(real(arcIn)) ; inf(real(edgeIn))];
 % Find starting object
 idx = find(segRealInf == min(segRealInf),1);
 startIdx = idx;
+if idx <= length(arcIn)
+    edgeFlag = false;
+else
+    edgeFlag = true;
+end
 
 % Follow the boundary
 k = 1;
-edgeFlag = false;
 prevIdx = [];
 while k==1 || (k<=K && idx~=startIdx)
 
@@ -50,7 +54,7 @@ while k==1 || (k<=K && idx~=startIdx)
             else
                 edgeIn = edgeIn((setdiff(1:end,prevIdx(end)-length(arcIn))));
             end
-            warning('Boundary incontinuity, removing last segment and trying again')
+            % warning('Boundary incontinuity, removing last segment and trying again')
             arcOut = ciat.PolyarcularInterval.trimSegments(arcIn,edgeIn,...
                                                            recurCount+1);
             return
@@ -65,12 +69,12 @@ while k==1 || (k<=K && idx~=startIdx)
             idx = startIdx;
         else
             % Select the segment with the smaller initial Gauss angle
-            diffGauss = wrapToPi(startGauss(idx)-endGauss(prevIdx(end)));
+            diffGauss = ciat.wrapToPi(startGauss(idx)-endGauss(prevIdx(end)));
             idx = idx(diffGauss == min(diffGauss));
         end
         if length(idx) > 1
             % Select the segment with the smallest Gauss angle derivative
-            diffGauss = wrapToPi(endGauss(idx)-startGauss(idx))./segLength(idx);
+            diffGauss = ciat.wrapToPi(endGauss(idx)-startGauss(idx))./segLength(idx);
             minIdx = find(diffGauss == min(diffGauss),1);
             idx = idx(minIdx);
         end

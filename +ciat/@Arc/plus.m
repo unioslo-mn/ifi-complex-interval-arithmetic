@@ -176,15 +176,15 @@ function output = splitAngle(input)
     if any(mask,'all')
         [M,N] = size(input);
         input2(M,N) = ciat.RealInterval;
-        angInf = wrapToPi(input.Infimum(mask));
-        angSup = wrapToPi(input.Supremum(mask));
+        angInf = ciat.wrapToPi(input.Infimum(mask));
+        angSup = ciat.wrapToPi(input.Supremum(mask));
         input2(mask) = ciat.RealInterval(-pi*ones(size(angSup)),angSup);
         input(mask) = ciat.RealInterval( angInf , pi*ones(size(angInf)));
         output = cat(3,input,input2);
     else
         output = ciat.RealInterval(...
-                            wrapToPi(input.Infimum) , ...
-                            wrapToPi(input.Supremum) );
+                            ciat.wrapToPi(input.Infimum) , ...
+                            ciat.wrapToPi(input.Supremum) );
     end
 
 end
