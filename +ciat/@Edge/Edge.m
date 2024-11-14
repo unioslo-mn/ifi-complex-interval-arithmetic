@@ -33,8 +33,15 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 case 0
                     % This is for initializing an array of objects
                 case 1
-                    obj.Startpoint = varargin{1};
-                    obj.Endpoint = obj.Startpoint;
+                    if length(varargin{1})==1
+                        obj.Startpoint = varargin{1};
+                        obj.Endpoint = obj.Startpoint;
+                    elseif length(varargin{1})==2
+                        obj.Startpoint = varargin{1}(1);
+                        obj.Endpoint = varargin{1}(2);
+                    else
+                        error('Input array is too long')
+                    end
                 case 2
                     obj.Startpoint = varargin{1};
                     obj.Endpoint = varargin{2};
@@ -173,8 +180,16 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 b1 = obj1.Offset;
                 a2 = obj2.Slope;
                 b2 = obj2.Offset;
-                xCoord = (b2 - b1) ./ (a1 - a2);
-                yCoord = a1 * xCoord + b1;
+                if isinf(a1)
+                    xCoord = real(obj1.Startpoint);
+                    yCoord = a2 * xCoord + b2;
+                elseif isinf(a2)
+                    xCoord = real(obj2.Startpoint);
+                    yCoord = a1 * xCoord + b1;
+                else
+                    xCoord = (b2 - b1) ./ (a1 - a2);
+                    yCoord = a1 * xCoord + b1;
+                end
 
                 % Assign values
                 r = nan(M1,N1);
