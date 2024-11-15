@@ -251,23 +251,42 @@ function points = castPolarTimesCircular(pInt, cInt, dR)
     bndEdge(4) = ciat.Edge( edgeCenter + [-1 1]*edgeVector);  
 
     % Adjust the first and last arc wrapping vertices
-    points{2}(1) = max(points{2}(1),...
-                       cap(bndEdge(1) , ciat.Edge(points{2}(1:2))));
-    points{2}(end) = max(points{2}(end),...
-                       cap(bndEdge(2) , ciat.Edge(points{2}(end-1:end))));
-    points{3}(1) = max(points{3}(1),...
-                       cap(bndEdge(2) , ciat.Edge(points{3}(1:2))));
-    points{3}(end) = max(points{3}(end),...
-                       cap(bndEdge(3) , ciat.Edge(points{3}(end-1:end))));
-    points{4}(1) = max(points{4}(1),...
-                       cap(bndEdge(3) , ciat.Edge(points{4}(1:2))));
-    points{4}(end) = max(points{4}(end),...
-                       cap(bndEdge(4) , ciat.Edge(points{4}(end-1:end))));
-    points{5}(1) = max(points{5}(1),...
-                       cap(bndEdge(4) , ciat.Edge(points{5}(1:2))));
-    points{5}(end) = max(points{5}(end),...
-                       cap(bndEdge(1) , ciat.Edge(points{5}(end-1:end))));
-    
+        % Segment 2
+    pCap = cap(bndEdge(1) , ciat.Edge(points{2}(1:2)));
+    if ~isnan(pCap)
+        points{2}(1) = pCap;
+    end
+    pCap = cap(bndEdge(2) , ciat.Edge(points{2}(end-1:end)));
+    if ~isnan(pCap)
+        points{2}(end) = pCap;
+    end
+        % Segment 3
+    pCap = cap(bndEdge(2) , ciat.Edge(points{3}(1:2)));
+    if ~isnan(pCap)
+        points{3}(1) = pCap;
+    end
+    pCap = cap(bndEdge(3) , ciat.Edge(points{3}(end-1:end)));
+    if ~isnan(pCap)
+        points{3}(end) = pCap;
+    end
+        % Segment 4
+    pCap = cap(bndEdge(3) , ciat.Edge(points{4}(1:2)));
+    if ~isnan(pCap)
+        points{4}(1) = pCap;
+    end
+    pCap = cap(bndEdge(4) , ciat.Edge(points{4}(end-1:end)));
+    if ~isnan(pCap)
+        points{4}(end) = pCap;
+    end
+        % Segment 5
+    pCap = cap(bndEdge(4) , ciat.Edge(points{5}(1:2)));
+    if ~isnan(pCap)
+        points{5}(1) = pCap;
+    end
+    pCap = cap(bndEdge(1) , ciat.Edge(points{5}(end-1:end)));
+    if ~isnan(pCap)
+        points{5}(end) = pCap;
+    end    
             
     % Return as column vector
     points = vertcat(points{:});
