@@ -227,7 +227,11 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
                         
         % Get point count
         function value = get.ArxCount(obj)
-            value = cellfun(@length,obj.Arx);
+            if isa(obj,'cell')
+                value = cellfun(@length,obj.Arx);
+            else
+                value = length(obj.Arx);
+            end
         end
 
 
@@ -348,8 +352,8 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             % Calculate the polygon area for each polyarcular interval
             for m = 1:M
                 for n = 1:N
-                    arcs = obj.Arcs{m,n}; 
-                    vertices = obj.Vertices{m,n}; 
+                    arcs = obj(m,n).Arcs; 
+                    vertices = obj(m,n).Vertices; 
                     if isempty(arcs)
                         % value(m,n) = nan;
                         points = vertices.Center;
@@ -402,8 +406,8 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     % Sample arcs and edges
-                    arcs = [obj.Arcs{m,n}; obj.Vertices{m,n}]; 
-                    edges = obj.Edges{m,n};
+                    arcs = [obj(m,n).Arcs; obj(m,n).Vertices]; 
+                    edges = obj(m,n).Edges;
                     arcPoints = sample(arcs,nPoints);
                     edgePoints = sample(edges,nPoints);
 
