@@ -230,24 +230,26 @@ function points = castPolarTimesCircular(pInt, cInt, dR)
     % Calculate the four tangent edges
     bndEdge(4,1) = ciat.Edge;
         % outer curve edge
-    edgeCenter = (pAbs.sup*(1+cRad)) * exp(1j*pAng.mid);
+    edgeCenter = cCen * pAbs.sup * exp(1j*pAng.mid) * (1+cRad/abs(cCen));
     % edgeVector = (pAbs.sup*(1+cRad))*exp(1j*(pAng.mid+pi/2));
-    edgeVector = pAbs.sup*exp(1j*pAng.inf) - pAbs.sup*exp(1j*pAng.sup);
+    edgeVector = cCen*(pAbs.sup*exp(1j*pAng.inf) - pAbs.sup*exp(1j*pAng.sup));
     bndEdge(1) = ciat.Edge( edgeCenter + [-1 1]*edgeVector);  
         % max phase edge
-    edgeCenter = pAbs.mid*exp(1j*pAng.sup) + ...
-                 pAbs.mid*cRad*exp(1j*(pAng.sup+pi/2));
-    edgeVector = pAbs.width*exp(1j*(pAng.sup+rotAng));
+    edgeCenter = cCen * (pAbs.mid*exp(1j*pAng.sup) + ...
+                         pAbs.mid*cRad/abs(cCen)*exp(1j*(pAng.sup+pi/2)));
+    edgeVector = cCen * pAbs.width*exp(1j*(pAng.sup+rotAng));
     bndEdge(2) = ciat.Edge( edgeCenter + [-1 1]*edgeVector);  
         % inner curve edge
-    edgeCenter = mean([pAbs.inf*exp(1j*pAng.inf),pAbs.inf*exp(1j*pAng.sup)]) + ...
-                 pAbs.inf*cRad*exp(1j*(pAng.mid+pi));
-    edgeVector = pAbs.inf*exp(1j*pAng.inf) - pAbs.inf*exp(1j*pAng.sup);
+    edgeCenter = cCen * (mean([pAbs.inf*exp(1j*pAng.inf), ...
+                               pAbs.inf*exp(1j*pAng.sup)]) + ...
+                         pAbs.inf*cRad/abs(cCen)*exp(1j*(pAng.mid+pi)));
+    edgeVector = cCen * (pAbs.inf*exp(1j*pAng.inf) - ...
+                         pAbs.inf*exp(1j*pAng.sup));
     bndEdge(3) = ciat.Edge( edgeCenter + [-1 1]*edgeVector); 
         % min phase edge
-    edgeCenter = pAbs.mid*exp(1j*pAng.inf) + ...
-                 pAbs.mid*cRad*exp(1j*(pAng.inf-pi/2));
-    edgeVector = pAbs.width*exp(1j*(pAng.inf-rotAng));
+    edgeCenter = cCen * (pAbs.mid*exp(1j*pAng.inf) + ...
+                         pAbs.mid*cRad/abs(cCen)*exp(1j*(pAng.inf-pi/2)));
+    edgeVector = cCen * pAbs.width*exp(1j*(pAng.inf-rotAng));
     bndEdge(4) = ciat.Edge( edgeCenter + [-1 1]*edgeVector);  
 
     % Adjust the first and last arc wrapping vertices
