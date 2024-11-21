@@ -165,6 +165,34 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             value = obj.Angle;
         end
 
+        % Negative
+        function r = uminus(obj)
+            r = ciat.Edge(-obj.Startpoint, -obj.Endpoint);
+        end
+
+        % Reciprocal
+        function r = recip(obj) % Needs vectorization
+            P1 = obj.Startpoint;
+            P2 = obj.Endpoint;
+            if obj.ZeroCrossing == 0
+                if obj.ison(0)
+                    warning('Edge contains zero, reciprocal returns NaN')
+                    r = ciat.Edge;
+                else
+                    r = ciat.Edge(1./P1,1./P2);
+                end
+            else
+                norm = obj.NormFactor;
+                
+                center = 0.5 * norm;
+                radius = 0.5 * abs(norm);
+                ang1 = angle(1/P1-center);
+                ang2 = angle(1/P2-center);
+    
+                r = ciat.Arc(center, radius, ang1, ang2);
+            end
+        end
+
         %% Other methods
 
         % Intersection
@@ -216,7 +244,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         % Is point on edge
         function r = ison(obj,x)
             % Check if the point is on the line of the edge
-            onLine = abs(real(x) * obj.Slope + obj.Offset - imag(x)) < 10*eps;
+            onLine = abs(real(x) * obj.Slope + obj.Offset - imag(x)) < 100*eps;
 
             % Check if the point is on the edge real interval
             inReal = obj.Real.isin(real(x));

@@ -30,11 +30,11 @@ function r = plusConcave(obj1,obj2)
 
     % Split and trim segments
     [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
-    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,1);
+    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3);
     
     % Generate polyarc
     r = ciat.PolyarcularInterval(arc3);
-    r = joinSegments(r);
+    r = mergeArcs(r);
 
 end
 

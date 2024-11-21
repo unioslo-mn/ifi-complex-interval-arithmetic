@@ -334,14 +334,14 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Generate output object
                     outObj(m,n) = ciat.PolyarcularInterval(arcs);
 
-                    % Join segments
-                    % outObj(m,n) = outObj(m,n).joinSegments;
+                    % Merge arcs
+                    % outObj(m,n).mergeArcs;
                 end
             end
         end
 
         % Joining segments
-        function r = joinSegments(obj)
+        function r = mergeArcs(obj)
             arcs = obj.ArcStorage{:};
             K = length(arcs);
             k = 1;
@@ -367,13 +367,63 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         % Union
-        function r = union(obj) %Needs debugging
-            arcs = [obj.Arcs{:}];
-            edges = [obj.Edges{:}];
-            [arcs,edges] = ciat.PolyarcularInterval.splitSegments(arcs(:),edges(:));
-            arcDef = ciat.PolyarcularInterval.trimSegments(arcs,edges,1);
-            r = ciat.PolyarcularInterval(arcDef);
-            r = joinSegments(r);
+        function r = union(obj) % Needs check for empty union
+            N = length(obj(:));
+            if N == 1
+                r = obj;
+                return
+            end
+
+            r = obj(1);
+            for n=2:N
+                arcIn = [r.Arcs ; obj(n).Arcs];
+                edgeIn = [r.Edges ; obj(n).Edges];
+                [arcSp,edgeSp] = ciat.PolyarcularInterval.splitSegments( ...
+                                                             arcIn,edgeIn);
+                if length(arcSp)+length(edgeSp)>length(arcIn)+length(edgeIn)
+                    arcDef = ciat.PolyarcularInterval.trimSegments( ...
+                                                             arcSp,edgeSp);
+                    r = ciat.PolyarcularInterval(arcDef);
+                    r.mergeArcs;
+                else
+                    warning('The union of intervals is disconnected, returning NaN')
+                    r = ciat.PolyarcularInterval;
+                end
+            end
+        end
+        % Alias for the union function
+        function r = cup(obj,varargin)
+            r = union(obj,varargin{:});
+        end
+
+        % Intersection
+        function r = intersection(obj) % Needs check for empty union
+            N = length(obj(:));
+            if N == 1
+                r = obj;
+                return
+            end
+
+            r = obj(1);
+            for n=2:N
+                arcIn = [r.Arcs ; obj(n).Arcs];
+                edgeIn = [r.Edges ; obj(n).Edges];
+                [arcSp,edgeSp] = ciat.PolyarcularInterval.splitSegments( ...
+                                                            arcIn,edgeIn);
+                if length(arcSp)+length(edgeSp)>length(arcIn)+length(edgeIn)
+                    arcDef = ciat.PolyarcularInterval.trimSegments( ...
+                                            arcSp,edgeSp,'inner',true);
+                    r = ciat.PolyarcularInterval(arcDef);
+                    r.mergeArcs;
+                else
+                    warning('The intersection of intervals is empty, returning NaN')
+                    r = ciat.PolyarcularInterval;
+                end
+            end
+        end
+        % Alias for the union function
+        function r = cap(obj,varargin)
+            r = intersection(obj,varargin{:});
         end
 
         % IsNaN
@@ -476,7 +526,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         outObj = segmentProduct(obj1, obj2)
         outObj = cast(inObj,options)
         [arcOut,edgeOut] = splitSegments(arcIn,edgeIn)
-        [arcOut,edgeOut] = trimSegments(arcIn,edgeIn,recurCount)
+        [arcOut,edgeOut] = trimSegments(arcIn,edgeIn,optional)
         seg = orderSegments(obj)
         r = plusConvex(obj1,obj2)
         r = plusConcave(obj1,obj2)

@@ -27,7 +27,7 @@ function arcs = setArcs(arcs)
                 arcs(n).ArcAngle = ciat.RealInterval(angMin,angMax);
             end
         end
-    else
-        arcs.ArcAngle = ciat.RealInterval(-pi,pi);
+    % else
+        % arcs.ArcAngle = ciat.RealInterval(-pi,pi);
     end
 end

@@ -51,8 +51,9 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 case 4
                     center = varargin{1};
                     radius = varargin{2};
-                    angInf = varargin{3};
-                    angSup = varargin{4};
+                    angInf = min(varargin{3},varargin{4}) + ...
+                             2*pi*(varargin{4} < varargin{3});
+                    angSup = max(varargin{3},varargin{4});
                     mustBeA(center,'double')
                     mustBeA(radius,'double')
                     mustBeA(angInf,'double')
@@ -357,6 +358,30 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             r = ciat.Arc(-obj.Center,obj.Radius,obj.ArcAngle+pi);
         end
 
+        % Unary reciprocal operator
+        function r = recip(obj)
+            P1 = obj.Startpoint;
+            P2 = obj.Endpoint;
+            if abs(obj.Center) == obj.Radius
+                if obj.ison(0)
+                    warning('Arc contains zero, reciprocal returns NaN')
+                    r = ciat.Arc;
+                else
+                    r = ciat.Edge(1./P1,1./P2);
+                end
+            else
+                norm = obj.NormFactor;
+                rad = obj.Radius * abs(norm);
+                
+                center = 1./(1-rad.^2) * norm;
+                radius = rad./(1-rad.^2) * abs(norm);
+                ang1 = angle(1/P1-center);
+                ang2 = angle(1/P2-center);
+    
+                r = ciat.Arc(center, radius, ang1, ang2);
+            end
+        end
+
         % Intersection
         function r = intersection(obj1,obj2)
 
@@ -468,10 +493,13 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             onCircle = abs(abs(x - obj.Center) - abs(obj.Radius)) < 10*eps;
 
             % Check if the point is in the sector
-            inSector = abs(ciat.wrapToPi( angle(x - obj.Center) - ...
-                                     obj.ArcAngle.Infimum  + ...
-                                    (obj.Radius<0)*pi ) ) ...
-                            <= obj.ArcAngle.Width;
+            % inSector = abs(ciat.wrapToPi( angle(x - obj.Center) - ...
+            %                          obj.ArcAngle.Infimum  + ...
+            %                         (obj.Radius<0)*pi ) ) ...
+            %                 <= obj.ArcAngle.Width;
+            inSector = any(obj.ArcAngle.isin(ciat.wrapToPi(angle(x-obj.Center)+...
+                                                      (obj.Radius<0)*pi) ...
+                                                      +[0,2*pi]));
 
             % Combine conditions
             r = onCircle & inSector;

@@ -473,6 +473,10 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
         % _________________________________________________________________________
             r = ciat.PolygonalInterval(cat(1,obj.Points));
         end
+        % Alias for the union function
+        function r = cup(obj,varargin)
+            r = union(obj,varargin{:});
+        end
         
         % Intersection
         function r = intersection(obj)
@@ -500,6 +504,10 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
                 poly3 = intersect(poly1,poly2);
                 r.Points = complex(poly3.Vertices(:,1),poly3.Vertices(:,2));
             end
+        end
+        % Alias for the intersection function
+        function r = cap(obj,varargin)
+            r = intersection(obj,varargin{:});
         end
         
         % Negative (uminus)
