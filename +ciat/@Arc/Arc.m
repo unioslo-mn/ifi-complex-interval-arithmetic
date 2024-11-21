@@ -135,15 +135,47 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Log-Gauss map angle interval
         function value = get.LogGaussMap(obj)
-            % value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint),...
-                                                     % angle(obj.Endpoint));
+            % Extract properties
             N = length(obj);
+            norm = obj.NormFactor;
             isConvex = obj.Radius >= 0;
             angleBounds = [obj.ArcAngle.inf obj.ArcAngle.sup];
             startGauss = angleBounds(sub2ind([N 2] , (1:N)' , 2-isConvex));
             endGauss = angleBounds(sub2ind([N 2] , (1:N)' , 1+isConvex));
-            value = ciat.RealInterval( startGauss - angle(obj.Startpoint),...
-                                       endGauss - angle(obj.Endpoint) );
+            
+            % Calculate log-Gauss map interval
+            if obj.isin(0)
+                % Find envelope
+                syms s           
+                rad = obj.Radius * abs(norm);
+                g(s) = angle(rad*exp(1i*s)) - angle(1+rad*exp(1i*s));
+                dg(s) =    (real(exp(s*1i))^2* ...
+                            (imag(exp(s*1i))^2/real(exp(s*1i))^2 + 1))/...
+                            (imag(exp(s*1i))^2 + real(exp(s*1i))^2) - ...
+                            (((rad^2*imag(exp(s*1i))^2)/(rad*real(exp(s*1i)) + 1)^2 + ...
+                            (rad*real(exp(s*1i)))/(rad*real(exp(s*1i)) + 1))* ...
+                            (rad*real(exp(s*1i)) + 1)^2)/...
+                            (rad^2*imag(exp(s*1i))^2 + ...
+                            (rad*real(exp(s*1i)) + 1)^2);
+                sEnv = abs(ciat.wrapToPi(eval(vpasolve(abs(dg)==0,s))));
+                
+                value = ciat.RealInterval(startGauss - angle(obj.Startpoint),...
+                                          endGauss - angle(obj.Endpoint) );
+                
+                % If the parameter interval contains the envelope
+                sInt = obj.ArcAngle + angle(norm);
+                gEnv = eval(g(sEnv));
+                if any(sInt.isin([sEnv,sEnv+2*pi]))
+                    value.Supremum = gEnv;
+                end
+                if any(sInt.isin([-sEnv,-sEnv+2*pi]))
+                    value.Infimum = -gEnv;
+                end    
+    
+            else
+                value = ciat.RealInterval(startGauss - angle(obj.Startpoint),...
+                                          endGauss - angle(obj.Endpoint) );
+            end
         end
 
         % Normalization factor
@@ -505,6 +537,34 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             r = onCircle & inSector;
         end
 
+        % Find point with a given log-Gauss map
+        function point = findLGM(obj,LGM)
+            % gFunc = @(s) -pi*(obj.LogGaussMap.mid<0) - angle(1+1i*s);
+            % sSolv = fsolve(@(s) gFunc(s)-LGM,0,optimset('Display','off'));
+            % point = (1+1i*sSolv) / obj.NormFactor;
+
+            if obj.LogGaussMap.isin(LGM)
+                R = obj.Radius * abs(obj.NormFactor);
+                gFunc = @(s) atan2(R*sin(s),R*cos(s))-atan2(R*sin(s),1+R*cos(s));
+                if abs(R) > 1
+                    sSolv = arrayfun(@(x0) fsolve(@(s) gFunc(s)-LGM+pi*(R<0),...
+                            x0, optimset('Display','off')),[-pi,0,pi]);
+                    sInt = obj.ArcAngle + angle(obj.NormFactor);
+                    sSolv = ciat.wrapToPi(sSolv);% + pi*(R<0));
+                    sSolv = uniquetol(sSolv(sSolv>=-pi & sSolv<=pi),1e-3);
+                    sSolv = sSolv(any(sInt.isin(sSolv+[0;2*pi]),1));
+                else
+                    sSolv = fsolve(@(s) gFunc(s)-LGM, 0, ...
+                                    optimset('Display','off'));
+                end
+
+                point = (1+R*exp(1i*(sSolv)))/obj.NormFactor;
+            else
+                point = nan();
+            end
+
+        end
+
         % Split
         function arcOut = split(arcIn,splitPoint)
 
@@ -700,6 +760,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         r = plus(obj1,obj2)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)
+        r = sum(obj,varargin)
         h = plotMap(obj, logMap, arrowSize, varargin)
 
     end

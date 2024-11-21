@@ -288,6 +288,16 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             end
         end
 
+        % Find point with a given log-Gauss map
+        function point = findLGM(obj,LGM)
+            if obj.LogGaussMap.isin(LGM)
+                gFunc = @(s) -pi*(obj.LogGaussMap.mid<0) - angle(1+1i*s);
+                sSolv = fsolve(@(s) gFunc(s)-LGM,0,optimset('Display','off'));
+                point = (1+1i*sSolv) / obj.NormFactor;
+            else
+                point = nan();
+            end
+        end
 
         % Sample
         function points = sample(obj, nPoints)
@@ -373,6 +383,9 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         %% Function headers
         r = plus(obj1,obj2)
+        r = times(obj1,obj2)
+        r = mtimes(obj1,obj2)
+        r = sum(obj,varargin)
         h = plotMap(obj,logMap,arrowSize,varargin)
 
     end

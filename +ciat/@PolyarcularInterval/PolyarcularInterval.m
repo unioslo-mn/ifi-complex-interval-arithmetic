@@ -283,7 +283,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Interleave arc and edge samples
                     allPoints = [arcPoints.';edgePoints.'];
                     allPoints = allPoints(:);
-                    points{m,n} = [allPoints{:}].';
+                    % points{m,n} = [allPoints{:}].';
+                    points{m,n} = [allPoints].';
                 end
             end
 
