@@ -274,6 +274,19 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
             r.Supremum = r.Supremum.';
         end
 
+        function r = sample(obj,cnt)
+            [M,N] = size(obj);
+            r = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    r{m,n} = linspace(obj.inf,obj.sup,cnt);
+                end
+            end
+            if M*N==1
+                r = r{:};
+            end
+        end
+
         function r = ctranspose(obj)
             r = obj.';
         end

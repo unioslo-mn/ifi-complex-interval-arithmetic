@@ -1,8 +1,8 @@
 function r = mtimes(obj1,obj2)
    
     % Check input class
-    mustBeA(obj1,["ciat.Arc","double"]);
-    mustBeA(obj2,["ciat.Arc","double"]);
+    mustBeA(obj1,["ciat.Arc","ciat.Edge","double"]);
+    mustBeA(obj2,["ciat.Arc","ciat.Edge","double"]);
     
     % Get input sizes and check if they can be combined
     [M1,N1] = size(obj1);

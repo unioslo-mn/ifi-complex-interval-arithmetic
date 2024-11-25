@@ -521,6 +521,12 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Is point on the arc
         function r = ison(obj,x)
+
+            if isempty(x)
+                r = [];
+                return
+            end
+
             % Check if the point is in the circle of the arc
             onCircle = abs(abs(x - obj.Center) - abs(obj.Radius)) < 10*eps;
 
@@ -767,6 +773,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
     methods(Static)
         angles = wrapArcAngle(angles)
+        output = capGaussMap(input1, input2)
     end
 
 %% Vectorizing the object

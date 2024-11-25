@@ -5,10 +5,11 @@ arguments
     arcIn            (:,:)  {mustBeA(arcIn,{'ciat.Arc','double'})}  = []
     edgeIn           (:,:)  {mustBeA(edgeIn,{'ciat.Edge','double'})}  = []
     optional.inner   (1,1)  {mustBeNumericOrLogical} = false
+    optional.attempts (1,1) {mustBeNumeric} = 5
 end 
 
 
-for iTry = 1:5
+for iTry = 1:optional.attempts
 
     % Initialize
     K = length(arcIn) + length(edgeIn);
@@ -58,7 +59,7 @@ for iTry = 1:5
         prevIdx = [prevIdx;idx];
         idx = find( abs(seg.Endpoint - startPoints) < 100*eps );
         if isempty(idx)
-            if iTry < 5
+            if iTry < optional.attempts
                 % Remove element and continue
                 if prevIdx(end) <= length(arcIn)
                     arcIn = arcIn((setdiff(1:end,prevIdx(end))));
@@ -67,7 +68,7 @@ for iTry = 1:5
                 end    
                 break
             else
-                warning('Boundary incontinuity after 5 attempts, returning NaN')
+                warning(sprintf('Boundary incontinuity after %i attempts, returning NaN',optional.attempts))
                 arcOut(1,1) = ciat.Arc;
                 return
             end
