@@ -26,11 +26,11 @@ aI2 = ciat.PolyarcularInterval(pI);
 
 %% Demonstrate detailed method of the plus function
 
-aI1Arcs = [aI1.Arcs{:} ; aI1.Vertices{:}];
-aI2Arcs = [aI2.Arcs{:} ; aI2.Vertices{:}];
+aI1Arcs = [aI1.Arcs ; aI1.Vertices];
+aI2Arcs = [aI2.Arcs ; aI2.Vertices];
 
-aI1Edges = aI1.Edges{:};
-aI2Edges = aI2.Edges{:};
+aI1Edges = aI1.Edges;
+aI2Edges = aI2.Edges;
 
 aI3ArcPlusArc = aI1Arcs + aI2Arcs.';
 aI3EdgePlusEdge = aI1Edges + aI2Edges.';

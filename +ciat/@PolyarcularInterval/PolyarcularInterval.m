@@ -86,6 +86,11 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
          % Get arcs (retrieve from hidden property ArcStorage)
         function value = get.DefArcs(obj)
             value = obj.ArcStorage;
+
+            [M,N] = size(obj);
+            if M*N==1
+                value = value{:};
+            end
         end
 
         %% Dependent properties
@@ -267,6 +272,11 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             end
         end
 
+        % Binary minus operation
+        function r = minus(obj1,obj2)
+            r = obj1 + (-obj2);
+        end
+
         % Sample
         function points = sample(obj, nPoints)
             [M,N] = size(obj);
@@ -283,8 +293,8 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Interleave arc and edge samples
                     allPoints = [arcPoints.';edgePoints.'];
                     allPoints = allPoints(:);
-                    % points{m,n} = [allPoints{:}].';
-                    points{m,n} = [allPoints].';
+                    points{m,n} = [allPoints{:}].';
+                    % points{m,n} = [allPoints].';
                 end
             end
 
@@ -330,7 +340,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     [arcs,edges] = ciat.PolyarcularInterval.splitSegments(arcs,edges);
                     arcs = arcs(arcs.Length > 100*eps);
                     edges = edges(edges.Length > 100*eps);
-                    arcs = ciat.PolyarcularInterval.trimSegments(arcs,edges,1);
+                    arcs = ciat.PolyarcularInterval.trimSegments(arcs,edges,'attempts',5);
 
                     % Generate output object
                     outObj(m,n) = ciat.PolyarcularInterval(arcs);

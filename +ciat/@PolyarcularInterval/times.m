@@ -38,20 +38,19 @@ function r = times(obj1,obj2)
     M = max([M1,M2]);
     N = max([N1,N2]);
     
-    % Turn scalars to degenerate intervals
-    if isa(obj1, 'double')
-        obj1 = ciat.PolyarcularInterval(obj1, 0);
-    end
-    if isa(obj2, 'double')
-        obj2 = ciat.PolyarcularInterval(obj2, 0);
-    end 
-
+   
     % Loop throught the arrays
     r(M,N) = ciat.PolyarcularInterval;
     for m = 1:M
         for n = 1:N
+            if isa(obj1,'double')
+                r(m,n) = ciat.PolyarcularInterval(obj2.DefArcs .* obj1);
+            elseif isa(obj2,'double')
+                r(m,n) = ciat.PolyarcularInterval(obj1.DefArcs .* obj2);
+            else
             % Calculate product
             r(M,N) = multiply( obj1(m1,n1) , obj2(m2,n2) );
+            end
         end
     end
 end
@@ -66,7 +65,7 @@ function r = multiply(obj1,obj2)
     
     % Handle exception when one of the inputs is a degenerate interval
     if length(v)==1 || length(w)==1 
-        arcs = 
+        % arcs = 
         r = ciat.PolyarcularInterval(arcs);
         return
     end
