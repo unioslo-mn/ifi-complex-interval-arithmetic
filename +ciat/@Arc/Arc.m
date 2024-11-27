@@ -135,56 +135,27 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Log-Gauss map angle interval
         function value = get.LogGaussMap(obj)
-            % Extract properties
-            N = length(obj);
-            norm = obj.NormFactor;
-            isConvex = obj.Radius >= 0;
-            angleBounds = [obj.ArcAngle.inf obj.ArcAngle.sup];
-            startGauss = angleBounds(sub2ind([N 2] , (1:N)' , 2-isConvex));
-            endGauss = angleBounds(sub2ind([N 2] , (1:N)' , 1+isConvex));
-            
-            % Calculate log-Gauss map interval
-            if obj.isin(0)
-                % Find envelope
-                syms s           
-                rad = obj.Radius * abs(norm);
-                g(s) = angle(rad*exp(1i*s)) - angle(1+rad*exp(1i*s));
-                dg(s) =    (real(exp(s*1i))^2* ...
-                            (imag(exp(s*1i))^2/real(exp(s*1i))^2 + 1))/...
-                            (imag(exp(s*1i))^2 + real(exp(s*1i))^2) - ...
-                            (((rad^2*imag(exp(s*1i))^2)/(rad*real(exp(s*1i)) + 1)^2 + ...
-                            (rad*real(exp(s*1i)))/(rad*real(exp(s*1i)) + 1))* ...
-                            (rad*real(exp(s*1i)) + 1)^2)/...
-                            (rad^2*imag(exp(s*1i))^2 + ...
-                            (rad*real(exp(s*1i)) + 1)^2);
-                sEnv = abs(ciat.wrapToPi(eval(vpasolve(abs(dg)==0,s))));
-                
-                value = ciat.RealInterval(startGauss - angle(obj.Startpoint),...
-                                          endGauss - angle(obj.Endpoint) );
-                
-                % If the parameter interval contains the envelope
-                sInt = obj.ArcAngle + angle(norm);
-                gEnv = eval(g(sEnv));
-                if any(sInt.isin([sEnv,sEnv+2*pi]))
-                    value.Supremum = gEnv;
-                end
-                if any(sInt.isin([-sEnv,-sEnv+2*pi]))
-                    value.Infimum = -gEnv;
-                end    
-    
-            else
-                value = ciat.RealInterval(startGauss - angle(obj.Startpoint),...
-                                          endGauss - angle(obj.Endpoint) );
-            end
+            value = getLogGaussMap(obj);
         end
 
         % Normalization factor
         function value = get.NormFactor(obj)
             if ~isempty(obj)
-                if obj.Center == 0
-                    value = 0;
-                else
-                    value = 1/obj.Center;
+                % Extract properties
+                [M,N] = size(obj);
+                isZeroCentered = obj.Center == 0;
+
+                value = zeros(M,N);
+                % Assign values to zero centered arcs
+                mask = isZeroCentered;
+                if any(mask,'all')
+                    value(mask) = ones(sum(mask,'all'),1);
+                end
+    
+                % Assign values to non-zero centered arcs
+                mask = ~isZeroCentered;
+                if any(mask,'all')
+                    value(mask) = 1./obj.Center(mask);
                 end
             else
                 value = [];
@@ -545,15 +516,13 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
 
         % Find point with a given log-Gauss map
         function point = findLGM(obj,LGM)
-            % gFunc = @(s) -pi*(obj.LogGaussMap.mid<0) - angle(1+1i*s);
-            % sSolv = fsolve(@(s) gFunc(s)-LGM,0,optimset('Display','off'));
-            % point = (1+1i*sSolv) / obj.NormFactor;
-
             if obj.LogGaussMap.isin(LGM)
                 R = obj.Radius * abs(obj.NormFactor);
                 gFunc = @(s) atan2(R*sin(s),R*cos(s))-atan2(R*sin(s),1+R*cos(s));
                 if abs(R) > 1
-                    sSolv = arrayfun(@(x0) fsolve(@(s) gFunc(s)-LGM+pi*(R<0),...
+                    % sSolv = arrayfun(@(x0) fsolve(@(s) gFunc(s)-LGM+pi*(R<0),...
+                    %         x0, optimset('Display','off')),[-pi,0,pi]);
+                    sSolv = arrayfun(@(x0) fsolve(@(s) gFunc(s)-LGM,...
                             x0, optimset('Display','off')),[-pi,0,pi]);
                     sInt = obj.ArcAngle + angle(obj.NormFactor);
                     sSolv = ciat.wrapToPi(sSolv);% + pi*(R<0));
@@ -563,6 +532,10 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     sSolv = fsolve(@(s) gFunc(s)-LGM, 0, ...
                                     optimset('Display','off'));
                 end
+
+                % if R<0
+                %     sSolv = ciat.wrapToPi(sSolv+pi);
+                % end
 
                 point = (1+R*exp(1i*(sSolv)))/obj.NormFactor;
             else
@@ -630,7 +603,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 angInf = obj(m,n).ArcAngle.Infimum;
                 angSup = obj(m,n).ArcAngle.Supremum;
                 points{m,n} = center + radius * ...
-                                   exp(1j*linspace(angInf,angSup,nPoints));
+                                   exp(1j*linspace(angInf,angSup,nPoints)');
                 if radius < 0
                     points{m,n} = flip(points{m,n});
                 end
@@ -763,6 +736,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         end
         
         %% Function headers
+        value = getLogGaussMap(obj)
         r = plus(obj1,obj2)
         r = times(obj1,obj2)
         r = mtimes(obj1,obj2)

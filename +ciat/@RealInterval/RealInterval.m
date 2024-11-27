@@ -716,7 +716,7 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
                     minSup = min(obj.Supremum,[],varargin{:});
     
                     % Assign bounds
-                    mask = maxInf < minSup;
+                    mask = maxInf <= minSup;
                     r(size(maxInf,1),size(maxInf,2)) = ciat.RealInterval;
                     if any(mask)
                         r(mask) = ciat.RealInterval( maxInf(mask) , ...

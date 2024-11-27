@@ -96,8 +96,9 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % Normalization factor
 		function value = get.NormFactor(obj)
+            [M,N] = size(obj);
             if obj.ZeroCrossing == 0
-                value = 0;
+                value = ones(M,N);
             else
                 % Extract line parameters
                 v1 = obj.Startpoint;
@@ -156,10 +157,10 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         
         % Angle
         function value = get.Angle(obj)
-            value = ciat.RealInterval(min([angle(obj.Startpoint), ...
-                                             angle(obj.Endpoint)],[],2),...
-                                        max([angle(obj.Startpoint), ...
-                                             angle(obj.Endpoint)],[],2));
+            value = ciat.RealInterval( min(angle(cat(3,obj.Startpoint, ...
+                                                    obj.Endpoint)),[],3),...
+                                         max(angle(cat(3,obj.Startpoint,...
+                                                    obj.Endpoint)),[],3) );
         end
         function value = angle(obj)
             value = obj.Angle;
@@ -168,6 +169,11 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         % Negative
         function r = uminus(obj)
             r = ciat.Edge(-obj.Startpoint, -obj.Endpoint);
+        end
+
+        % Minus
+        function r = minus(obj1,obj2)
+            r = obj1 + (-obj2);
         end
 
         % Reciprocal
@@ -306,7 +312,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
             for n = 1:N
                 points{m,n} = linspace(obj(m,n).Startpoint,...
-                                       obj(m,n).Endpoint,nPoints);
+                                       obj(m,n).Endpoint,nPoints).';
             end
             end
 

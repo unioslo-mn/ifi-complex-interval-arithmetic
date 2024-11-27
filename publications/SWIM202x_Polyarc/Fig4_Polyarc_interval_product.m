@@ -28,14 +28,17 @@ B_a = (ciat.PolyarcularInterval(B_p)-1);
 A_smp = A_a.sample(sCnt);
 B_smp = B_a.sample(sCnt);
 C_smp = A_smp(:) * B_smp(:).';
-C_idx = boundary(real(C_smp(:)),imag(C_smp(:)),0.7);
-C_bnd = C_smp(C_idx);
+
 
 % Log-Gauss map intersections
-% LGM_arc_arc = ~isnan(cap(A_a.Arcs.LogGaussMap,B_a.Arcs.LogGaussMap.'))
-% LGM_arc_edge = ~isnan(cap([A_a.Arcs.LogGaussMap; A_a.Edges.LogGaussMap],...
-%                           [B_a.Arcs.LogGaussMap; B_a.Edges.LogGaussMap].'))
-% LGM_edge_edge = ~isnan(cap(A_a.Edges.LogGaussMap,B_a.Edges.LogGaussMap.'))
+LGM_arc_arc = ~isnan(cap(A_a.Arcs.LogGaussMap,B_a.Arcs.LogGaussMap.'))
+LGM_arc_edge = ~isnan(cap([A_a.Arcs.LogGaussMap; A_a.Edges.LogGaussMap],...
+                          [B_a.Arcs.LogGaussMap; B_a.Edges.LogGaussMap].'))
+LGM_edge_edge = ~isnan(cap(A_a.Edges.LogGaussMap,B_a.Edges.LogGaussMap.'))
+
+% Add arcs and edges
+% ArcTimesArc = A_a.Arcs .* B_a.Arcs.';
+
 
 %% Plot
 figure(2);clf;hold on;axis equal
@@ -44,7 +47,6 @@ B_a.plot('r');
 % A_a.plotLogGaussMap(0.2,'b');
 % B_a.plotLogGaussMap(0.2,'r');
 scatter(real(C_smp),imag(C_smp),1,'g.');
-plot(real(C_bnd),imag(C_bnd),'k-');
 
 %%
 % Generate arcs

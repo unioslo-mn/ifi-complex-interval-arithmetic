@@ -19,7 +19,7 @@ arcs2 = ciat.Arc(centers(:,:,2), radii(:,:,2), ...
   
 
 % Add arcs
-arcPlus = arcs1 + arcs2;
+arcPlusArc = arcs1 + arcs2;
 
 %% 
 
@@ -27,4 +27,4 @@ arcPlus = arcs1 + arcs2;
 figure;clf;hold on;axis equal
 arcs1.plot('k:')
 arcs2.plot('k--')
-arcPlus.plot('b')
+arcPlusArc.plot('b')
