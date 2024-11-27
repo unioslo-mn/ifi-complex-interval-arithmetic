@@ -2,18 +2,24 @@
 clear
 
 % Interval parameters
+% rad = [[0.3 ; 1.9] , [0.6 ; 2.8]];
+% ang = [ [-0.7 ; -0.3]+0.35 , [0.6 ; 1.1]-0.3 ];
+
+% Interval parameters
 rad = [[0.3 ; 1.9] , [0.6 ; 2.8]];
-ang = [ [-0.7 ; -0.3] , [0.6 ; 1.1] ];
+ang = [[-0.6 ; -0.3] , [-0.9 ; -0.4] ];
 
 % Arc sampling parameter
-sCnt = 50;
+sCnt = 20;
 sAxis = linspace(0,1,sCnt)';
 
 % Plot parameters
 col = lines(100);
+% col = turbo(100);
 gauRad = [0.2 , 0.5 , 0.8]*3;
 gauSca = 0.8 * [1,1,1];
-gauOffset = -5+6i;
+norLen = 0.5;
+gauOffset = -9+2i;
 
 % Generate polar intervals
 A_p = ciat.PolarInterval(rad(1,1), rad(2,1), ang(1,1)*pi, ang(2,1)*pi);
@@ -31,24 +37,40 @@ C_smp = A_smp(:) * B_smp(:).';
 
 
 % Log-Gauss map intersections
-LGM_arc_arc = ~isnan(cap(A_a.Arcs.LogGaussMap,B_a.Arcs.LogGaussMap.'))
-LGM_arc_edge = ~isnan(cap([A_a.Arcs.LogGaussMap; A_a.Edges.LogGaussMap],...
-                          [B_a.Arcs.LogGaussMap; B_a.Edges.LogGaussMap].'))
-LGM_edge_edge = ~isnan(cap(A_a.Edges.LogGaussMap,B_a.Edges.LogGaussMap.'))
+LGM_cap = ~isnan(ciat.Arc.capGaussMap( ...
+    [A_a.Arcs.LogGaussMap;A_a.Edges.LogGaussMap;A_a.Vertices.LogGaussMap],...
+    [B_a.Arcs.LogGaussMap;B_a.Edges.LogGaussMap;B_a.Vertices.LogGaussMap].'));
 
 % Add arcs and edges
-% ArcTimesArc = A_a.Arcs .* B_a.Arcs.';
+ArcTimesArc = A_a.Arcs .* B_a.Arcs.';           
+ArcTimesEdge = A_a.Arcs .* B_a.Edges.';         
+EdgeTimesEdge = A_a.Edges .* B_a.Edges.';       
+VertTimesArc = A_a.Vertices .* B_a.Arcs.';      
+VertTimesEdge =  A_a.Vertices .* B_a.Edges.';   
+ArcTimesVert = A_a.Arcs .* B_a.Vertices.';      
+EdgeTimesVert = A_a.Edges .* B_a.Vertices.';   
+VertTimesVert = A_a.Vertices .* B_a.Vertices.';   
 
-
-%% Plot
+% Plot
 figure(2);clf;hold on;axis equal
 A_a.plot('b');
 B_a.plot('r');
-% A_a.plotLogGaussMap(0.2,'b');
-% B_a.plotLogGaussMap(0.2,'r');
+A_a.plotLogGaussMap(0.2,'b');
+B_a.plotLogGaussMap(0.2,'r');
 scatter(real(C_smp),imag(C_smp),1,'g.');
 
+% ArcTimesArc.plot('b','linewidth',2);
+% ArcTimesEdge.plot('b','linewidth',2);
+% EdgeTimesEdge.plot('c','linewidth',2); 
+% VertTimesArc.plot('k','linewidth',2);
+% VertTimesEdge.plot('k','linewidth',2);
+% ArcTimesVert.plot('k','linewidth',2);
+% EdgeTimesVert.plot('k','linewidth',2);
+
+
 %%
+
+if 1
 % Generate arcs
 plaOffs = -[1,1];
 pla=cell(2,1);
@@ -164,6 +186,37 @@ for l = 1:length(seg{2})
 end
 end
 
+% Complete results segments
+arcToAdd = EdgeTimesEdge(~isnan(EdgeTimesEdge));
+segCnt = length(seg{3}) + 1;
+seg{3}(segCnt).typ = 'arc';
+seg{3}(segCnt).cnt = arcToAdd.Center;
+seg{3}(segCnt).rad = arcToAdd.Radius;
+seg{3}(segCnt).nor = arcToAdd.GaussMap.Bounds/pi;
+seg{3}(segCnt).len = arcToAdd.Length;
+seg{3}(segCnt).smp = arcToAdd.sample(sCnt);
+seg{3}(segCnt).log = arcToAdd.LogGaussMap.Bounds;
+%
+segCnt = length(seg{3}) + 1;
+edgeToAdd = EdgeTimesVert(1,4);
+seg{3}(segCnt).typ = 'edge';
+seg{3}(segCnt).cnt = [edgeToAdd.Startpoint;edgeToAdd.Endpoint];
+seg{3}(segCnt).rad = [];
+seg{3}(segCnt).nor = edgeToAdd.GaussMap.Bounds/pi;
+seg{3}(segCnt).len = edgeToAdd.Length;
+seg{3}(segCnt).smp = edgeToAdd.sample(sCnt);
+seg{3}(segCnt).log = edgeToAdd.LogGaussMap.Bounds;
+%
+segCnt = length(seg{3}) + 1;
+pointToAdd = VertTimesVert(1,4);
+seg{3}(segCnt).typ = 'point';
+seg{3}(segCnt).cnt = pointToAdd.Center;
+seg{3}(segCnt).rad = [];
+seg{3}(segCnt).nor = pointToAdd.GaussMap.Bounds/pi;
+seg{3}(segCnt).len = 0;
+seg{3}(segCnt).smp = pointToAdd.Center * ones(sCnt,1);
+seg{3}(segCnt).log = pointToAdd.LogGaussMap.Bounds;
+
 % Add interval boundaries
 bnd1 = [seg{1}.smp];
 bnd2 = [seg{2}.smp];
@@ -173,7 +226,7 @@ bnd3 = bnd1(:) * bnd2(:).';
 
 % figure(2);clf;hold on;axis equal
 % fimplicit(@(x,y) x.^2+y.^2-1,'k:')
-scatter(real(bnd3),imag(bnd3),'g.')
+% scatter(real(bnd3),imag(bnd3),'g.')
 
 scatter(real(gauOffset),imag(gauOffset),10,'+')
 fimplicit(@(x,y) (x-real(gauOffset)).^2+(y-imag(gauOffset)).^2 - ...
@@ -187,6 +240,7 @@ for m = 1:3
     gauSca(m) = gauSca(m) / sum([seg{m}.len]);
 for n = 1:length(seg{m})
     % Draw interval
+    c = max(round(round(mean(seg{m}(n).nor)/2+0.5,2)*100),1);
     if strcmp(seg{m}(n).typ,'point')
         scatter(real(seg{m}(n).cnt),imag(seg{m}(n).cnt),50,col(n,:),...
                 'o','filled','MarkerFaceColor',col(n,:))
@@ -203,6 +257,23 @@ for n = 1:length(seg{m})
     plot(real(loggau),imag(loggau),...
         '-','color',col(n,:),'LineWidth',2) 
 
+    norAng = linspace(seg{m}(n).nor(1),seg{m}(n).nor(2),sCnt)';
+    quiver(real(seg{m}(n).smp),imag(seg{m}(n).smp),...
+           norLen*cos(norAng*pi),norLen*sin(norAng*pi),...
+           '-','color',col(c,:),'AutoScale','off');
+
     gauRad(m) = gauRad(m) + seg{m}(n).len * gauSca(m);
 end
 end
+end
+
+% Settings
+xlabel('Real')
+ylabel('Imag')
+text(-1.07,-1.2,'A','HorizontalAlignment','center')
+text(-2.63,-1.5,'B','HorizontalAlignment','center')
+text(-0.28,5,'A+B','HorizontalAlignment','center')
+text(-9,3.1,'A','HorizontalAlignment','center')
+text(-9,4.14,'B','HorizontalAlignment','center')
+text(-9,4.92,'A+B','HorizontalAlignment','center')
+fontsize(30,'points')

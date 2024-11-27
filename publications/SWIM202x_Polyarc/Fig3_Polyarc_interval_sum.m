@@ -272,7 +272,6 @@ for n = 1:length(seg{m})
                 '-','color',col(c,:),'LineWidth',2)
     end
     % Draw Gauss map
-    % subplot(1,2,2);
     gau = exp(1j*pi*(sAxis*diff(seg{m}(n).nor)+seg{m}(n).nor(1))) .* ...
                 (sAxis * seg{m}(n).len * gauSca(m) + gauRad(m));
     plot(real(gau),imag(gau),...

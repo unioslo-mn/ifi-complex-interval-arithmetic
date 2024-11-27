@@ -92,6 +92,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 		function value = get.LogGaussMap(obj)
             value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint), ...
                                                      angle(obj.Endpoint));
+            value = ciat.RealInterval(ciat.wrapToPi(value.inf),...
+                                      ciat.wrapToPi(value.sup));
         end
 
         % Normalization factor
@@ -297,8 +299,16 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         % Find point with a given log-Gauss map
         function point = findLGM(obj,LGM)
             if obj.LogGaussMap.isin(LGM)
-                gFunc = @(s) -pi*(obj.LogGaussMap.mid<0) - angle(1+1i*s);
-                sSolv = fsolve(@(s) gFunc(s)-LGM,0,optimset('Display','off'));
+                % gFunc = @(s) -pi*(obj.LogGaussMap.mid<0) - angle(1+1i*s);
+                gFunc = @(s) - angle(1+1i*s);
+                sSolv=zeros(1,3);
+                for idx = 1:3
+                    sSolv(idx) = fsolve(@(s) gFunc(s)-LGM+(idx-2)*pi,...
+                        obj.CurveParameter.mid,optimset('Display','off'));
+                end
+                sSolv = uniquetol(sSolv,1e-6);
+                sSolv = sSolv(any(obj.CurveParameter.isin(sSolv,...
+                                                'tolerance',1e-6),1));
                 point = (1+1i*sSolv) / obj.NormFactor;
             else
                 point = nan();

@@ -2,6 +2,7 @@ function value = getLogGaussMap(obj)
     % Extract properties
     [M,N] = size(obj);
     isZeroCentered = obj.Center == 0;
+    isVertex = obj.Radius == 0;
     isConvex = obj.Radius >= 0;
     isInZero = obj.isin(0);
     isCurveZero = obj.CurveParameter.isin(0);
@@ -9,8 +10,8 @@ function value = getLogGaussMap(obj)
    
     % Calculate log-Gauss map values
     gFunc = @(s,R) atan2(R.*sin(s),R.*cos(s))-atan2(R.*sin(s),1+R.*cos(s));
-    LGMinf = gFunc(obj.CurveParameter.inf,obj.Radius);
-    LGMsup = gFunc(obj.CurveParameter.sup,obj.Radius);
+    LGMinf = gFunc(obj.CurveParameter.inf,obj.Radius .* abs(obj.NormFactor));
+    LGMsup = gFunc(obj.CurveParameter.sup,obj.Radius .* abs(obj.NormFactor));
 
     % Assign log-Gauss map value
     value(M,N) = ciat.RealInterval;
@@ -18,6 +19,13 @@ function value = getLogGaussMap(obj)
     mask = isZeroCentered;
     if any(mask,'all')
         value(mask) = ciat.RealInterval(zeros(sum(mask,'all'),1));
+    end
+        % For zero-radius arcs the LGM is calculated from the Gauss map
+    mask = isVertex;
+    if any(mask,'all')
+        LGMinf = ciat.wrapToPi(obj.GaussMap.inf - angle(obj.Center) );
+        LGMsup = ciat.wrapToPi(obj.GaussMap.sup - angle(obj.Center) );
+        value(mask) = ciat.RealInterval(LGMinf,LGMsup);
     end
         % For non-zero-centered arcs that does not include
         % the origin the LGM is simply the LGM of the endpoints

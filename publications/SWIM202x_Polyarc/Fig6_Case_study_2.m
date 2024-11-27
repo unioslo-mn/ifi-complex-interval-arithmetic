@@ -1,0 +1,45 @@
+clear
+% close all
+
+%% Set parameters
+
+m = [6+12i ; -2-5i ; -3+10i];
+d = ciat.RealInterval([11 8 5],[12 10 7])';
+a = ciat.RealInterval([14 -147 63],[100 -75 150])'/180*pi;
+
+%% Generate intervals
+
+F_p = ciat.PolarInterval(d,a);
+F_a = ciat.PolyarcularInterval(F_p);
+iF_a = -F_a + m;
+L_a = intersection(iF_a);
+L_c = ciat.CircularInterval(L_a);
+Loc = L_c.Center;
+Msr = F_a + Loc;
+
+
+%% Plot
+figure(1);clf;hold on;axis equal
+
+% Plot reference points
+p1 = scatter(real(m),imag(m),100,'ks','filled','DisplayName','Landmark');
+for n=1:length(m)
+    text(real(m(n))+0.2,imag(m(n)),sprintf('m_%i',n), ...
+            'HorizontalAlignment','left')
+end
+
+% Plot solution
+p4 = L_a.plot('k-','linewidth',3,'DisplayName','Solution set (intersection)');
+p3 = iF_a.plot('k--','DisplayName','Inverted measurement');
+
+
+% Plot measurements
+p5 = scatter(real(Loc),imag(Loc),100,'ko','filled','DisplayName','Center of solution set');
+p2 = Msr.plot('k-','DisplayName','Measurement (relative to set center)');
+
+fontsize(30,'points')
+legend([p1(1),p2(1),p3(1),p4(1),p5(1)],'Location','northwest')
+xlabel('Real (x)')
+ylabel('Imag (y)')
+xLim = xlim();
+xlim(xLim-7)

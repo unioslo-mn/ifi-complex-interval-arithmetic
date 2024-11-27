@@ -222,8 +222,10 @@ function points = castPolarTimesCircular(pInt, cInt, dR)
 
     % Segment 5: max amplitude, min phase (top right) corner
     arcCenter = cCen*pAbs.sup*exp(1j*pAng.inf);
-    arcAngInf = minAng;
-    arcAngSup = minAng - pi/2 - rotAng;
+    % arcAngInf = minAng;
+    % arcAngSup = minAng - pi/2 - rotAng;
+    arcAngInf = minAng - pi/2 - rotAng;
+    arcAngSup = minAng;
     arcRad = cRad * pAbs.sup;
     points{5} = ciat.Arc(arcCenter,arcRad,arcAngInf,arcAngSup).polyWrap(dR);
 

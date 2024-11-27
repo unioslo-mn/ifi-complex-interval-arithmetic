@@ -84,7 +84,7 @@ function outObj = cast(inObj)
                     inReal = real(points);
                     inImag = imag(points);
                     % [c,R] = minboundcircle(inReal,inImag);
-                    [R,c,~] = ExactMinBoundCircle([inReal,inImag]);
+                    [R,c,~] = ExactMinBoundCircle([inReal(:),inImag(:)]);
                     outCenter(m,n) = c(1) + 1i*c(2);
                     outRadius(m,n) = R+10*eps;
                 end

@@ -267,7 +267,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             r(M,N) = ciat.PolyarcularInterval;
             for m = 1:M
                 for n = 1:N
-                    r(m,n) = ciat.PolyarcularInterval(-obj(m,n).DefArcs{:});
+                    r(m,n) = ciat.PolyarcularInterval(-obj(m,n).DefArcs);
                 end
             end
         end

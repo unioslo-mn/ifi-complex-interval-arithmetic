@@ -758,8 +758,15 @@ classdef RealInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         % Inside including the boundaries
-        function r = isin(obj,x)
-            r = obj.Infimum <= x & x <= obj.Supremum; 
+        function r = isin(obj,x,optional)
+            arguments
+                obj
+                x
+                optional.tolerance  = 100*eps
+            end
+            
+            r = obj.Infimum <= x + optional.tolerance &...
+                obj.Supremum >= x - optional.tolerance ; 
         end
 
         % Inside excluding the boundaries

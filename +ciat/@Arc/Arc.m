@@ -524,10 +524,11 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                     %         x0, optimset('Display','off')),[-pi,0,pi]);
                     sSolv = arrayfun(@(x0) fsolve(@(s) gFunc(s)-LGM,...
                             x0, optimset('Display','off')),[-pi,0,pi]);
-                    sInt = obj.ArcAngle + angle(obj.NormFactor);
+                    sInt = obj.CurveParameter;
                     sSolv = ciat.wrapToPi(sSolv);% + pi*(R<0));
                     sSolv = uniquetol(sSolv(sSolv>=-pi & sSolv<=pi),1e-3);
-                    sSolv = sSolv(any(sInt.isin(sSolv+[0;2*pi]),1));
+                    sSolv = sSolv(any(sInt.isin(sSolv+[-2*pi;0;2*pi],...
+                                                'tolerance',1e-6),1));
                 else
                     sSolv = fsolve(@(s) gFunc(s)-LGM, 0, ...
                                     optimset('Display','off'));
