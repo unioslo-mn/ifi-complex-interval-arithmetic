@@ -24,8 +24,8 @@ figure(1);clf;hold on;axis equal
 % Plot reference points
 p1 = scatter(real(m),imag(m),100,'ks','filled','DisplayName','Landmark');
 for n=1:length(m)
-    text(real(m(n))+0.2,imag(m(n)),sprintf('m_%i',n), ...
-            'HorizontalAlignment','left')
+    text(real(m(n))+0.2,imag(m(n)),sprintf('$P_%i$',n), ...
+            'HorizontalAlignment','left','Interpreter','latex')
 end
 
 % Plot solution
@@ -36,6 +36,15 @@ p3 = iF_a.plot('k--','DisplayName','Inverted measurement');
 % Plot measurements
 p5 = scatter(real(Loc),imag(Loc),100,'ko','filled','DisplayName','Center of solution set');
 p2 = Msr.plot('k-','DisplayName','Measurement (relative to set center)');
+
+% Interval labels
+text(10,10,'$A_1$', 'HorizontalAlignment', 'center','Interpreter','latex')
+text(-5,-2,'$A_2$', 'HorizontalAlignment', 'center','Interpreter','latex')
+text(-3,12,'$A_3$', 'HorizontalAlignment', 'center','Interpreter','latex')
+text(8,1,'$P_1-A_1$', 'HorizontalAlignment', 'left','Interpreter','latex')
+text(4,3,'$P_2-A_2$', 'HorizontalAlignment', 'left','Interpreter','latex')
+text(3,8,'$P_3-A_3$', 'HorizontalAlignment', 'center','Interpreter','latex')
+text(-2,2,'$B$', 'HorizontalAlignment', 'center','Interpreter','latex')
 
 fontsize(30,'points')
 legend([p1(1),p2(1),p3(1),p4(1),p5(1)],'Location','northwest')

@@ -182,7 +182,8 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
         function r = recip(obj) % Needs vectorization
             P1 = obj.Startpoint;
             P2 = obj.Endpoint;
-            if obj.ZeroCrossing == 0
+            pEdge = mean([P1,P2]);
+            if abs(obj.ZeroCrossing) < 100*eps
                 if obj.ison(0)
                     warning('Edge contains zero, reciprocal returns NaN')
                     r = ciat.Edge;
@@ -193,11 +194,13 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                 norm = obj.NormFactor;
                 
                 center = 0.5 * norm;
-                radius = 0.5 * abs(norm);
-                ang1 = angle(1/P1-center);
-                ang2 = angle(1/P2-center);
+                radius = 0.5 * abs(norm) * ((abs(P2)-abs(P1)<0)-0.5)*2;
+                ang = ciat.RealInterval(angle(1./P1-center),...
+                                        angle(1./P2-center));
+                ang = ang + pi * (~ang.isin(ciat.wrapToPi(...
+                                    angle(1./pEdge-center) + pi*(radius < 0))));
     
-                r = ciat.Arc(center, radius, ang1, ang2);
+                r = ciat.Arc(center, radius, ang);
             end
         end
 

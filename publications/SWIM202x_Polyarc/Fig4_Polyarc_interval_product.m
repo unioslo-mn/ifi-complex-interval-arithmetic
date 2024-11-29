@@ -16,10 +16,10 @@ sAxis = linspace(0,1,sCnt)';
 % Plot parameters
 col = lines(100);
 % col = turbo(100);
-gauRad = [0.2 , 0.5 , 0.8]*3;
-gauSca = 0.8 * [1,1,1];
+gauRad = [0.2 , 0.5 , 0.8];
+gauSca = 0.2 * [1,1,1];
 norLen = 0.5;
-gauOffset = -9+2i;
+gauOffset = 0;%-9+2i;
 
 % Generate polar intervals
 A_p = ciat.PolarInterval(rad(1,1), rad(2,1), ang(1,1)*pi, ang(2,1)*pi);
@@ -51,8 +51,10 @@ ArcTimesVert = A_a.Arcs .* B_a.Vertices.';
 EdgeTimesVert = A_a.Edges .* B_a.Vertices.';   
 VertTimesVert = A_a.Vertices .* B_a.Vertices.';   
 
-% Plot
-figure(2);clf;hold on;axis equal
+%% Plot
+
+figure(2);clf;
+subplot(2,3,[2,3,5,6]);hold on;axis equal
 A_a.plot('b');
 B_a.plot('r');
 A_a.plotLogGaussMap(0.2,'b');
@@ -68,9 +70,6 @@ scatter(real(C_smp),imag(C_smp),1,'g.');
 % EdgeTimesVert.plot('k','linewidth',2);
 
 
-%%
-
-if 1
 % Generate arcs
 plaOffs = -[1,1];
 pla=cell(2,1);
@@ -184,7 +183,6 @@ for l = 1:length(seg{2})
         end
     end
 end
-end
 
 % Complete results segments
 arcToAdd = EdgeTimesEdge(~isnan(EdgeTimesEdge));
@@ -222,12 +220,8 @@ bnd1 = [seg{1}.smp];
 bnd2 = [seg{2}.smp];
 bnd3 = bnd1(:) * bnd2(:).';
 
-
-
-% figure(2);clf;hold on;axis equal
-% fimplicit(@(x,y) x.^2+y.^2-1,'k:')
-% scatter(real(bnd3),imag(bnd3),'g.')
-
+% Gauss map
+subplot(2,3,1);hold on;axis equal
 scatter(real(gauOffset),imag(gauOffset),10,'+')
 fimplicit(@(x,y) (x-real(gauOffset)).^2+(y-imag(gauOffset)).^2 - ...
                         ((gauRad(1)+gauSca(1)+gauRad(2))/2)^2,'k:')
@@ -235,11 +229,18 @@ fimplicit(@(x,y) (x-real(gauOffset)).^2+(y-imag(gauOffset)).^2 - ...
                         (gauRad(2)+gauSca(2)*1.1)^2,'k:')
 fimplicit(@(x,y) (x-real(gauOffset)).^2+(y-imag(gauOffset)).^2 - ...
                         (gauRad(3)+gauSca(3)*1.1)^2,'k:')
+
+
+% Log-projection
+subplot(2,3,4);cla;hold on;axis equal
+
 % axis equal
 for m = 1:3
     gauSca(m) = gauSca(m) / sum([seg{m}.len]);
 for n = 1:length(seg{m})
     % Draw interval
+    subplot(2,3,[2,3,5,6])
+    norAng = linspace(seg{m}(n).nor(1),seg{m}(n).nor(2),sCnt)';
     c = max(round(round(mean(seg{m}(n).nor)/2+0.5,2)*100),1);
     if strcmp(seg{m}(n).typ,'point')
         scatter(real(seg{m}(n).cnt),imag(seg{m}(n).cnt),50,col(n,:),...
@@ -248,7 +249,12 @@ for n = 1:length(seg{m})
         plot(real(seg{m}(n).smp),imag(seg{m}(n).smp),...
                 '-','color',col(n,:),'LineWidth',2)
     end
+    quiver(real(seg{m}(n).smp),imag(seg{m}(n).smp),...
+           norLen*cos(norAng*pi),norLen*sin(norAng*pi),...
+           '-','color',col(c,:),'AutoScale','off');
+
     % Draw Gauss map
+    subplot(2,3,1)
     gau = exp(1j*pi*(sAxis*diff(seg{m}(n).nor)+seg{m}(n).nor(1))) .* ...
                 (sAxis * seg{m}(n).len * gauSca(m) + gauRad(m));
     loggau = exp(1j*pi*(sAxis*diff(seg{m}(n).log)+seg{m}(n).log(1))) .* ...
@@ -257,10 +263,17 @@ for n = 1:length(seg{m})
     plot(real(loggau),imag(loggau),...
         '-','color',col(n,:),'LineWidth',2) 
 
-    norAng = linspace(seg{m}(n).nor(1),seg{m}(n).nor(2),sCnt)';
-    quiver(real(seg{m}(n).smp),imag(seg{m}(n).smp),...
-           norLen*cos(norAng*pi),norLen*sin(norAng*pi),...
-           '-','color',col(c,:),'AutoScale','off');
+    % Draw log-projection
+    subplot(2,3,4)
+    if strcmp(seg{m}(n).typ,'point')
+        scatter(wrapTo2Pi(imag(log(seg{m}(n).cnt))),real(log(seg{m}(n).cnt)),50,col(n,:),...
+                'o','filled','MarkerFaceColor',col(n,:))
+    else
+        plot(wrapTo2Pi(imag(log(seg{m}(n).smp))),real(log(seg{m}(n).smp)),...
+                '-','color',col(n,:),'LineWidth',2)
+    end
+    
+    
 
     gauRad(m) = gauRad(m) + seg{m}(n).len * gauSca(m);
 end
@@ -268,12 +281,45 @@ end
 end
 
 % Settings
+subplot(2,3,[2,3,5,6])
 xlabel('Real')
 ylabel('Imag')
 text(-1.07,-1.2,'A','HorizontalAlignment','center')
 text(-2.63,-1.5,'B','HorizontalAlignment','center')
-text(-0.28,5,'A+B','HorizontalAlignment','center')
-text(-9,3.1,'A','HorizontalAlignment','center')
-text(-9,4.14,'B','HorizontalAlignment','center')
-text(-9,4.92,'A+B','HorizontalAlignment','center')
+text(-0.28,5,'A \times B','HorizontalAlignment','center')
 fontsize(30,'points')
+annotation('textbox',[0.07,.83,.1,.1],'String','\textbf{a)}', ...
+           'FontSize',30,...
+           'BackgroundColor','none',...
+           'EdgeColor','none',...
+           'HorizontalAlignment','right', ...
+           'Interpreter','latex');
+
+subplot(2,3,1)
+text(0,0.3,'A','HorizontalAlignment','center')
+text(0,0.6,'B','HorizontalAlignment','center')
+text(0,0.9,'A \times B','HorizontalAlignment','center')
+xlabel('Real')
+ylabel('Imag')
+fontsize(30,'points')
+annotation('textbox',[0.35,.83,.1,.1],'String','\textbf{b)}', ...
+           'FontSize',30,...
+           'BackgroundColor','none',...
+           'EdgeColor','none',...
+           'HorizontalAlignment','right', ...
+           'Interpreter','latex');
+%
+subplot(2,3,4)
+text(4.5,-0.2,'A','HorizontalAlignment','center')
+text(3.6,1,'B','HorizontalAlignment','center')
+text(1.5,1,'A \times B','HorizontalAlignment','center')
+xlabel('Arg')
+ylabel('Log-Abs')
+fontsize(30,'points')
+annotation('textbox',[0.07,.35,.1,.1],'String','\textbf{c)}', ...
+           'FontSize',30,...
+           'BackgroundColor','none',...
+           'EdgeColor','none',...
+           'HorizontalAlignment','right', ...
+           'Interpreter','latex');
+

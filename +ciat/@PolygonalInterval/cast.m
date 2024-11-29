@@ -89,6 +89,10 @@ function outObj = cast(inObj,inObj2,options)
                     error('Invalid input type at position 2')
                 end
             end
+        case 'ciat.PolyarcularInterval'
+            vert = inObj.Vertices.Center;
+            arcSmp = inObj.Arcs.polyWrap(dR);
+            outPoints = [vert;vertcat(arcSmp{:})];
         otherwise
             error('Invalid input type at position 1')
     end  

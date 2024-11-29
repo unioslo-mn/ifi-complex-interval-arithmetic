@@ -365,7 +365,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
         function r = recip(obj)
             P1 = obj.Startpoint;
             P2 = obj.Endpoint;
-            if abs(obj.Center) == obj.Radius
+            if abs(obj.Center) == abs(obj.Radius)
                 if obj.ison(0)
                     warning('Arc contains zero, reciprocal returns NaN')
                     r = ciat.Arc;
@@ -374,14 +374,31 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 end
             else
                 norm = obj.NormFactor;
-                rad = obj.Radius * abs(norm);
+                rad = obj.Radius .* abs(norm);
+                pArc = obj.Center + obj.Radius.*exp(1i*obj.ArcAngle.mid);
                 
-                center = 1./(1-rad.^2) * norm;
-                radius = rad./(1-rad.^2) * abs(norm);
-                ang1 = angle(1/P1-center);
-                ang2 = angle(1/P2-center);
+                if obj.Center == 0 
+                    center = 0;
+                    radius = -1 ./ rad;
+                    ang = ciat.RealInterval(angle(1./P2),...
+                                            angle(1./P1));
+                    ang = ang + pi * (~ang.isin(ciat.wrapToPi(...
+                                    angle(1./pArc) + pi*(radius < 0))));
+                else
+                    center = 1./(1-rad.^2) * norm;
+                    radius = -rad./(1-rad.^2) * abs(norm);
+                    if obj.ArcAngle.Width == 2*pi
+                        ang = ciat.RealInterval(-pi,pi);
+                    else
+                        ang = ciat.RealInterval(angle(1./P1-center),...
+                                                angle(1./P2-center));
+                        ang = ang + pi * (~ang.isin(ciat.wrapToPi(...
+                                        angle(1./pArc) + pi*(radius < 0))));
+                    end
+                end
+                
     
-                r = ciat.Arc(center, radius, ang1, ang2);
+                r = ciat.Arc(center, radius, ang);
             end
         end
 
@@ -784,7 +801,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
                 % If rhs is of size 1, then use indices to set size
                 if isscalar(varargin{1})
                     sz = [indexOp.Indices{:}];
-                    obj = ciat.RealInterval;
+                    obj = ciat.Arc;
                     obj.Center = nan(sz);
                     obj.Radius = nan(sz);
                     % ang(sz) = ciat.RealInterval;

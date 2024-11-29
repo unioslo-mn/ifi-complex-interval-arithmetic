@@ -80,13 +80,23 @@ function outObj = cast(inObj)
             
             for m = 1:M
                 for n = 1:N
-                    points = inObj(m,n).sample(10);
-                    inReal = real(points);
-                    inImag = imag(points);
-                    % [c,R] = minboundcircle(inReal,inImag);
-                    [R,c,~] = ExactMinBoundCircle([inReal(:),inImag(:)]);
-                    outCenter(m,n) = c(1) + 1i*c(2);
-                    outRadius(m,n) = R+10*eps;
+                    if length(inObj(m,n).Arcs)==1
+                        if inObj(m,n).Arcs.ArcAngle.Width > pi
+                            outCenter(m,n) = inObj(m,n).Arcs.Center;
+                            outRadius(m,n) = inObj(m,n).Arcs.Radius;
+                        else
+                            outCenter(m,n) = inObj(m,n).Edges.Midpoint;
+                            outRadius(m,n) = inObj(m,n).Edges.Length/2;
+                        end
+                    else
+                        points = inObj(m,n).sample(10);
+                        inReal = real(points);
+                        inImag = imag(points);
+                        % [c,R] = minboundcircle(inReal,inImag);
+                        [R,c,~] = ExactMinBoundCircle([inReal(:),inImag(:)]);
+                        outCenter(m,n) = c(1) + 1i*c(2);
+                        outRadius(m,n) = R+10*eps;
+                    end
                 end
             end
         case 'ciat.PolyarxInterval' % Temporary solution

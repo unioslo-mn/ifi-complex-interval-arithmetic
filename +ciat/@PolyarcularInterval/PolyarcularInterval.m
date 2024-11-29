@@ -3,6 +3,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         DefArcs         % Defining arcs of the polygonal interval boundary
         Arcs;           % Implicit arcs 
         Edges;          % Implicit edges
+        Segments;       % Boundary segments in counter-clockwise order
         Vertices;       % Implicit vertices 
         Real;           % Projection of the polygonal interval to the real axis
         Imag;           % Projection of the polygonal interval to the imaginary axis
@@ -123,6 +124,29 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     edges = ciat.Edge(arcs.Endpoint , ...
                                       circshift(arcs.Startpoint,-1));
                     value{m,n} = edges(edges.Length>10*eps);
+                end
+            end
+
+            if M*N==1
+                value = value{:};
+            end
+        end
+
+        % Get all boundary segments
+        function value = get.Segments(obj)
+            [M,N] = size(obj);
+            value = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    arcs = obj.ArcStorage{m,n};
+                    edges = ciat.Edge(arcs.Endpoint , ...
+                                      circshift(arcs.Startpoint,-1));
+                    arcs = arcs(arcs.Length > 100*eps);
+                    edges = edges(edges.Length > 100*eps);
+                    arcs = mat2cell(arcs,ones(length(arcs),1));
+                    edges = mat2cell(edges,ones(length(edges),1));
+                    segments = [arcs';edges'];
+                    value{m,n} = segments(:);
                 end
             end
 
@@ -252,7 +276,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                                   obj.ArcStorage{m,n}.Endpoint].';
                         polygonArea = polyarea(real(points(:)), ...
                                                imag(points(:)));
-                        arcArea = sum(obj(m,n).Arcs.Area);
+                        arcArea = abs(sum(obj(m,n).Arcs.Area));
                         value(m,n) = polygonArea + arcArea;
                     end
                 end
@@ -268,6 +292,27 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     r(m,n) = ciat.PolyarcularInterval(-obj(m,n).DefArcs);
+                end
+            end
+        end
+
+        % Unary reciprocal operator
+        function r = recip(obj)
+            [M,N] = size(obj);
+            r(M,N) = ciat.PolyarcularInterval;
+            for m = 1:M
+                for n = 1:N
+                    inSeg = obj(m,n).Segments;
+                    L = length(inSeg);
+                    outSeg(L,1) = ciat.Arc;
+                    for l = 1:L
+                        recipSeg = recip(inSeg{l});
+                        if isa(recipSeg,'ciat.Arc')
+                            outSeg(l) = recipSeg;
+                        end
+                    end
+                    mask = ~isnan(outSeg) & (outSeg.Radius ~= 0);
+                    r(m,n) = ciat.PolyarcularInterval(outSeg(mask));
                 end
             end
         end
@@ -293,7 +338,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     % Interleave arc and edge samples
                     allPoints = [arcPoints.';edgePoints.'];
                     allPoints = allPoints(:);
-                    points{m,n} = [allPoints{:}].';
+                    if isa(allPoints,'cell')
+                        points{m,n} = [allPoints{:}].';
+                    end
                     % points{m,n} = [allPoints].';
                 end
             end
