@@ -525,7 +525,7 @@ classdef Arc < matlab.mixin.indexing.RedefinesParen
             %                 <= obj.ArcAngle.Width;
             inSector = any(obj.ArcAngle.isin(ciat.wrapToPi(angle(x-obj.Center)+...
                                                       (obj.Radius<0)*pi) ...
-                                                      +[0,2*pi]));
+                                                      +[0,2*pi]),2);
 
             % Combine conditions
             r = onCircle & inSector;

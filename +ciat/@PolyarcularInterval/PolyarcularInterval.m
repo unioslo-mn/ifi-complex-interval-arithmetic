@@ -243,7 +243,9 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
             for m = 1:M
                 for n = 1:N
                     arcs = obj.ArcStorage{m,n};
-                    if obj(m,n).isin(0)
+                    isOnBoundary = any([obj(m,n).Arcs.ison(0);...
+                                         obj(m,n).Edges.ison(0)]);
+                    if obj(m,n).isin(0) && ~isOnBoundary
                         minAng(m,n) = -pi;
                         maxAng(m,n) = pi;
                     elseif obj(m,n).Imag.isin(0) && ...
