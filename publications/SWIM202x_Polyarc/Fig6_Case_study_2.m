@@ -23,10 +23,13 @@ figure(1);clf;hold on;axis equal
 
 % Plot reference points
 p1 = scatter(real(m),imag(m),100,'ks','filled','DisplayName','Landmark');
-for n=1:length(m)
-    text(real(m(n))+0.2,imag(m(n)),sprintf('$P_%i$',n), ...
-            'HorizontalAlignment','left','Interpreter','latex')
-end
+text(real(m(1))+0.3,imag(m(1))+0.5,sprintf('$P_%i$',1), ...
+        'HorizontalAlignment','left','Interpreter','latex')
+text(real(m(2))+0.2,imag(m(2)),sprintf('$P_%i$',2), ...
+        'HorizontalAlignment','left','Interpreter','latex')
+text(real(m(3))+0.2,imag(m(3)),sprintf('$P_%i$',3), ...
+        'HorizontalAlignment','left','Interpreter','latex')
+
 
 % Plot solution
 p4 = L_a.plot('k-','linewidth',3,'DisplayName','Solution set (intersection)');
@@ -41,7 +44,7 @@ p2 = Msr.plot('k-','DisplayName','Measurement (relative to set center)');
 text(10,10,'$A_1$', 'HorizontalAlignment', 'center','Interpreter','latex')
 text(-5,-2,'$A_2$', 'HorizontalAlignment', 'center','Interpreter','latex')
 text(-3,12,'$A_3$', 'HorizontalAlignment', 'center','Interpreter','latex')
-text(8,1,'$P_1-A_1$', 'HorizontalAlignment', 'left','Interpreter','latex')
+text(8,2,'$P_1-A_1$', 'HorizontalAlignment', 'left','Interpreter','latex')
 text(4,3,'$P_2-A_2$', 'HorizontalAlignment', 'left','Interpreter','latex')
 text(3,8,'$P_3-A_3$', 'HorizontalAlignment', 'center','Interpreter','latex')
 text(-2,2,'$B$', 'HorizontalAlignment', 'center','Interpreter','latex')
