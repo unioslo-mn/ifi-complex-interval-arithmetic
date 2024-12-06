@@ -343,14 +343,16 @@ function r = edgeTimesVertex(edge,vert,LGMcap)
         pntLGMinf = newEdge.Startpoint;
         pntLGMsup = newEdge.Endpoint;
      elseif infIn
-         if abs(startLGM - LGMcap.inf) <= abs(endLGM - LGMcap.inf)
+         if abs(ciat.wrapToPi(startLGM) - ciat.wrapToPi(LGMcap.sup))...
+            <= abs(ciat.wrapToPi(endLGM) - ciat.wrapToPi(LGMcap.sup))
             pntLGMinf = newEdge.Startpoint;
          else
             pntLGMinf = newEdge.Endpoint;
          end
          pntLGMsup = newEdge.findLGM(LGMcap.sup);
      elseif supIn
-        if abs(startLGM - LGMcap.sup) <= abs(endLGM - LGMcap.sup)
+        if abs(ciat.wrapToPi(startLGM) - ciat.wrapToPi(LGMcap.sup))...
+            <= abs(ciat.wrapToPi(endLGM) - ciat.wrapToPi(LGMcap.sup))
             pntLGMsup = newEdge.Startpoint;
          else
             pntLGMsup = newEdge.Endpoint;

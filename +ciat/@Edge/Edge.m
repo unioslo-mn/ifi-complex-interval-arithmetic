@@ -90,15 +90,21 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
 
         % Log-GaussMap
 		function value = get.LogGaussMap(obj)
-            value = obj.GaussMap - ciat.RealInterval(angle(obj.Startpoint), ...
-                                                     angle(obj.Endpoint));
-            value = ciat.RealInterval(ciat.wrapToPi(value.inf),...
-                                      ciat.wrapToPi(value.sup));
-            % gFunc = @(s) - angle(1+1i*s);
-            % curvePar = obj.CurveParameter;
-            % LGMinf = min(gFunc(curvePar.Bounds));
-            % LGMsup = max(gFunc(curvePar.Bounds));
-            % value = ciat.RealInterval(LGMinf,LGMsup);
+            % Calculate LGM at start and endpoint
+            startLGM = ciat.wrapToPi(obj.GaussMap.mid - angle(obj.Startpoint));
+            endLGM = ciat.wrapToPi(obj.GaussMap.mid - angle(obj.Endpoint));
+
+            % Extract curve parameter direction
+            curveParDir = (obj.Endpoint - obj.Startpoint) .* obj.NormFactor;
+
+            % Create LGM interval
+            if imag(curveParDir) >= 0 
+                value = ciat.RealInterval(endLGM - (endLGM>startLGM)*2*pi, ...
+                                          startLGM);
+            else
+                value = ciat.RealInterval(startLGM - (startLGM>endLGM)*2*pi, ...
+                                          endLGM);
+            end
         end
 
         % Normalization factor

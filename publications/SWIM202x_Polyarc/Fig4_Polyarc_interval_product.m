@@ -68,7 +68,6 @@ A_a.plotLogGaussMap(0.2,'b');
 B_a.plotLogGaussMap(0.2,'r');
 scatter(real(C_smp),imag(C_smp),1,'g.');
 
-% 
 % lineWidth = 2;
 % ArcTimesArc.plot('k','linewidth',lineWidth);
 % ArcTimesEdge.plot('k','linewidth',lineWidth);

@@ -25,7 +25,8 @@ function value = getLogGaussMap(obj)
     if any(mask,'all')
         LGMinf = ciat.wrapToPi(obj.GaussMap.inf - angle(obj.Center) );
         LGMsup = ciat.wrapToPi(obj.GaussMap.sup - angle(obj.Center) );
-        value(mask) = ciat.RealInterval(LGMinf,LGMsup);
+        value(mask) = ciat.RealInterval(LGMinf - (LGMinf>LGMsup)*2*pi,...
+                                          LGMsup);
     end
         % For non-zero-centered arcs that does not include
         % the origin the LGM is simply the LGM of the endpoints
