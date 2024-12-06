@@ -51,6 +51,13 @@ ArcTimesVert = A_a.Arcs .* B_a.Vertices.';
 EdgeTimesVert = A_a.Edges .* B_a.Vertices.';   
 VertTimesVert = A_a.Vertices .* B_a.Vertices.';   
 
+% % Add arcs and edges
+% VertTimesArc = A_a.Vertices.Center .* B_a.Arcs.';      
+% VertTimesEdge =  A_a.Vertices.Center .* B_a.Edges.';   
+% ArcTimesVert = A_a.Arcs .* B_a.Vertices.Center.';      
+% EdgeTimesVert = A_a.Edges .* B_a.Vertices.Center.';   
+% VertTimesVert = A_a.Vertices.Center .* B_a.Vertices.Center.'; 
+
 %% Plot
 
 figure(2);clf;
@@ -61,13 +68,15 @@ A_a.plotLogGaussMap(0.2,'b');
 B_a.plotLogGaussMap(0.2,'r');
 scatter(real(C_smp),imag(C_smp),1,'g.');
 
-% ArcTimesArc.plot('b','linewidth',2);
-% ArcTimesEdge.plot('b','linewidth',2);
-% EdgeTimesEdge.plot('c','linewidth',2); 
-% VertTimesArc.plot('k','linewidth',2);
-% VertTimesEdge.plot('k','linewidth',2);
-% ArcTimesVert.plot('k','linewidth',2);
-% EdgeTimesVert.plot('k','linewidth',2);
+% 
+% lineWidth = 2;
+% ArcTimesArc.plot('k','linewidth',lineWidth);
+% ArcTimesEdge.plot('k','linewidth',lineWidth);
+% EdgeTimesEdge.plot('k','linewidth',lineWidth); 
+% VertTimesArc.plot('k','linewidth',lineWidth);
+% VertTimesEdge.plot('k','linewidth',lineWidth);
+% ArcTimesVert.plot('k','linewidth',lineWidth);
+% EdgeTimesVert.plot('k','linewidth',lineWidth);
 
 
 % Generate arcs

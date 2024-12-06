@@ -8,6 +8,9 @@ arguments
     optional.attempts (1,1) {mustBeNumeric} = 5
 end 
 
+% Remove dead-end segments
+
+
 
 for iTry = 1:optional.attempts
 

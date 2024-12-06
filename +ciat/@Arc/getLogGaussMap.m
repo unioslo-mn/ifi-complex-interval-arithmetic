@@ -21,7 +21,7 @@ function value = getLogGaussMap(obj)
         value(mask) = ciat.RealInterval(zeros(sum(mask,'all'),1));
     end
         % For zero-radius arcs the LGM is calculated from the Gauss map
-    mask = isVertex;
+    mask = ~isZeroCentered & isVertex;
     if any(mask,'all')
         LGMinf = ciat.wrapToPi(obj.GaussMap.inf - angle(obj.Center) );
         LGMsup = ciat.wrapToPi(obj.GaussMap.sup - angle(obj.Center) );
@@ -29,19 +29,20 @@ function value = getLogGaussMap(obj)
     end
         % For non-zero-centered arcs that does not include
         % the origin the LGM is simply the LGM of the endpoints
-    mask = ~isZeroCentered & ~isInZero & isConvex;
+    mask = ~isZeroCentered & ~isVertex & ~isInZero & isConvex;
     if any(mask,'all')
         value(mask) = ciat.RealInterval(LGMinf(mask)-2*pi*isCurvePi(mask), ...
                                         LGMsup(mask));
     end
-    mask = ~isZeroCentered & ~isInZero & ~isConvex;
+    mask = ~isZeroCentered & ~isVertex & ~isInZero & ~isConvex;
     if any(mask,'all')
-        value(mask) = ciat.RealInterval(LGMinf(mask)-2*pi*isCurveZero(mask), ...
-                                        LGMsup(mask));
+        value(mask) = ciat.RealInterval(ciat.wrapToPi(LGMinf(mask)-pi) ...
+                                        -2*pi*isCurveZero(mask), ...
+                                        ciat.wrapToPi(LGMsup(mask)-pi));
     end
         % For non-zero centered arcs that contain the origin
         % the LGM has an envelope
-    mask = ~isZeroCentered & isInZero;
+    mask = ~isZeroCentered & ~isVertex & isInZero;
     if any(mask,'all')
           value(mask) = ciat.RealInterval(LGMinf(mask),LGMsup(mask));
 

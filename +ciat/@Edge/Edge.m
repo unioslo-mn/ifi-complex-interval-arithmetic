@@ -94,6 +94,11 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                                                      angle(obj.Endpoint));
             value = ciat.RealInterval(ciat.wrapToPi(value.inf),...
                                       ciat.wrapToPi(value.sup));
+            % gFunc = @(s) - angle(1+1i*s);
+            % curvePar = obj.CurveParameter;
+            % LGMinf = min(gFunc(curvePar.Bounds));
+            % LGMsup = max(gFunc(curvePar.Bounds));
+            % value = ciat.RealInterval(LGMinf,LGMsup);
         end
 
         % Normalization factor
@@ -310,8 +315,7 @@ classdef Edge < matlab.mixin.indexing.RedefinesParen
                         obj.CurveParameter.mid,optimset('Display','off'));
                 end
                 sSolv = uniquetol(sSolv,1e-6);
-                sSolv = sSolv(any(obj.CurveParameter.isin(sSolv,...
-                                                'tolerance',1e-6),1));
+                sSolv = sSolv(obj.CurveParameter.isin(sSolv,'tolerance',1e-6));
                 point = (1+1i*sSolv) / obj.NormFactor;
             else
                 point = nan();

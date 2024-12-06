@@ -51,10 +51,10 @@ function r = times(obj1,obj2)
         end
     end
 
-    if all(isnan(arcOut),'all')
-        r = edgeOut;
-    elseif all(isnan(edgeOut),'all')
+    if all(isnan(edgeOut),'all')
         r = arcOut;
+    elseif all(isnan(arcOut),'all')
+        r = edgeOut;
     else
         r = {arcOut , edgeOut};
     end
@@ -112,10 +112,7 @@ function r = arcTimesEdge(arc,edge)
             % segment
             % Check if the arc is a vertex
             if arc.Radius == 0
-                r = edge .* arc.Center;
-                pLGMinf = r.findLGM(LGMcap.inf);
-                pLGMsup = r.findLGM(LGMcap.sup);
-                r = ciat.Edge(pLGMinf,pLGMsup);
+                r = edgeTimesVertex(edge,arc,LGMcap);
             else
                 % The result is an arc fitted to a Cartesian oval segment 
                 r = fitArcToArcTimesEdge(arc,edge);
@@ -127,6 +124,8 @@ function r = arcTimesEdge(arc,edge)
         r = NaN;
     end
 end
+
+%% Fit arc to the envelope of arc times edge
 
 function r = fitArcToArcTimesEdge(arc,edge)
     % Extract radii and curve parameters
@@ -192,6 +191,7 @@ end
 %% Multiplication with an arc
 
 function r = arcTimesArc(arc1,arc2)
+
     
     % Initialize output
     r = ciat.Arc;
@@ -200,43 +200,36 @@ function r = arcTimesArc(arc1,arc2)
     LGMcap = ciat.Arc.capGaussMap(arc1.LogGaussMap,arc2.LogGaussMap);
 
     if ~isnan(LGMcap)
-        if arc1.Center == 0 && arc2.Center == 0 
-            r = ciat.Arc(0,arc1.Radius * arc2.Radius,...
-                        arc1.GaussMap + arc2.GaussMap);
-        elseif arc1.Center == 0 
-            % The log-Gauss map of a zero-centered arc is 0, therefore 
-            % in this case the product is the zero-centered arc
-            % multplied by the point(s) of the non-zero centered arc
-            % that has a log-Gauss map of zero
-            r = arc1 .* arc2.findLGM(0);
-        elseif arc2.Center == 0 
-            r = arc2 .* arc1.findLGM(0);
+        % Check if any of the arcs is a vertex
+        if arc1.Radius == 0 && arc2.Radius == 0
+            newCenter = arc1.Center * arc2.Center;
+            r = ciat.Arc(newCenter, 0, LGMcap + angle(newCenter));
+        elseif arc1.Radius == 0
+            r = arcTimesVertex(arc2,arc1,LGMcap);
+        elseif arc2.Radius == 0
+            r = arcTimesVertex(arc1,arc2,LGMcap);
         else
-            % Check if the arc is a vertex
-            center = arc1.Center * arc2.Center ;
-            if arc1.Radius == 0 && arc2.Radius == 0
-                r = ciat.Arc(center , 0, LGMcap + angle(center));
-            elseif arc1.Radius == 0
-                r = arc2 .* arc1.Center;
-                pLGMinf = r.findLGM(LGMcap.inf);
-                pLGMsup = r.findLGM(LGMcap.sup);
-                arcAngle = ciat.RealInterval( angle(pLGMinf - center), ...
-                                              angle(pLGMsup - center));
-                r = ciat.Arc(center , arc2.Radius, arcAngle);
-            elseif arc2.Radius == 0
-                r = arc1 .* arc2.Center;
-                pLGMinf = r.findLGM(LGMcap.inf);
-                pLGMsup = r.findLGM(LGMcap.sup);
-                arcAngle = ciat.RealInterval( angle(pLGMinf - center), ...
-                                              angle(pLGMsup - center));
-                r = ciat.Arc(center , arc1.Radius, arcAngle);
+            %  If none of them are vertices check if any has zero center
+            if arc1.Center == 0 && arc2.Center == 0 
+                r = ciat.Arc(0,arc1.Radius * arc2.Radius,...
+                            arc1.GaussMap + arc2.GaussMap);
+            elseif arc1.Center == 0 
+                % The log-Gauss map of a zero-centered arc is 0, therefore 
+                % in this case the product is the zero-centered arc
+                % multplied by the point(s) of the non-zero centered arc
+                % that has a log-Gauss map of zero
+                r = arc1 .* arc2.findLGM(0);
+            elseif arc2.Center == 0 
+                r = arc2 .* arc1.findLGM(0);
             else
                 % The result is an arc fitted to a Cartesian oval segment 
                 r = fitArcToArcTimesArc(arc1,arc2);
-            end
-        end    
+            end    
+        end
     end
 end
+
+%% Fit arc to the envelope of an arc times another arc
 
 function r = fitArcToArcTimesArc(arc1,arc2)
 
@@ -267,7 +260,7 @@ function r = fitArcToArcTimesArc(arc1,arc2)
     end
     pHxy = H_st(pHst(:,1),pHst(:,2));
 
-    % Sample then envelope
+    % Sample the envelope
     figure;
     J_smp = fimplicit(j_st,[S.inf S.sup T.inf T.sup]);
     J_smp = [J_smp.XData;J_smp.YData]';
@@ -295,3 +288,82 @@ function r = fitArcToArcTimesArc(arc1,arc2)
     r = r * (1 / arc1.NormFactor / arc2.NormFactor);
 
 end
+
+%% Multiplication of an arc with a vertex
+
+function r = arcTimesVertex(arc,vert,LGMcap)
+
+    % Scale-rotate the arc with the vertex center
+    newArc = arc .* vert.Center;
+
+
+    % Check if the arc LGM is included in the vertex LGM
+    infIn = any(vert.LogGaussMap.isin(arc.LogGaussMap.inf+[-2,0,2]*pi));
+    supIn = any(vert.LogGaussMap.isin(arc.LogGaussMap.sup+[-2,0,2]*pi));
+    if infIn && supIn
+        arcAngle = newArc.ArcAngle;
+    else
+        % Find points on new arc corresponding to the LGM bounds
+        pntLGMinf = newArc.findLGM(LGMcap.inf);
+        pntLGMsup = newArc.findLGM(LGMcap.sup);
+        angLGMinf = angle(pntLGMinf - newArc.Center);
+        angLGMsup = angle(pntLGMsup - newArc.Center);
+        arcAngle = ciat.RealInterval( angLGMinf, angLGMsup);
+
+        % Flip the arc-angle interval if necessary
+        cAng0 = angle(arc.findLGM(LGMcap.mid) * vert.Center - newArc.Center);
+        if ~any(arcAngle.isin(cAng0  + [-2,0,2]*pi ))
+            arcAngle = ciat.RealInterval(arcAngle.sup-2*pi,arcAngle.inf);
+        end
+    end
+        
+    % Generate the output arc
+    r = ciat.Arc(newArc.Center , newArc.Radius, ...
+                                 arcAngle - (newArc.Radius<1)*pi);
+    % r = ciat.Arc(newArc.Center , newArc.Radius,arcAngle);
+end
+
+
+%% Multiplication of an edge with a vertex
+
+function r = edgeTimesVertex(edge,vert,LGMcap)
+
+    % Scale-rotate the edge with the vertex center
+    newEdge = edge .* vert.Center;
+
+    % Check if the arc LGM is included in the vertex LGM
+    infIn = any(vert.LogGaussMap.isin(edge.LogGaussMap.inf+[-2,0,2]*pi));
+    supIn = any(vert.LogGaussMap.isin(edge.LogGaussMap.sup+[-2,0,2]*pi));
+
+    % Calculate LGM at the start- and endpoint
+    startLGM = edge.GaussMap.mid - angle(edge.Startpoint);
+    endLGM = edge.GaussMap.mid - angle(edge.Endpoint);
+
+     if infIn && supIn
+        pntLGMinf = newEdge.Startpoint;
+        pntLGMsup = newEdge.Endpoint;
+     elseif infIn
+         if abs(startLGM - LGMcap.inf) <= abs(endLGM - LGMcap.inf)
+            pntLGMinf = newEdge.Startpoint;
+         else
+            pntLGMinf = newEdge.Endpoint;
+         end
+         pntLGMsup = newEdge.findLGM(LGMcap.sup);
+     elseif supIn
+        if abs(startLGM - LGMcap.sup) <= abs(endLGM - LGMcap.sup)
+            pntLGMsup = newEdge.Startpoint;
+         else
+            pntLGMsup = newEdge.Endpoint;
+         end
+        pntLGMinf = newEdge.findLGM(LGMcap.inf);
+     else
+        pntLGMinf = newEdge.findLGM(LGMcap.inf);
+        pntLGMsup = newEdge.findLGM(LGMcap.sup);   
+     end
+    r = ciat.Edge(pntLGMinf,pntLGMsup);
+end
+
+
+
+
+

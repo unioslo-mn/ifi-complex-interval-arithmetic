@@ -49,7 +49,7 @@ function r = times(obj1,obj2)
                 r(m,n) = ciat.PolyarcularInterval(obj1.DefArcs .* obj2);
             else
             % Calculate product
-            r(M,N) = multiply( obj1(m1,n1) , obj2(m2,n2) );
+            r(M,N) = multiply( obj1(m,n) , obj2(m,n) );
             end
         end
     end
@@ -57,21 +57,46 @@ end
 
 %%
 function r = multiply(obj1,obj2)
-    % Ensure counter-clockwise order and that v1 and w1
-    % being the vertices with smallest y-coordinate 
-    % (and smallest x-coordinate in case of ties)
-    v = obj1.Arcs;
-    w = obj2.Arcs;
     
-    % Handle exception when one of the inputs is a degenerate interval
-    if length(v)==1 || length(w)==1 
-        % arcs = 
-        r = ciat.PolyarcularInterval(arcs);
-        return
+      % Extract curve segments by type
+    arc1 = obj1.Arcs;
+    arc2 = obj2.Arcs;
+    vert1 = obj1.Vertices;
+    vert2 = obj2.Vertices;
+    edge1 = obj1.Edges;
+    edge2 = obj2.Edges; 
+
+    % Multiply segments
+    segments = cell(4,1);
+    segments{1} = arc1 * arc2.';
+    segments{2} = arc1 * edge2.';
+    segments{3} = edge1 * arc2.';
+    segments{4} = edge1 * edge2.';
+    segments{5} = arc1 * vert2.';
+    segments{6} = vert1 * arc2.';
+    segments{7} = edge1 * vert2.';
+    segments{8} = vert1 * edge2.';
+
+    % Separate segments to arcs and edges
+    arc3 = ciat.Arc;
+    edge3 = ciat.Edge;
+    for idx = 1:length(segments)
+        switch class(segments{idx})
+            case 'ciat.Arc'
+                arc3 = [arc3;segments{idx}(~isnan(segments{idx}))];
+            case 'ciat.Edge'
+                edge3 = [edge3;segments{idx}(~isnan(segments{idx}))];
+            case 'cell'
+                arc3 = [arc3;segments{idx}{1}(~isnan(segments{idx}{1}))];
+                edge3 = [edge3;segments{idx}{2}(~isnan(segments{idx}{2}))];
+        end
     end
 
-    % Use log Gauss map matching and multiply arcs
-    % Use segmentProduct(v(index),w(index)) function to get the new arc
-    r = ciat.PolygonalInterval(arcs);
-
+    % Split and trim segments
+    [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
+    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,'attempts',15);
+    
+    % Generate polyarc
+    r = ciat.PolyarcularInterval(arc3);
+    r = mergeArcs(r);
 end

@@ -106,6 +106,8 @@ function r = edgeTimesEdge(edge1,edge2)
     end
 end
 
+
+%% Fit arc to the product of two edges
 function r = fitArcToEdgeTimesEdge(edge1,edge2)
     % Extract radii and curve parameters
             S = edge1.CurveParameter;

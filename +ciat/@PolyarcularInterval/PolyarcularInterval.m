@@ -571,7 +571,10 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         end
 
         %% Function headers
+        r = plus(obj1,obj2)
         r = sum(obj,varargin)
+        r = times(obj1,obj2)
+        r = mtimes(obj1,obj2)
         r = isin(obj,x)
         [vertices,convexity] = getVertices(obj)
         r = quickSum(obj)

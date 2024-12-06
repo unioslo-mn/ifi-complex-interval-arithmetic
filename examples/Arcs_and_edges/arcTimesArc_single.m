@@ -7,7 +7,7 @@ clear
 match = false;
 while ~match
     centers = [1;1] .* complex(rand(2,1),rand(2,1));
-    radii = 2*rand(2,1)-1;
+    radii = [1.2; -0.5]%2*rand(2,1)-1;
     angMid = 2*pi*rand(2,1) - pi;
     angWid = 2*pi*rand(2,1)/5;
     angInf = angMid - angWid/2;
@@ -55,7 +55,8 @@ end
 % Plot normalized arcs
 subplot(2,2,2);cla;hold on;axis equal;title('Normalized')
 arcsNorm.plot('k','lineWidth',2);
-arcsNorm.plotLogGaussMap(.1,'k');
+% arcsNorm.plotLogGaussMap(.5,'k');
+arcsNorm.plotGaussMap(.5,'k');
 arcTimesArcNorm.plot('b','lineWidth',3);
 % arcTimesArcNorm.plotMap(0,.1,'b');
 scatter(real(arcNormSmpTimesArcNormSmp),imag(arcNormSmpTimesArcNormSmp),1,'g.');
