@@ -151,16 +151,34 @@ function r = fitArcToEdgeTimesEdge(edge1,edge2)
             cAng2 = @(u) angle(pHxy(2)-cCnt(u));
             cFit = @(u) abs(min(abs(H_smp-cCnt(u))-cRad(u)));
             uSol = fminsearch(cFit,1);
-            r = ciat.Arc(cCnt(uSol),cRad(uSol),...
-                    ciat.RealInterval(cAng1(uSol),cAng2(uSol)));
+
+            % Create concave arc
+            arcCenter = cCnt(uSol);
+            arcRadius = - cRad(uSol);
+            arcAngle = ciat.RealInterval(cAng1(uSol), cAng2(uSol)) - pi;
             
             % Flip the arc-angle interval if necessary
-            cAng0 = angle(H_smp(ceil(length(H_smp)/2)) - r.Center);
-            if ~r.ArcAngle.isin(cAng0)
-                r = ciat.Arc(cCnt(uSol),cRad(uSol),...
-                    ciat.RealInterval(cAng2(uSol)-2*pi,cAng1(uSol)));
+            cAng0 = angle(H_smp(ceil(length(H_smp)/2)) - arcCenter) - pi ;
+            if ~any(arcAngle.isin(cAng0+[-2,0,2]*pi))
+                arcAngle = ciat.RealInterval(cAng2(uSol)-2*pi,cAng1(uSol));
             end
-    
-            % Reverse normalization
+
+            % Assign arc and reverse normalization
+            r = ciat.Arc(arcCenter , arcRadius , arcAngle);
             r = r * (1 / edge1.NormFactor / edge2.NormFactor);
+
+            
+            % 
+            % r = ciat.Arc(cCnt(uSol),cRad(uSol),...
+            %         ciat.RealInterval(cAng1(uSol),cAng2(uSol)));
+            % 
+            % % Flip the arc-angle interval if necessary
+            % cAng0 = angle(H_smp(ceil(length(H_smp)/2)) - r.Center);
+            % if ~r.ArcAngle.isin(cAng0)
+            %     r = ciat.Arc(cCnt(uSol),cRad(uSol),...
+            %         ciat.RealInterval(cAng2(uSol)-2*pi,cAng1(uSol)));
+            % end
+            % 
+            % % Reverse normalization
+            % r = r * (1 / edge1.NormFactor / edge2.NormFactor);
 end

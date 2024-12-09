@@ -94,7 +94,9 @@ function r = multiply(obj1,obj2)
 
     % Split and trim segments
     [arc3,edge3] = ciat.PolyarcularInterval.splitSegments(arc3,edge3);
-    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,'attempts',15);
+    arc3 = ciat.PolyarcularInterval.trimSegments(arc3,edge3,...
+                                                'attempts',15,...
+                                                'tolerance',1e-6);
     
     % Generate polyarc
     r = ciat.PolyarcularInterval(arc3);

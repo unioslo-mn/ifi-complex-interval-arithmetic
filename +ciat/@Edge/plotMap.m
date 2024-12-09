@@ -1,4 +1,24 @@
-function h = plotMap(obj,logMap,arrowSize,varargin)
+function h = plotMap(obj, logMap, arrowSize, varargin)
+
+
+    % Extract arrowcount variable
+    arrowCount = 3;
+    if ~isempty(varargin)
+        idx = 1;
+        while idx <= length(varargin)
+            if strcmp(varargin{idx},'arrowCount')
+                if length(varargin) > idx
+                    arrowCount = varargin{idx+1};
+                    varargin = varargin(setdiff(1:length(varargin),[idx idx+1]));
+                else
+                    varargin = varargin(1:end-1);
+                end
+            end
+            idx = idx+1;
+        end
+    end
+
+
     tf = ishold;
     if tf == false 
         clf
@@ -8,7 +28,7 @@ function h = plotMap(obj,logMap,arrowSize,varargin)
 
     % Plot normal vectors
     for n = 1:length(obj(:))
-        % Extact variables
+        % Extract variables
         edge = obj(n);
         if logMap == 0
             map = edge.GaussMap;
@@ -16,26 +36,10 @@ function h = plotMap(obj,logMap,arrowSize,varargin)
             map = edge.LogGaussMap;
         end
 
-        % Set arrow positions
-        p(1) = edge.Startpoint;
-        p(2) = edge.Midpoint;
-        p(3) = edge.Endpoint;
+        % Set arrow positions and length
+        p = edge.sample(arrowCount);
+        a = arrowSize * exp(1i*map.sample(arrowCount).');
 
-        % Set vector lengths
-        if length(map) == 1
-            a = zeros(1,3);
-        else
-            a = zeros(1,6);
-            p = repmat(p,1,2);
-        end
-
-        % Set arrow angle and length
-        for m = 1:length(map)
-            a(1+3*(m-1)) = arrowSize * exp(1i*map(m).Infimum);
-            a(2+3*(m-1)) = arrowSize * exp(1i*map(m).Midpoint);
-            a(3+3*(m-1)) = arrowSize * exp(1i*map(m).Supremum);
-        end
-        
         % Plot arrows
         h=[h; ...
             quiver(real(p),imag(p),real(a),imag(a),...

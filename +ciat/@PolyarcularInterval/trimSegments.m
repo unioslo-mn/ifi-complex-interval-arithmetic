@@ -6,6 +6,7 @@ arguments
     edgeIn           (:,:)  {mustBeA(edgeIn,{'ciat.Edge','double'})}  = []
     optional.inner   (1,1)  {mustBeNumericOrLogical} = false
     optional.attempts (1,1) {mustBeNumeric} = 5
+    optional.tolerance (1,1) {mustBeNumeric} = 100*eps
 end 
 
 % Remove dead-end segments
@@ -60,7 +61,7 @@ for iTry = 1:optional.attempts
     
         % Find next segment
         prevIdx = [prevIdx;idx];
-        idx = find( abs(seg.Endpoint - startPoints) < 100*eps );
+        idx = find( abs(seg.Endpoint - startPoints) < optional.tolerance );
         if isempty(idx)
             if iTry < optional.attempts
                 % Remove element and continue

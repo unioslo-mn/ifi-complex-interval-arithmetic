@@ -1,4 +1,24 @@
 function h = plotMap(obj, logMap, arrowSize, varargin)
+
+
+    % Extract arrowcount variable
+    arrowCount = 3;
+    if ~isempty(varargin)
+        idx = 1;
+        while idx <= length(varargin)
+            if strcmp(varargin{idx},'arrowCount')
+                if length(varargin) > idx
+                    arrowCount = varargin{idx+1};
+                    varargin = varargin(setdiff(1:length(varargin),[idx idx+1]));
+                else
+                    varargin = varargin(1:end-1);
+                end
+            end
+            idx = idx+1;
+        end
+    end
+
+
     tf = ishold;
     if tf == false 
         clf
@@ -16,27 +36,10 @@ function h = plotMap(obj, logMap, arrowSize, varargin)
             map = arc.LogGaussMap;
         end
 
-        % Set arrow positions
-        p = zeros(1,3);
-        p(1) = arc.Startpoint;
-        p(2) = arc.Midpoint;
-        p(3) = arc.Endpoint;
-
-        % Set vector lengths
-        if length(map) == 1
-            a = zeros(1,3);
-        else
-            a = zeros(1,6);
-            p = reshape(repmat(p,1,2),1,[]);
-        end
-
-        % Set arrow angle and length
-        for m = 1:length(map)
-            a(1+3*(m-1)) = arrowSize * exp(1i*map(m).Infimum);
-            a(2+3*(m-1)) = arrowSize * exp(1i*map(m).Midpoint);
-            a(3+3*(m-1)) = arrowSize * exp(1i*map(m).Supremum);
-        end
-
+        % Set arrow positions and length
+        p = arc.sample(arrowCount);
+        a = arrowSize * exp(1i*map.sample(arrowCount).');
+        
         % Flip vectors if arc is concave 
         if obj(n).Radius < 0
             a = flip(a);

@@ -4,6 +4,7 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         Arcs;           % Implicit arcs 
         Edges;          % Implicit edges
         Segments;       % Boundary segments in counter-clockwise order
+        Boundary;       % Boundary segments and vertices in counter-clockwise order
         Vertices;       % Implicit vertices 
         Real;           % Projection of the polygonal interval to the real axis
         Imag;           % Projection of the polygonal interval to the imaginary axis
@@ -141,11 +142,58 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
                     arcs = obj.ArcStorage{m,n};
                     edges = ciat.Edge(arcs.Endpoint , ...
                                       circshift(arcs.Startpoint,-1));
-                    arcs = arcs(arcs.Length > 100*eps);
-                    edges = edges(edges.Length > 100*eps);
+                    % arcs = arcs(arcs.Length > 100*eps);
+                    % edges = edges(edges.Length > 100*eps);
                     arcs = mat2cell(arcs,ones(length(arcs),1));
                     edges = mat2cell(edges,ones(length(edges),1));
                     segments = [arcs';edges'];
+                    value{m,n} = segments(:);
+                end
+            end
+
+            if M*N==1
+                value = value{:};
+            end
+        end
+
+        % Get all boundary segments
+        function value = get.Boundary(obj)
+            [M,N] = size(obj);
+            value = cell(M,N);
+            for m = 1:M
+                for n = 1:N
+                    % Extract arcs
+                    arcs = obj.ArcStorage{m,n};
+
+                    % Extract edges
+                    edges = ciat.Edge(arcs.Endpoint , ...
+                                      circshift(arcs.Startpoint,-1));
+
+                    % Extract vertices after the arc
+                    ang1 = arcs.GaussMap.Supremum .* (arcs.Radius > 0) + ...
+                           arcs.GaussMap.Infimum .* (arcs.Radius < 0);
+                    ang2 = edges.GaussMap.mid;
+                    mask = ang1 > 0 & ang2 < 0;
+                    ang1(mask) = ang1(mask) - 2*pi;
+                    vertA = ciat.Arc(arcs.Endpoint,zeros(length(arcs),1),...
+                                     ciat.RealInterval( ang1,ang2));
+
+                    % Extract vertices after the edge
+                    ang1 = edges.GaussMap.mid;
+                    ang2 = arcs.GaussMap.Infimum .* (arcs.Radius > 0) + ...
+                           arcs.GaussMap.Supremum .* (arcs.Radius < 0);
+                    ang2 = circshift(ang2,-1);
+                    mask = ang1 > 0 & ang2 < 0;
+                    ang1(mask) = ang1(mask) - 2*pi;
+                    vertE = ciat.Arc(edges.Endpoint,zeros(length(arcs),1),...
+                                     ciat.RealInterval( ang1,ang2));
+
+                    % Create ordered cell array
+                    arcs = mat2cell(arcs,ones(length(arcs),1));
+                    vertA = mat2cell(vertA,ones(length(vertA),1));
+                    edges = mat2cell(edges,ones(length(edges),1));
+                    vertE = mat2cell(vertE,ones(length(vertE),1));
+                    segments = [arcs.';vertA.';edges.';vertE.'];
                     value{m,n} = segments(:);
                 end
             end
@@ -159,8 +207,6 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
         function value = get.Vertices(obj)
             [M,N] = size(obj);
             value = cell(M,N);
-            arcs = obj.Arcs;
-            edges = obj.Edges;
             for m = 1:M
                 for n = 1:N
                     [value{m,n},~] = obj(m,n).getVertices;
