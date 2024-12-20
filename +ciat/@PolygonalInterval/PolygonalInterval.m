@@ -4,7 +4,7 @@ classdef PolygonalInterval < matlab.mixin.indexing.RedefinesParen
 %
 % This is a class of the Complex Interval Arithmetic Toolbox.
 % It allows the definition of complex intervals represented by polygonal
-% regions in the complex plane defined by an ordered series of points
+% regions in the complex plane defined by an ordered series of points.
 % The object allows performing arithmetic operations on and between them. 
 % The object automatically calculates properties of the interval used for 
 % casting to other representation types and allows the calculation with 

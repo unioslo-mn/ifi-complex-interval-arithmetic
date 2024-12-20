@@ -1,4 +1,24 @@
 classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
+
+% Polyarcular interval class for complex interval arithmetic calculations
+%
+% This is a class of the Complex Interval Arithmetic Toolbox.
+% It allows the definition of complex intervals represented by polyarcular
+% regions in the complex plane defined by an ordered series of arcs.
+% The object allows performing arithmetic operations on and between them. 
+% The object automatically calculates properties of the interval used for 
+% casting to other representation types and allows the calculation with 
+% arrays and matrices of intervals.
+% _________________________________________________________________________
+%
+% Copyright (C) 2023 H. Arnestad and G. Gereb, BSD-3
+% If you use this software, please cite it as in CITATION.cff
+% Project: Beampattern Interval Analysis 
+% Website: doi.org/10.5281/zenodo.6856232
+% Contact: haavaarn@uio.no, gaborge@uio.no
+% (More information in README.md and LICENSE.md.)
+% _________________________________________________________________________
+
 	properties (Dependent)
         DefArcs         % Defining arcs of the polygonal interval boundary
         Arcs;           % Implicit arcs 
@@ -20,6 +40,37 @@ classdef PolyarcularInterval < matlab.mixin.indexing.RedefinesParen
 	methods
 		%% Constructor
         function obj = PolyarcularInterval(inObj,inObj2,optional)
+        %POLYARCULARINTERVAL Construct an instance of this class
+        %
+        % This function generates one or more polyarcular intervals
+        % based on the optional input arguments, each having a 
+        % default value. If no argument is given, the generated
+        % object has empty properties, which is useful for 
+        % initialization of an array of intervals.
+        % There are multiple ways of defining an interval. The default
+        % method is givin an array of arcs as a single argument of
+        % ciat.Arc type, which results a single polyarcular interval
+        % no matter how the arcs are structured (array or matrix.
+        % In order to generate multiple polygonal intervals from arcs
+        % a cell array has to be given as a single argument with each cell
+        % containing a set of arcs of the ciat.Arc type.
+        % It is also possible to give only a single input argument, of one
+        % of the other complex interval types in which case it will be 
+        % converted to polygonal intervals, representing the smallest 
+        % enclosing interval. 
+        %__________________________________________________________________________
+        % USAGE        
+        %   ciat.PolyarxInterval(arx)
+        %   ciat.PolyarxInterval(obj)
+        %   ciat.PolyarxInterval
+        % _________________________________________________________________________
+        % NECESSARY ARGUMENT
+        % _________________________________________________________________________
+        % OPTIONS
+        %   arx  : struct containing the properties of each convex arc
+        % _________________________________________________________________________
+        % EXAMPLES
+        % _________________________________________________________________________
             arguments
                 inObj                (:,:)   = []
                 inObj2               (:,:)   = []

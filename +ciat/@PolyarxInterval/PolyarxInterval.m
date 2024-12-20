@@ -1,11 +1,14 @@
 classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
 
-% Polygonal interval class for complex interval arithmetic calculations
+% Convex polyarc interval class for complex interval arithmetic calculations
 %
 % This is a class of the Complex Interval Arithmetic Toolbox.
-% It allows the definition of complex intervals represented by polygonal
-% regions in the complex plane defined by an ordered series of points
+% It allows the definition of complex intervals represented by convex
+% polyarcular regions in the complex plane defined by an ordered set of
+% convex arcs.
 % The object allows performing arithmetic operations on and between them. 
+% In particular, it is optimized for performing addition of polar
+% intervals, in the context of beampattern interval analysis.
 % The object automatically calculates properties of the interval used for 
 % casting to other representation types and allows the calculation with 
 % arrays and matrices of intervals.
@@ -42,44 +45,32 @@ classdef PolyarxInterval < matlab.mixin.indexing.RedefinesParen
         
         %% Constructor
         function obj = PolyarxInterval(inObj,inObj2)
-        %POLYGONALINTERVAL Construct an instance of this class
+        %POLYARXINTERVAL Construct an instance of this class
         %
-        % This function generates one or more polygonal intervals
+        % This function generates one or more convex polyarcular intervals
         % based on the optional input arguments, each having a 
         % default value. If no argument is given, the generated
         % object has empty properties, which is useful for 
         % initialization of an array of intervals.
         % There are multiple ways of defining an interval. The default
-        % method is givin an array of points as a single argument of
-        % complex double type, which results a single polygonal interval
-        % no matter how the points are structured (array or matrix.
-        % In order to generate multiple polygonal intervals from points
-        % a cell array has to be given as a single argument with each cell
-        % containing a set of complex values.
+        % method is givin a struct containing the properties of the convex 
+        % arcs, which results a single polygonal interval.
         % It is also possible to give only a single input argument, of one
         % of the other complex interval types in which case it will be 
         % converted to polygonal intervals, representing the smallest 
         % enclosing interval. 
         %__________________________________________________________________________
         % USAGE        
-        %   ciat.PolyarxInterval(center,radius)
+        %   ciat.PolyarxInterval(arx)
         %   ciat.PolyarxInterval(obj)
         %   ciat.PolyarxInterval
         % _________________________________________________________________________
         % NECESSARY ARGUMENT
         % _________________________________________________________________________
         % OPTIONS
-        %   points  : vertex points as complex double type array
-        %   cells   : cell array of vertex points 
-        %   obj       : object of double or another complex interval type
-        %               (see cast function for details)
+        %   arx  : struct containing the properties of each convex arc
         % _________________________________________________________________________
         % EXAMPLES
-        %   polyInt = ciat.PolyarxInterval(1,2,3,4)
-        %   polyInt = ciat.PolyarxInterval([1,2],[2,3],[3,4],[4,5])
-        %   polyInt = ciat.PolyarxInterval([1+1i,2+2i])
-        %   polyInt = ciat.PolyarxInterval(ciat.PolarInterval(0,1,2,3))
-        %   polyInt(5,2) = ciat.PolyarxInterval
         % _________________________________________________________________________
             arguments
                 inObj                (:,:)   = []
